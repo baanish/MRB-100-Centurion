@@ -12,7 +12,8 @@ namespace Centurion;
 /// </summary>
 static class BayCookoffRule
 {
-    public const float BurnS = 5f;
+    /// <summary>Gives the crew time to react once the bay's tank catches fire (owner, 2026-10-19).</summary>
+    public const float BurnS = 20f;
     public const float YieldFraction = 0.25f;
     public const float MaxBlastKg = 5000f;
     /// <summary>At or under this a blast is stock fragmentation (DamageEffects.BlastFrag), as a stock warhead's is (Missile.cs:166, 1732).</summary>

@@ -56,11 +56,11 @@ Past 25% extension, more than +4 g or less than -1 g for half a second tears off
 
 Lasers cannot hurt the Centurion or start its fires. Guns, flak and missiles still can. Fuel fires still damage the aircraft, spread between tanks and threaten loaded bays.
 
-A fuel fire next to a loaded bay is a countdown. Each bay shares its fuselage section with a fuel tank, and if that tank burns for 5 seconds while the bay still holds conventional bombs or missiles, the bay explodes and the section breaks away. The blast grows with what is left aboard, up to the equivalent of 5,000 kg of TNT, and it damages anything close by, escorts included. Nuclear weapons never set it off; they are lost with the bay. If a tank near a loaded bay catches fire, drop what you can on a target and keep wingmen clear.
+A fuel fire next to a loaded bay is a countdown. Each bay shares its fuselage section with a fuel tank, and if that tank burns for 20 seconds while the bay still holds conventional bombs or missiles, the bay explodes and the section breaks away. The blast grows with what is left aboard, up to the equivalent of 5,000 kg of TNT, and it damages anything close by, escorts included. Nuclear weapons never set it off; they are lost with the bay. If a tank near a loaded bay catches fire, drop what you can on a target and keep wingmen clear.
 
 ## AWACS beam and radar master
 
-Fit the 6 t AWACS Beam on the dorsal station. It occupies the aft bay, which must stay empty. The forward bay keeps its bomber stores and ARAD-116 options; the AWACS preset uses 8 ARAD-116s.
+Fit the 6 t AWACS Beam on the dorsal station. It occupies the aft bay, which must stay empty. The forward bay keeps its bomber stores and ARAD-116 options; the AWACS preset uses 16 ARAD-116s.
 
 Clear the hangar with the radar master on and the beam rises, then extends its ends. Deployment takes 12 seconds. The beam detects nothing until fully deployed. Switching the radar master off stows it and removes the extra deployed drag; switching on raises it again when clear of the hangar.
 
@@ -109,8 +109,8 @@ The table gives the intended packed pair for every bay munition, plus all forwar
 | Piledriver TBM (20 kt) | 6 | 6 | 12 |
 | Demolition Bomb | 2 | 2 | 4 |
 | ARAD-116, small rack | 4 | 0 | 4 |
-| ARAD-116, AWACS preset rack | 8 | 0 | 8 |
-| ARAD-116, packed rack | 16 | 0 | 16 |
+| ARAD-116, medium rack | 8 | 0 | 8 |
+| ARAD-116, packed rack (AWACS preset) | 16 | 0 | 16 |
 
 Smaller racks also appear in the selector. For the dense GPO-500, PAB-250 and PAB-250LR racks, either bay can select either size shown in the packed table. Use the listed pairs for the intended balance and payload.
 
@@ -143,6 +143,6 @@ Bombers extend for takeoff and climb on a racetrack before heading toward the ta
 
 The AI leaves the laser in automatic defence. It holds its attack against missiles the laser can cover. For an uncovered radar missile, it dodges while holding height rather than diving to the ground. Escort it against head-on attacks.
 
-AWACS aircraft climb toward 15 km and orbit near 200 m/s, with radars on. Their racetrack follows the front at a distance set by detecting stealthy fighters, about 25 km from the nearest enemy base under normal conditions. This can put them inside long-range SAM coverage. They use countermeasures and the automatic laser, keep their carried missiles unused, and return at 20% fuel.
+AWACS aircraft climb toward 15 km and orbit near 200 m/s, with radars on. Their racetrack follows the front at a distance set by detecting stealthy fighters, about 25 km from the nearest enemy base under normal conditions. This can put them inside long-range SAM coverage. They use countermeasures and the automatic laser, and return at 20% fuel. They fire their ARAD-116s in pairs at emitting hostile SAM and AA radars, only from beyond the site's own reach plus 10 km and never closing in to make a shot, so a StratoLance R9 site is never a target.
 
 AI Centurions need a qualifying runway at least 1,907 m long. Players can spawn at any base whose medium hangar fits the aircraft. The AI manages span itself, including extension for landing and retraction for taxi.

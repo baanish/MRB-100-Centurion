@@ -1,11 +1,18 @@
 # Changelog
 
-## Coming soon
+## 0.1.3 (in progress)
 
-- In progress: a small external camera on the nose where the forward screen's view comes from, and subtler scan lines on that screen.
-- In progress: the wing status display drawn with the HUD span gauge's line art.
-- In progress: a finer damage model that breaks the aircraft into more, smaller pieces, including split fuselage panels, and a slimmer tail.
-- In progress: internal structure and fuel compartments visible through damage, with armour and joint strength set for each part.
+### Done
+
+- The wing status display is drawn with the HUD span gauge's line art, one wing hanging down, with the extension percentage and amber warnings.
+- A burning weapon bay now cooks off after 20 seconds instead of 5, giving the crew time to react.
+
+### Planned
+
+- A finer damage model: the aircraft breaks into 66 pieces instead of 39, including split fuselage skin panels and outer wing sections.
+- Internal structure and fuel compartments visible through damage, with armour and joint strength set for each part.
+- A slimmer, more streamlined tail (appearance only; flight is unchanged).
+- A small external camera on the nose where the forward screen's view comes from, and subtler scan lines on that screen.
 
 ## 0.1.2 (pre-release), 2026-10-19
 

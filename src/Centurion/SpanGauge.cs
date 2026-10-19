@@ -37,6 +37,18 @@ static class SpanGauge
 
         var plan = ___wingIcon;
         plan.localRotation = Quaternion.identity;
+        var (retracted, extended) = SlidePlan(plan, telescope.Extension);
+        ___inputPivot.localRotation = Quaternion.identity;
+        ___inputPivot.localPosition = Vector3.Lerp(retracted, extended, telescope.Command);
+        ___label.text = Invariant($"SPAN {telescope.Extension * 100f:0}%");
+    }
+
+    /// <summary>
+    /// Slides each stage of a span plan (the gauge's, or the wing display's copy, <see cref="WingDisplay"/>) to the
+    /// extension, showing only what is outboard of the part it nests in; returns the tip's retracted and extended places.
+    /// </summary>
+    internal static (Vector3 Retracted, Vector3 Extended) SlidePlan(Transform plan, float extension)
+    {
         var cover = plan.Find("root").localPosition.x;
         Vector3 retracted = default, extended = default;
         foreach (var name in Stages)
@@ -44,13 +56,11 @@ static class SpanGauge
             var stage = (RectTransform)plan.Find(name);
             retracted = plan.Find(name + "_retracted").localPosition;
             extended = plan.Find(name + "_extended").localPosition;
-            stage.localPosition = Vector3.Lerp(retracted, extended, telescope.Extension);
+            stage.localPosition = Vector3.Lerp(retracted, extended, extension);
             stage.GetComponent<Image>().fillAmount = Mathf.Clamp01((stage.localPosition.x + stage.rect.xMax - cover) / stage.rect.width);
             cover = Mathf.Max(cover, stage.localPosition.x);
         }
 
-        ___inputPivot.localRotation = Quaternion.identity;
-        ___inputPivot.localPosition = Vector3.Lerp(retracted, extended, telescope.Command);
-        ___label.text = Invariant($"SPAN {telescope.Extension * 100f:0}%");
+        return (retracted, extended);
     }
 }

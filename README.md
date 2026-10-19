@@ -1,5 +1,7 @@
 # MRB-100 Centurion
 
+![A black MRB-100 Centurion with its wings extended, dropping a salvo of PAB-250 bombs from both bays](docs/player/media/centurion_hero.jpg)
+
 A heavy bomber and AWACS for Nuclear Option 0.34.2, set in the 2080s as the B-52's successor. Its truss-braced wing telescopes from hangar width to twice that in flight, two late-UltraFan turbofans charge a capacitor for a laser C-RAM in the tail, and nose, tail and dorsal radars all run at once. It spawns from medium hangars for both factions.
 
 Every player in a lobby needs the mod: a new aircraft is never client-side.
@@ -51,6 +53,8 @@ Read the [pilot's guide](docs/player/FLYING.md), [known issues](docs/player/KNOW
 
 ## Flying the telescoping wing
 
+![The Centurion's wing telescoping from retracted to fully extended in flight](docs/player/media/centurion_wing_extension.gif)
+
 The span is on **Custom Axis 1**, the axis the Alkyon's wing sweep uses: 0 is retracted, full is extended, and full travel takes 8 seconds. Bind it in the game's control settings.
 
 - **Retracted** is for speed: transit and dashes near Mach 0.85.
@@ -97,7 +101,7 @@ Fit the radar beam on the dorsal hardpoint (6 t). It's a Wedgetail-style beam in
 - Once clear of the hangar with the radar on, the beam rises on its blade and extends its end sections over 12 seconds. It reads no range until fully up.
 - Nominal range 150 km in every direction, alongside the nose and tail radars. Actual detection depends on the target and conditions. It draws 15 kW, and deployed it adds real drag.
 - The radar toggle switches all three radars and stows or raises the beam with them, shedding its drag when stowed.
-- The beam takes the aft bay's space, so the aft bay is empty on the AWACS. The forward bay keeps the ARAD-116 options (x8 on the preset).
+- The beam takes the aft bay's space, so the aft bay is empty on the AWACS. The forward bay keeps the ARAD-116 options (x16 on the preset).
 - It loiters at about 49,000 ft (15 km), extended, near 200 m/s.
 
 Radars on every Centurion: the nose radar sees 60 km ahead, the tail radar 40 km behind, both with 60-degree half-cones, and both follow the radar master switch.
@@ -135,7 +139,7 @@ On the HUD and in the cockpit:
 The AI flies both roles, on its own doctrine rather than the stock low strike.
 
 - **Bomber:** it climbs out extended in a racetrack near its base until it's high enough to ingress, then cruises at its loaded ceiling (about 51,000 to 57,000 ft, by weight) in gentle 20 degree banks. Unguided bombs fall from that height; glide bombs release from range without it descending. Tusko-B and AShM-300 loads launch from that height and speed, and it stays up while its missiles are flying rather than landing with rounds aboard. It makes repeated passes until its targets are gone or it runs dry, keeps its pulls inside the wing's tear limits, and never picks the laser as a weapon. It holds its attack against missiles its laser can engage; against a radar missile the laser can't reach it dodges sideways but keeps its height.
-- **AWACS:** it climbs to 15 km and flies a racetrack toward the front, standing off as far as the beam can still spot a stealth fighter over the nearest enemy base (about 25 km). It keeps its radars on, uses countermeasures against missiles close to impact, never fires missiles, and heads home to land at 20% fuel.
+- **AWACS:** it climbs to 15 km and flies a racetrack toward the front, standing off as far as the beam can still spot a stealth fighter over the nearest enemy base (about 25 km). It keeps its radars on, uses countermeasures against missiles close to impact, and heads home to land at 20% fuel. Its 16 ARAD-116s go in pairs at emitting hostile SAM and AA radars, only from beyond the site's own reach plus 10 km, one pair in the air at a time; it never fires air-to-air missiles.
 
 AI Centurions take off only from runways of 1,907 m (6,257 ft) or longer; players can spawn at every base whose medium hangar fits it.
 
@@ -155,7 +159,7 @@ The `Diagnostics`, `Debug` and `Capture` sections are for testing; leave them at
 
 ## Known limitations
 
-- **Art and sounds aren't final.** The Centurion has its own flight deck and engine audio. Interior art, displays, the damage model, and gear and wing sounds are still in progress.
+- **Art and sounds aren't final.** The Centurion has its own flight deck and engine audio. Interior art, displays and the damage model are still in progress, and the full sound set hasn't had its final listening pass.
 - **Multiplayer is tested on one PC only.** Loopback tests with a separate client pass for the span, wing loss, radars, the AWACS beam and the laser, also under simulated lag, including players who join late; the two-PC test hasn't run. On a dedicated server a client's laser is untested. A late joiner sees a beam that is moving at its end position for up to 12 seconds.
 - **Manual laser aim on dedicated servers can disagree with damage.** The server may apply damage along its own aim while the player aims manually.
 - **Don't fly it at 4x time.** At the camera tool's 4x time scale, manoeuvring flight can tear the wing off. Normal speed is fine.

@@ -6,7 +6,7 @@ Interim builds are work in progress for Nuclear Option 0.34.2. Check your releas
 
 - The flight deck interior art and displays are still being finished. The Centurion has its own cockpit, but its presentation is not final.
 - The damage model and exposed structure are still in progress.
-- Gear and wing sounds are still being finished. Engine and cabin audio are present.
+- The sound set has not had its final listening pass. Engine, cabin, wing-stage and flap sounds are the Centurion's own; the gear and laser use stock sounds.
 
 ## Multiplayer
 

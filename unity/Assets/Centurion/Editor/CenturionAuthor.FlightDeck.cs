@@ -35,6 +35,12 @@ namespace Centurion.Editor
         // The flood light under the overhead between the seats: where, how far it reaches, how bright, its warm white.
         private const float FloodStation = 6.2f, FloodHeight = 5.05f, FloodRange = 2.6f, FloodIntensity = 1.5f;
         private static readonly Color FloodColour = new Color(1f, 0.95f, 0.88f);
+        // The wing display's wing, the HUD span gauge's plan turned to hang down the page (canvas units, millimetres): its
+        // millimetres per aircraft metre, which bring the extended tip to just over the percentage; where along the span
+        // it leaves the page's top edge, outboard of the body the root sprite also draws; the station centred across it;
+        // the width of the page it is clipped to, which leaves out the tail the root sprite draws aft of the wing.
+        private const float WingDisplayMmPerMetre = 4.6f, WingDisplayTopSpan = 3.4f, WingDisplayCentreStation = 23f, WingDisplayClipWidth = 110f;
+        private static readonly Color MfdGreen = new Color(0f, 1f, 0f, 1f);
         // The screen: a mod copy of the stock glass_int with its mirror finish off (docs/COCKPIT-DESIGN.md "Forward view").
         private static readonly Color ScreenTint = new Color(0.80f, 0.92f, 0.95f, 0.25f);
         private const float ScreenSmoothness = 0.2f;
@@ -226,8 +232,11 @@ namespace Centurion.Editor
         }
 
         // The wing display's page (flightdeck.py wing_canvas): a world-space canvas, a millimetre to the unit, off until
-        // src/Centurion/WingDisplay.cs turns it on with the interior. It carries one line of the stock tac screen's MFD
-        // text, inactive, which the plugin copies for its lines; the plugin draws and lays out the rest.
+        // src/Centurion/WingDisplay.cs turns it on with the interior. Its "page" carries a copy of the HUD span gauge's plan
+        // (AuthorSpanGaugeHud: the root sprite, each stage's Filled sprite and its ends), turned so the right wing hangs
+        // from the page's top edge with the nose to the right, in MFD green; the plugin clips it to the page (the body
+        // outboard of the top edge's span is cut off), slides its stages as the gauge does, and writes the percentage and
+        // the word from one line of the stock tac screen's MFD text, inactive here, that it copies.
         private static void AuthorWingDisplay(Build b, BlockoutPart page, Transform interiorRoot)
         {
             var canvasObject = new GameObject("wing_display", typeof(RectTransform)) { layer = 3 };
@@ -239,6 +248,25 @@ namespace Centurion.Editor
             var canvas = canvasObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.enabled = false;
+
+            var pageRect = (RectTransform)new GameObject("page", typeof(RectTransform)).transform;
+            pageRect.SetParent(rect, false);
+            pageRect.anchorMin = new Vector2(0.5f, 0f);
+            pageRect.anchorMax = new Vector2(0.5f, 1f);
+            pageRect.sizeDelta = new Vector2(WingDisplayClipWidth, 0f);
+            var plan = (RectTransform)Object.Instantiate(FindDeep(Load<GameObject>(HudExtrasPath).transform, "wingPivot").gameObject, pageRect).transform;
+            plan.name = "plan";
+            plan.anchorMin = plan.anchorMax = new Vector2(0.5f, 0.5f);
+            plan.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            plan.localScale = Vector3.one * (WingDisplayMmPerMetre / SpanGaugeUnitsPerMetre);
+            plan.localPosition = new Vector3((WingDisplayCentreStation - OriginStation) * WingDisplayMmPerMetre,
+                rect.sizeDelta.y / 2f + WingDisplayTopSpan * WingDisplayMmPerMetre, 0f);
+            foreach (var image in plan.GetComponentsInChildren<Behaviour>(true).Where(c => c.GetType().Name == "Image" && c.enabled))
+            {
+                var so = new SerializedObject(image);
+                Prop(so, "m_Color").colorValue = MfdGreen;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
 
             var text = (RectTransform)Object.Instantiate(FindDeep(Load<GameObject>(DonorTacScreen).transform, "Title TWR").gameObject, rect).transform;
             text.name = "text";
