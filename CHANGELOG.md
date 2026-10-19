@@ -13,6 +13,7 @@
 - Internal structure and fuel compartments visible through damage, with armour and joint strength set for each part.
 - A slimmer, more streamlined tail (appearance only; flight is unchanged).
 - A small external camera on the nose where the forward screen's view comes from, and subtler scan lines on that screen.
+- The missile warning strips move from the windows onto the cockpit panel, and the Alkyon's old missile warning on the tactical screen is removed.
 
 ## 0.1.2 (pre-release), 2026-10-19
 

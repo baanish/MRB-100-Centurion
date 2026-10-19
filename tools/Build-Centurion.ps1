@@ -83,7 +83,8 @@ if ($Committed) {
 }
 $dll = $null
 if (Test-Path -LiteralPath $csproj) {
-    $dotnetOut = Join-Path $build 'dotnet'
+    # Staged outside build/ until Unity succeeds, so a failed build never leaves a DLL beside an older bundle there.
+    $dotnetOut = Join-Path $repo '.cache/build-staging/dotnet'
     # --no-incremental: an up-to-date skip would leave a DLL older than this run.
     & dotnet build $csproj -c Release --no-incremental -o $dotnetOut --nologo | Out-Host
     if ($LASTEXITCODE -ne 0) { Fail "dotnet build exited $LASTEXITCODE" }
@@ -181,5 +182,9 @@ $sums = foreach ($file in $outputs) {
     (Get-FileHash -LiteralPath (Join-Path $build $name) -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $name
 }
 [IO.File]::WriteAllLines((Join-Path $build 'SHA256SUMS.txt'), [string[]]$sums)
+if ($dll) {
+    New-Item -ItemType Directory -Force (Join-Path $build 'dotnet') | Out-Null
+    Copy-Item -Path (Join-Path $dotnetOut '*') -Destination (Join-Path $build 'dotnet') -Recurse -Force
+}
 $dllNote = if ($dll) { 'with Centurion.dll' } else { 'no DLL (src/Centurion not present yet)' }
 Write-Output "G0.1 PASS: build/$(Split-Path -Leaf $nobp) $($sums[0].Substring(0, 12)) $dllNote, $attempt Unity attempt(s) ($([int]$clock.Elapsed.TotalSeconds) s)"

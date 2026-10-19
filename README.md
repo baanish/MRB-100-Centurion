@@ -69,19 +69,19 @@ The span is on **Custom Axis 1**, the axis the Alkyon's wing sweep uses: 0 is re
 
 ## Wing flex
 
-![The extended wing flexing from 1 g up to 3.7 g, down to -0.5 g and back, seen head-on](docs/player/media/centurion_wing_flex.gif)
+![The extended wing flexing from 1 g up to 3.6 g, down to -0.5 g and back, seen head-on](docs/player/media/centurion_wing_flex.gif)
 
 A wing this long and slender bends a lot before it breaks, so the Centurion's does. The braced inner wing stays stiff; everything outboard of the strut node bends as one beam, root, stage 1 and stage 2 together, at every extension.
 
-![Head-on stills of the extended wing: parked, 1 g, 3.7 g and -0.5 g](docs/player/media/centurion_wing_flex_stills.jpg)
+![Head-on stills of the extended wing: parked, 1 g, 3.6 g and -0.5 g](docs/player/media/centurion_wing_flex_stills.jpg)
 
 | State, fully extended | Tip offset |
 |---|---|
 | Parked, under its own weight | 0.75 m (2.5 ft) down |
 | Level flight, 1 g | 2.5 m (8 ft) up |
-| Hard pull, 3.7 g | 7.0 m (23 ft) up |
+| Hard pull, 3.6 g | 7.2 m (24 ft) up |
 | Near the 4 g tear limit | 7.5 m (25 ft) up |
-| Push, -0.5 g | 1.6 m (5 ft) down |
+| Push, -0.5 g | 1.7 m (5.5 ft) down |
 
 - **It follows the load.** The bend comes from the aircraft's load factor through a spring and damper, so the tips lag a sudden pull, overshoot a little, and swing after a gust or a landing before they settle.
 - **It grows with the span.** The bend scales with the cube of the wing outboard of the node, so the retracted wing barely moves and the full 87 m (286 ft) span moves most.
