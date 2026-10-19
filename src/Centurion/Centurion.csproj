@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <!-- The Unity authoring project references prefab components by assembly name, so this must stay "Centurion". -->
+    <AssemblyName>Centurion</AssemblyName>
+    <RootNamespace>Centurion</RootNamespace>
+    <Version>0.1.2</Version>
+    <Authors>baanish</Authors>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- TelescopeController reads AeroPart's job fields through their native pointer (diagnostics). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Assembly-CSharp transitively references a newer compression facade that this plugin never uses. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
+    <GameDir Condition="'$(GameDir)' == '' and '$(NUCLEAR_OPTION_DIR)' != ''">$(NUCLEAR_OPTION_DIR)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">D:\SteamLibrary\steamapps\common\Nuclear Option</GameDir>
+    <Managed>$(GameDir)\NuclearOption_Data\Managed</Managed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="$(GameDir)\BepInEx\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(GameDir)\BepInEx\core\0Harmony.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(Managed)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Mirage" HintPath="$(Managed)\Mirage.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(Managed)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(Managed)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="$(Managed)\UnityEngine.AudioModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(Managed)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(Managed)\UnityEngine.ImageConversionModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ScreenCaptureModule" HintPath="$(Managed)\UnityEngine.ScreenCaptureModule.dll" Private="false" />
+    <Reference Include="Unity.TextMeshPro" HintPath="$(Managed)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
+    <Reference Include="UnityEngine.UIModule" HintPath="$(Managed)\UnityEngine.UIModule.dll" Private="false" />
+  </ItemGroup>
+
+  <Target Name="ValidateGameDir" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(Managed)\Assembly-CSharp.dll')" Text="Nuclear Option not found at GameDir '$(GameDir)'. Pass -p:GameDir=... or set NUCLEAR_OPTION_DIR." />
+    <Error Condition="!Exists('$(GameDir)\BepInEx\core\BepInEx.dll')" Text="BepInEx 5 is not installed in '$(GameDir)'." />
+  </Target>
+</Project>

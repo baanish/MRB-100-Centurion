@@ -1,0 +1,347 @@
+{
+ "frame": "centurion_status_top",
+ "parts": {
+  "aileron_L": {
+   "sprite": "centurion_part_aileron_L",
+   "rect": [
+    0.08984,
+    0.43555,
+    0.23633,
+    0.48828
+   ]
+  },
+  "aileron_R": {
+   "sprite": "centurion_part_aileron_R",
+   "rect": [
+    0.76367,
+    0.43555,
+    0.91016,
+    0.48828
+   ]
+  },
+  "flap_L1": {
+   "sprite": "centurion_part_flap_L1",
+   "rect": [
+    0.35938,
+    0.45508,
+    0.42969,
+    0.51172
+   ]
+  },
+  "flap_L2": {
+   "sprite": "centurion_part_flap_L2",
+   "rect": [
+    0.23828,
+    0.45312,
+    0.33984,
+    0.5
+   ]
+  },
+  "flap_R1": {
+   "sprite": "centurion_part_flap_R1",
+   "rect": [
+    0.57031,
+    0.45508,
+    0.64062,
+    0.51172
+   ]
+  },
+  "flap_R2": {
+   "sprite": "centurion_part_flap_R2",
+   "rect": [
+    0.66016,
+    0.45312,
+    0.76172,
+    0.5
+   ]
+  },
+  "fuselage_F": {
+   "sprite": "centurion_part_fuselage_F",
+   "rect": [
+    0.43945,
+    0.61133,
+    0.56055,
+    0.82617
+   ]
+  },
+  "fuselage_M": {
+   "sprite": "centurion_part_fuselage_M",
+   "rect": [
+    0.43945,
+    0.44531,
+    0.56055,
+    0.61719
+   ]
+  },
+  "fuselage_R": {
+   "sprite": "centurion_part_fuselage_R",
+   "rect": [
+    0.43945,
+    0.2793,
+    0.56055,
+    0.45117
+   ]
+  },
+  "nacelle_1": {
+   "sprite": "centurion_part_nacelle_1",
+   "rect": [
+    0.30273,
+    0.52539,
+    0.39648,
+    0.67383
+   ]
+  },
+  "nacelle_2": {
+   "sprite": "centurion_part_nacelle_2",
+   "rect": [
+    0.60352,
+    0.52539,
+    0.69727,
+    0.67383
+   ]
+  },
+  "nose": {
+   "sprite": "centurion_part_nose",
+   "rect": [
+    0.45117,
+    0.81836,
+    0.54883,
+    0.89648
+   ]
+  },
+  "nozzle_1": {
+   "sprite": "centurion_part_nozzle_1",
+   "rect": [
+    0.30664,
+    0.46875,
+    0.39062,
+    0.61523
+   ]
+  },
+  "nozzle_2": {
+   "sprite": "centurion_part_nozzle_2",
+   "rect": [
+    0.60938,
+    0.46875,
+    0.69336,
+    0.61523
+   ]
+  },
+  "pylon_1": {
+   "sprite": "centurion_part_pylon_1",
+   "rect": [
+    0.33789,
+    0.49609,
+    0.35938,
+    0.65234
+   ]
+  },
+  "pylon_2": {
+   "sprite": "centurion_part_pylon_2",
+   "rect": [
+    0.64062,
+    0.49609,
+    0.66211,
+    0.65234
+   ]
+  },
+  "radar_F_fairing": {
+   "sprite": "centurion_part_radar_F_fairing",
+   "rect": [
+    0.46484,
+    0.89062,
+    0.53516,
+    0.9707
+   ]
+  },
+  "ruddervator_L1": {
+   "sprite": "centurion_part_ruddervator_L1",
+   "rect": [
+    0.40039,
+    0.08203,
+    0.44727,
+    0.1543
+   ]
+  },
+  "ruddervator_L2": {
+   "sprite": "centurion_part_ruddervator_L2",
+   "rect": [
+    0.32422,
+    0.04492,
+    0.4082,
+    0.13086
+   ]
+  },
+  "ruddervator_R1": {
+   "sprite": "centurion_part_ruddervator_R1",
+   "rect": [
+    0.55273,
+    0.08203,
+    0.59961,
+    0.1543
+   ]
+  },
+  "ruddervator_R2": {
+   "sprite": "centurion_part_ruddervator_R2",
+   "rect": [
+    0.5918,
+    0.04492,
+    0.67578,
+    0.13086
+   ]
+  },
+  "spoiler_L": {
+   "sprite": "centurion_part_spoiler_L",
+   "rect": [
+    0.09375,
+    0.45703,
+    0.23633,
+    0.50781
+   ]
+  },
+  "spoiler_R": {
+   "sprite": "centurion_part_spoiler_R",
+   "rect": [
+    0.76367,
+    0.45703,
+    0.90625,
+    0.50781
+   ]
+  },
+  "sponson_L": {
+   "sprite": "centurion_part_sponson_L",
+   "rect": [
+    0.42188,
+    0.28125,
+    0.46484,
+    0.56641
+   ]
+  },
+  "sponson_R": {
+   "sprite": "centurion_part_sponson_R",
+   "rect": [
+    0.53516,
+    0.28125,
+    0.57812,
+    0.56641
+   ]
+  },
+  "strut_inner_L": {
+   "sprite": "centurion_part_strut_inner_L",
+   "rect": [
+    0.33789,
+    0.54102,
+    0.47852,
+    0.64258
+   ]
+  },
+  "strut_inner_R": {
+   "sprite": "centurion_part_strut_inner_R",
+   "rect": [
+    0.52148,
+    0.54102,
+    0.66211,
+    0.64258
+   ]
+  },
+  "strut_outer_L": {
+   "sprite": "centurion_part_strut_outer_L",
+   "rect": [
+    0.08984,
+    0.45703,
+    0.36328,
+    0.5918
+   ]
+  },
+  "strut_outer_R": {
+   "sprite": "centurion_part_strut_outer_R",
+   "rect": [
+    0.63672,
+    0.45703,
+    0.91016,
+    0.5918
+   ]
+  },
+  "tailcone": {
+   "sprite": "centurion_part_tailcone",
+   "rect": [
+    0.43945,
+    0.04883,
+    0.56055,
+    0.2832
+   ]
+  },
+  "vtail_L": {
+   "sprite": "centurion_part_vtail_L",
+   "rect": [
+    0.31445,
+    0.04492,
+    0.48047,
+    0.24609
+   ]
+  },
+  "vtail_R": {
+   "sprite": "centurion_part_vtail_R",
+   "rect": [
+    0.51953,
+    0.04492,
+    0.68555,
+    0.24609
+   ]
+  },
+  "wing_root_L": {
+   "sprite": "centurion_part_wing_root_L",
+   "rect": [
+    0.08008,
+    0.43555,
+    0.50195,
+    0.66602
+   ]
+  },
+  "wing_root_R": {
+   "sprite": "centurion_part_wing_root_R",
+   "rect": [
+    0.49805,
+    0.43555,
+    0.91992,
+    0.66602
+   ]
+  },
+  "wing_tele1_L": {
+   "sprite": "centurion_part_wing_tele1_L",
+   "rect": [
+    0.08008,
+    0.44531,
+    0.38086,
+    0.59961
+   ]
+  },
+  "wing_tele1_R": {
+   "sprite": "centurion_part_wing_tele1_R",
+   "rect": [
+    0.61914,
+    0.44531,
+    0.91992,
+    0.59961
+   ]
+  },
+  "wing_tele2_L": {
+   "sprite": "centurion_part_wing_tele2_L",
+   "rect": [
+    0.04297,
+    0.42969,
+    0.37305,
+    0.5957
+   ]
+  },
+  "wing_tele2_R": {
+   "sprite": "centurion_part_wing_tele2_R",
+   "rect": [
+    0.62695,
+    0.42969,
+    0.95703,
+    0.5957
+   ]
+  }
+ }
+}

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 552909734, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Name: baanish_centurion_pab80lr_216
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 680761231536453657, guid: f3513821cb9378b4ca617d9e32ca4971, type: 3}
+  jsonKey: baanish_centurion_pab80lr_216
+  info: {fileID: 11400000, guid: f29c5482cb4bbb14a96aa470a5de4aef, type: 2}
+  mountName: PAB-80LR x216
+  ammo: 216
+  turret: 0
+  missileBay: 1
+  radar: 0
+  tailHook: 0
+  slingloadHook: 0
+  countermeasure: 0
+  colorable: 0
+  Cargo: 0
+  Troops: 0
+  sortWeapons: 1
+  GearSafety: 1
+  GroundSafety: 1
+  GunAmmo: 0
+  emptyCost: 0
+  emptyMass: 0
+  mass: 27000
+  drag: 0
+  emptyDrag: 0
+  RCS: 0
+  emptyRCS: 0
+  disabled: 0
+  isEventContent: 0
+  dontAutomaticallyAddToEncyclopedia: 0

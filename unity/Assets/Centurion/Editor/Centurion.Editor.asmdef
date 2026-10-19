@@ -1,0 +1,6 @@
+{
+    "name": "Centurion.Editor",
+    "rootNamespace": "Centurion.Editor",
+    "references": ["Blueprinter.Editor"],
+    "includePlatforms": ["Editor"]
+}

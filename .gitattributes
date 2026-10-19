@@ -1,0 +1,4 @@
+unity/Assets/Blueprinter/Mods/centurion/Skin/*.png filter=lfs diff=lfs merge=lfs -text
+art/export/textures/*.png filter=lfs diff=lfs merge=lfs -text
+art/export_awacs/textures/*.png filter=lfs diff=lfs merge=lfs -text
+art/export_cockpit/textures/*.png filter=lfs diff=lfs merge=lfs -text

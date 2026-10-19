@@ -1,0 +1,27 @@
+.cache/
+build/
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/obj/
+unity/UserSettings/
+unity/BlueprinterCache/
+unity/*.csproj
+unity/*.sln
+src/**/bin/
+src/**/obj/
+*.blend1
+__pycache__/
+# Imported game placeholders, game assemblies, third-party binaries and generated data stay local (BUILD.md).
+**/_donotship/
+**/_donotship.meta
+unity/Packages/nuclearoption/
+unity/Assets/Blueprinter/Example/
+unity/Assets/Blueprinter/Example.meta
+unity/Assets/Blueprinter/Generated/
+unity/Assets/Blueprinter/Generated.meta
+unity/Assets/Plugins/BepInEx/
+unity/Assets/Plugins/BepInEx.meta
+unity/Assets/Plugins/Centurion.dll
+unity/Assets/TextMesh Pro/
+unity/Assets/TextMesh Pro.meta

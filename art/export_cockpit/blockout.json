@@ -1,0 +1,968 @@
+{
+ "source_blend": ".cache/cockpit/build/flightdeck.blend",
+ "source_sha256": "62e2731e2fdddfab07d79e84f61f1e0ff18ba773e583664c7ff7835d601d20a8",
+ "axes": "Unity = (-x, z, -y) of Blender; pivots are world positions, bounds are part-local (in axes_unity)",
+ "parts": {
+  "band": {
+   "fbx": "band.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.0,
+    -16.70345,
+    4.87501
+   ],
+   "pivot_unity": [
+    -0.0,
+    4.87501,
+    16.70345
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "8b4febd2270f91306b21448f6f7a57b64b99ecb66d0c54c9105c4252a009bd16",
+   "bounds_blender": [
+    [
+     -0.78244,
+     -0.07155,
+     -0.07501
+    ],
+    [
+     0.78244,
+     0.13282,
+     0.07499
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.78244,
+     -0.07501,
+     -0.13282
+    ],
+    [
+     0.78244,
+     0.07499,
+     0.07155
+    ]
+   ],
+   "tris": 96,
+   "materials": [
+    [
+     "Centurion_band",
+     96
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "band_bezel": {
+   "fbx": "band_bezel.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.0,
+    -16.64104,
+    4.89174
+   ],
+   "pivot_unity": [
+    0.0,
+    4.89174,
+    16.64104
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "1d47512bfeaa281793018e85ccbf99b13cf1fbee138badce3fa840e5436856c2",
+   "bounds_blender": [
+    [
+     -0.80308,
+     -0.14396,
+     -0.10974
+    ],
+    [
+     0.80308,
+     0.1677,
+     0.08626
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.80308,
+     -0.10974,
+     -0.1677
+    ],
+    [
+     0.80308,
+     0.08626,
+     0.14396
+    ]
+   ],
+   "tris": 1288,
+   "materials": [
+    [
+     "Centurion_cockpit_panel",
+     1288
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "band_marker": {
+   "fbx": "band_marker.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.73282,
+    -16.5933,
+    4.819
+   ],
+   "pivot_unity": [
+    -0.73282,
+    4.819,
+    16.5933
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "a8c4cda0e781abde8b80dd0b508b922566d5bc7f38c8943d19d20db983cc7b15",
+   "bounds_blender": [
+    [
+     -0.03768,
+     -0.01947,
+     -0.011
+    ],
+    [
+     0.03768,
+     0.01947,
+     0.011
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.03768,
+     -0.011,
+     -0.01947
+    ],
+    [
+     0.03768,
+     0.011,
+     0.01947
+    ]
+   ],
+   "tris": 2,
+   "materials": [
+    [
+     "Centurion_band_marker",
+     2
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "flightdeck_int": {
+   "fbx": "flightdeck_int.fbx",
+   "blender_parent": null,
+   "pivot_blender": [
+    0.0,
+    -15.925,
+    3.75
+   ],
+   "pivot_unity": [
+    -0.0,
+    3.75,
+    15.925
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "f5c10cd2f2830e76544e216db4048d0b9c18a30d5c7423495202fbe1ab1f817e",
+   "bounds_blender": [
+    [
+     -2.13236,
+     -6.25,
+     -2.32813
+    ],
+    [
+     2.13236,
+     0.4,
+     1.82307
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.13236,
+     -2.32813,
+     -0.4
+    ],
+    [
+     2.13236,
+     1.82307,
+     6.25
+    ]
+   ],
+   "tris": 26609,
+   "materials": [
+    [
+     "Centurion_cockpit_kit",
+     13889
+    ],
+    [
+     "Matte_black",
+     600
+    ],
+    [
+     "Centurion_cockpit_shell",
+     3524
+    ],
+    [
+     "Centurion_cockpit_panel",
+     2272
+    ],
+    [
+     "Centurion_cockpit_console",
+     1670
+    ],
+    [
+     "hotas",
+     342
+    ],
+    [
+     "aircraft_structure",
+     4312
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "glass_int": {
+   "fbx": "glass_int.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.18891,
+    -17.48768,
+    4.78729
+   ],
+   "pivot_unity": [
+    0.18891,
+    4.78729,
+    17.48768
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "a5c9c4a42935f2abf85d6e55b8c641b4489cead74168df8a10bc20fa65c7667c",
+   "bounds_blender": [
+    [
+     -1.97679,
+     -0.96732,
+     -0.86573
+    ],
+    [
+     2.35461,
+     1.93268,
+     0.45781
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.35461,
+     -0.86573,
+     -1.93268
+    ],
+    [
+     1.97679,
+     0.45781,
+     0.96732
+    ]
+   ],
+   "tris": 614,
+   "materials": [
+    [
+     "canopy_int",
+     614
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "hatch_liner_L": {
+   "fbx": "hatch_liner_L.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.46093,
+    -16.25792,
+    5.3238
+   ],
+   "pivot_unity": [
+    -0.46093,
+    5.3238,
+    16.25792
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "b7b1ea09c5803e0207d53a8f2fcb9273a5842f8e6e36de8b19deda4975e567a5",
+   "bounds_blender": [
+    [
+     -0.26974,
+     -0.63708,
+     -0.25531
+    ],
+    [
+     0.40209,
+     0.63292,
+     0.19673
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.40209,
+     -0.25531,
+     -0.63292
+    ],
+    [
+     0.26974,
+     0.19673,
+     0.63708
+    ]
+   ],
+   "tris": 192,
+   "materials": [
+    [
+     "Centurion_cockpit_shell",
+     192
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "hatch_liner_R": {
+   "fbx": "hatch_liner_R.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.47517,
+    -16.25475,
+    5.3205
+   ],
+   "pivot_unity": [
+    0.47517,
+    5.3205,
+    16.25475
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "96321dec3ff8bf18e890bb8a1d93c7a2f921ad08ff0a360b85232fc23d34d1e9",
+   "bounds_blender": [
+    [
+     -0.38786,
+     -0.64025,
+     -0.252
+    ],
+    [
+     0.28398,
+     0.62975,
+     0.20003
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.28398,
+     -0.252,
+     -0.62975
+    ],
+    [
+     0.38786,
+     0.20003,
+     0.64025
+    ]
+   ],
+   "tris": 186,
+   "materials": [
+    [
+     "Centurion_cockpit_shell",
+     186
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "labels": {
+   "fbx": "labels.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.00454,
+    -16.37238,
+    4.56603
+   ],
+   "pivot_unity": [
+    0.00454,
+    4.56603,
+    16.37238
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "1f67cdbe52fe78e6471657af0ea0da65770f600ad55a5c860a6dc7330d26c366",
+   "bounds_blender": [
+    [
+     -1.42816,
+     -0.61775,
+     -0.5658
+    ],
+    [
+     1.43724,
+     0.80418,
+     0.90503
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -1.43724,
+     -0.5658,
+     -0.80418
+    ],
+    [
+     1.42816,
+     0.90503,
+     0.61775
+    ]
+   ],
+   "tris": 320,
+   "materials": [
+    [
+     "Centurion_cockpit_labels",
+     192
+    ],
+    [
+     "Centurion_cockpit_legends",
+     128
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "stick_L": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    1.02,
+    -16.195,
+    4.43
+   ],
+   "pivot_unity": [
+    -1.02,
+    4.43,
+    16.195
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "stock_mesh": "Multirole1_joystick",
+    "stock_material": "hotas",
+    "mirror": 1
+   }
+  },
+  "stick_R": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -1.02,
+    -16.195,
+    4.43
+   ],
+   "pivot_unity": [
+    1.02,
+    4.43,
+    16.195
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "stock_mesh": "Multirole1_joystick",
+    "stock_material": "hotas",
+    "mirror": 0
+   }
+  },
+  "tacScreen": {
+   "fbx": "tacScreen.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.14618,
+    -16.70562,
+    4.63
+   ],
+   "pivot_unity": [
+    0.14618,
+    4.63,
+    16.70562
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "aec37d4aa7407523c21efd2ad35a8e203673f7b8b014458fcb37f00eb0a20c97",
+   "bounds_blender": [
+    [
+     -0.54885,
+     -0.05708,
+     -0.112
+    ],
+    [
+     0.65188,
+     0.1028,
+     0.112
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.65188,
+     -0.112,
+     -0.1028
+    ],
+    [
+     0.54885,
+     0.112,
+     0.05708
+    ]
+   ],
+   "tris": 40,
+   "materials": [
+    [
+     "tacScreenDisplay",
+     40
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "throttle_1": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.01,
+    -16.425,
+    4.142
+   ],
+   "pivot_unity": [
+    -0.01,
+    4.142,
+    16.425
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "stock_mesh": "Multirole1_throttle",
+    "stock_material": "hotas",
+    "mirror": 1
+   }
+  },
+  "throttle_2": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.01,
+    -16.425,
+    4.142
+   ],
+   "pivot_unity": [
+    0.01,
+    4.142,
+    16.425
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "stock_mesh": "Multirole1_throttle",
+    "stock_material": "hotas",
+    "mirror": 0
+   }
+  },
+  "warning_lenses": {
+   "fbx": "warning_lenses.fbx",
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.08543,
+    -16.66735,
+    4.47489
+   ],
+   "pivot_unity": [
+    0.08543,
+    4.47489,
+    16.66735
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {},
+   "sha256": "5c199f539765832248aff3755fe2f696e601a0ed9437de9fdfed7e50dc981bf4",
+   "bounds_blender": [
+    [
+     -0.84378,
+     -0.1082,
+     -0.03809
+    ],
+    [
+     1.01464,
+     0.18977,
+     0.12031
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -1.01464,
+     -0.03809,
+     -0.18977
+    ],
+    [
+     0.84378,
+     0.12031,
+     0.1082
+    ]
+   ],
+   "tris": 36,
+   "materials": [
+    [
+     "CockpitWarningLight",
+     36
+    ]
+   ],
+   "colliders": [],
+   "lod1": null
+  },
+  "warning_strip_L": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.26737,
+    -16.10742,
+    4.581
+   ],
+   "pivot_unity": [
+    -0.26737,
+    4.581,
+    16.10742
+   ],
+   "axes_unity": {
+    "right": [
+     0.96126,
+     0.0,
+     0.27564
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.27564,
+     0.0,
+     0.96126
+    ]
+   },
+   "props": {
+    "stock_mesh": "multirole1_warningLights",
+    "stock_material": "CockpitWarningLight",
+    "mirror": 0
+   }
+  },
+  "warning_strip_R": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    -0.26737,
+    -16.10742,
+    4.581
+   ],
+   "pivot_unity": [
+    0.26737,
+    4.581,
+    16.10742
+   ],
+   "axes_unity": {
+    "right": [
+     0.96126,
+     0.0,
+     -0.27564
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     0.27564,
+     0.0,
+     0.96126
+    ]
+   },
+   "props": {
+    "stock_mesh": "multirole1_warningLights",
+    "stock_material": "CockpitWarningLight",
+    "mirror": 0
+   }
+  },
+  "wing_display": {
+   "fbx": null,
+   "blender_parent": "flightdeck_int",
+   "pivot_blender": [
+    0.62906,
+    -16.63078,
+    4.63
+   ],
+   "pivot_unity": [
+    -0.62906,
+    4.63,
+    16.63078
+   ],
+   "axes_unity": {
+    "right": [
+     0.91796,
+     0.0,
+     0.39666
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.39666,
+     0.0,
+     0.91796
+    ]
+   },
+   "props": {
+    "canvas_w": 0.14336000000000013,
+    "canvas_h": 0.2240000000000002
+   }
+  }
+ },
+ "textures": {
+  "cockpit_band.png": "89d2d00e8619f06eedfc8d5239610a687a0cfb5210ed1173e42c419e8da7f9ea",
+  "cockpit_console_ao.png": "e165e8b337502fb508bc8a1d8f1545a23eda3b5ec8b59ee0cb5587a1dac68411",
+  "cockpit_console_b.png": "d5e86df2a1e1d904ab9aa9995f5ad70549ab297ba59d7d70e8df4ef3544eb03b",
+  "cockpit_console_m.png": "fad74fd2b17f968b63ad505d8f6f30094ce941a4ad10b6836aacd7f4af7b50f6",
+  "cockpit_console_n.png": "11492ca8d6b62cda17212bc467cc43dcd3a299d58080620e0b6be1934f4117ee",
+  "cockpit_kit_ao.png": "c4964d856a75de6ef4244f2d48b4bfb3d5d267dd6352750d1b1c4552a782cf69",
+  "cockpit_kit_b.png": "48fa093d2699c65c76a1f5dbb5b2e19887203688ac1910180aaaf346cf578d93",
+  "cockpit_kit_m.png": "098a5d1b827f2f6bc7e9ea49d57c656fb8baa23d8d82b81679287a0ca302787e",
+  "cockpit_kit_n.png": "70113c5a44299dd06bf44f3bd6d6bb0b6406a547f7473f73cc2403f97727df26",
+  "cockpit_labels_b.png": "d55d3d5fb1b1391d3fda7542c78e5abfb3e5c40301253bd9823602103a75c66f",
+  "cockpit_labels_e.png": "46f8fd08d83125f69962a5b6d8f4a66aee51bce97cf4cfc5106ba647fafb2b44",
+  "cockpit_marker.png": "563e2728609cf82336d6291868f50f8fa5c1b02d5041bcb5f3e58d4945d6aef1",
+  "cockpit_panel_ao.png": "b651a30fa62f9d8e722fb10c74e51e57d90c3548a2be259e97a4e0bdf87914b9",
+  "cockpit_panel_b.png": "dbbe9dc9b7996e641c2953e3b3c4bd254e62e6789ac3840ccc981ec9d902ba5e",
+  "cockpit_panel_m.png": "0c5268321fc3b8699204deaa62216cc755d66c6491b14ede9dc225d8426c6514",
+  "cockpit_panel_n.png": "e4d3883484fef5b9caa7fdc7d1917b8dcb18e10df7a39f7ca5b352d7c97aab03",
+  "cockpit_shell_ao.png": "a3c11906721d743396ab53d9c36f77f1f65596b29ced46e37f1cc92342c9ebe3",
+  "cockpit_shell_b.png": "37c084336074731c6665ade69a779bf937918fcfe64624e6b131281032ff9a4a",
+  "cockpit_shell_m.png": "b16008a19d70901ee68b1e29c791f9b09f2780bc78cb5a5f45214e4bb3e4f0aa",
+  "cockpit_shell_n.png": "2579d07561a49d8b303cad3c53cb66e0ea51e5e1283ec092b353a4a472800092"
+ }
+}

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c39d0b3dbc2446349568e124e8619bff, type: 3}
+  m_Name: OpAddWeaponToHardpoint_baanish_centurion_gbm500lr_36
+  m_EditorClassIdentifier: 
+  weaponJsonKey: baanish_centurion_gbm500lr_36
+  aircraft:
+  - aircraftJsonKey: baanish_centurion
+    hardpointIndices: 01000000
