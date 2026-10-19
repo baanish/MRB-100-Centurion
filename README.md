@@ -66,7 +66,28 @@ The span is on **Custom Axis 1**, the axis the Alkyon's wing sweep uses: 0 is re
 - **Rotation and tail strike.** Rotate to 8 or 9 degrees; the tail strikes at 10.5.
 - **Hands-off pitch.** With the stick centred, the aircraft holds the flight path you released it on (level if you let go within half a degree of level). Past 60 degrees of bank, in the flare, and under AI control the stock attitude hold flies alone.
 - **Airbrakes** open at exactly idle throttle, as on stock aircraft: the ailerons split and the spoilers rise.
-- The wing bends with load, purely for looks: about 2.5 m (8 ft) of tip rise at 1 g and 0.75 m (2.5 ft) of droop parked. Colliders and aerodynamics don't move.
+
+## Wing flex
+
+![The extended wing flexing from 1 g up to 3.7 g, down to -0.5 g and back, seen head-on](docs/player/media/centurion_wing_flex.gif)
+
+A wing this long and slender bends a lot before it breaks, so the Centurion's does. The braced inner wing stays stiff; everything outboard of the strut node bends as one beam, root, stage 1 and stage 2 together, at every extension.
+
+![Head-on stills of the extended wing: parked, 1 g, 3.7 g and -0.5 g](docs/player/media/centurion_wing_flex_stills.jpg)
+
+| State, fully extended | Tip offset |
+|---|---|
+| Parked, under its own weight | 0.75 m (2.5 ft) down |
+| Level flight, 1 g | 2.5 m (8 ft) up |
+| Hard pull, 3.7 g | 7.0 m (23 ft) up |
+| Near the 4 g tear limit | 7.5 m (25 ft) up |
+| Push, -0.5 g | 1.6 m (5 ft) down |
+
+- **It follows the load.** The bend comes from the aircraft's load factor through a spring and damper, so the tips lag a sudden pull, overshoot a little, and swing after a gust or a landing before they settle.
+- **It grows with the span.** The bend scales with the cube of the wing outboard of the node, so the retracted wing barely moves and the full 87 m (286 ft) span moves most.
+- **Near the ground it fades** to the weight droop, which the wing's lift takes away with speed: on the runway at flying speed the drawn wing matches the solid one, so wingtip strikes look right.
+- **It is cosmetic.** Only the drawn wing bends. Colliders, joints, lift and the tear rule use the rigid wing, so the flex changes nothing about how the aircraft flies, and every player sees the same bend.
+- **It is tunable** under `[WingFlex]` in `baanish.centurion.cfg` (see [Settings](#settings)): the three tip offsets, the natural frequency (0.6 Hz) and damping (0.15), or off entirely.
 
 ## Bomber
 
@@ -97,6 +118,8 @@ The Centurion carries no air-to-air missiles and no external pods; its built-in 
 ## AWACS
 
 Fit the radar beam on the dorsal hardpoint (6 t). It's a Wedgetail-style beam in a well along the spine, stowed flat so the aircraft clears the hangar door.
+
+![The AWACS beam rising from the spine and stowing again at 60,000 ft, shown at 4x speed](docs/player/media/centurion_awacs_beam.gif)
 
 - Once clear of the hangar with the radar on, the beam rises on its blade and extends its end sections over 12 seconds. It reads no range until fully up.
 - Nominal range 150 km in every direction, alongside the nose and tail radars. Actual detection depends on the target and conditions. It draws 15 kW, and deployed it adds real drag.
