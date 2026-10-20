@@ -4,7 +4,7 @@
     <!-- The Unity authoring project references prefab components by assembly name, so this must stay "Centurion". -->
     <AssemblyName>Centurion</AssemblyName>
     <RootNamespace>Centurion</RootNamespace>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <Authors>baanish</Authors>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -35,6 +35,10 @@
     <Reference Include="Unity.TextMeshPro" HintPath="$(Managed)\Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="UnityEngine.UI" HintPath="$(Managed)\UnityEngine.UI.dll" Private="false" />
     <Reference Include="UnityEngine.UIModule" HintPath="$(Managed)\UnityEngine.UIModule.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="NoAutopilotProfile.json" LogicalName="Centurion.NoAutopilotProfile.json" />
   </ItemGroup>
 
   <Target Name="ValidateGameDir" BeforeTargets="ResolveReferences">

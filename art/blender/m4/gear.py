@@ -34,7 +34,7 @@ from .surface import DOOR
 
 GROUP = "gear"
 PARTS = ("gear_F", "wheel_F", "gear_LM", "wheel_LM", "gear_RM", "wheel_RM")
-BUDGET_TRIS = 17500  # Lead's budget calls: 17,500 in round 2; round 4 adds 400 from the aircraft's spare for the nose
+BUDGET_TRIS = 14500  # damage stage 2: reclaim and leaner damage structure (was 17500)
 # tyres' rounded shoulders (384); 400 to the struts group for the hinge bump that replaced the legs' trunnion fairings.
 MIRROR_PARTS = {"gear_RM": "gear_LM", "wheel_RM": "wheel_LM"}
 GROUND_PARTS = ("wheel_F", "wheel_LM", "wheel_RM")  # on the runway on their tyres (the entry script's envelope)
@@ -59,7 +59,7 @@ GEAR_LEG, GEAR_FIXED, LEG_DOOR, DOOR_STRUCT, HOUSING, TYRE = 21, 23, 24, 25, 26,
 # 1.2 m wheels in pairs 0.84 m apart on axles 1.4 m apart; CenturionAuthor gives the game the same wheel radii.
 NOSE_WHEEL_X, MAIN_WHEEL_X = 0.40, 0.42
 MAIN_AXLES = (-1.4, 0.0, 1.4)
-WHEEL_SEG = 48
+WHEEL_SEG = 32
 # Wheel profiles, (radius, height along the axle away from the leg), outer hub face, tyre, inner face, with the trim
 # zone of each band. Tyre sections are aircraft radials: a flat ribbed crown, rounded shoulders, a bulged sidewall.
 MAIN_WHEEL = ((0.0, 0.112), (0.29, 0.055), (0.375, 0.170),
@@ -252,7 +252,7 @@ def lathe(p, profile, centre, axis, ref, seg, zones, cls=GEAR_LEG, slot=None, fl
         p.flat(faces, z, slot, zone_cls.get(z, cls))
 
 
-def rod(p, a, b, r, zone, seg=8, cls=GEAR_LEG, slot=None):
+def rod(p, a, b, r, zone, seg=6, cls=GEAR_LEG, slot=None):
     """A capped round bar from a to b on a swatch."""
     return p.flat(sf.tube(p, [a, b], r, seg, slot or p.gear), zone, slot, cls)
 

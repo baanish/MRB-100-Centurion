@@ -39,6 +39,7 @@ Export data, for each render part <part> in the "Centurion" collection:
 """
 
 import colorsys
+import contextlib
 import json
 import math
 import sys
@@ -400,6 +401,13 @@ def build_fuselage(parts):
         if name == "tailcone":
             rings += [fus_ring(s, k) for s, k in TAIL_END]
             smooth_rings += [fus_ring(s, k, with_chine=False) for s, k in TAIL_END]
+        if name in VISUAL_TAIL_PARTS:  # its colliders follow the skin the art draws, so hits land on what shows
+            with visual_tail():  # rings 0.5 m apart over its taper, so no inset hull bows past the skin between them
+                stations = sorted(set(stations) | {s0 + 0.5 * k for s0 in (stations[0],)
+                                                   for k in range(int((stations[-1] - stations[0]) / 0.5) + 1)})
+                smooth_rings = [fus_ring(s, with_chine=False) for s in stations]
+                if name == "tailcone":
+                    smooth_rings += [fus_ring(s, k, with_chine=False) for s, k in TAIL_END]
         # The radome dome is cut into a tip and a band, or one dome island stretches the checker near its base.
         loft(bm, rings, start, "cap", seams=(0, FUS_KEEL), cap_mat=(1, 1), ring_seams=(2,) if name == "radar_F_fairing" else ())
         mats, col = (SKIN, STRUCT), [{"rings": smooth_rings, "start": start, "end": "cap"}]
@@ -948,6 +956,7 @@ def set_extension(objs, extension):
 
 
 EXTRA_BUILDERS = ()  # parts a later step adds (step 6: the spine cover)
+PART_SPLITS = False  # step 6.1: the finer part tree (art/blender/part_splits.py), applied after the colliders
 
 
 def build(extension):
@@ -1018,6 +1027,10 @@ def build(extension):
         if obj.type == "MESH":
             order_slots(obj)
     report["colliders"] = build_colliders(parts, objs, world, subs["Colliders"])
+    if PART_SPLITS:
+        import part_splits
+        report["splits"] = part_splits.apply_blockout(sys.modules[__name__], objs, world, subs["Colliders"], mats,
+                                                       report["colliders"])
     report["lod1"] = build_lod1(parts, objs, world, subs["LOD1"], mats[LOD])
     report["uv"] = unwrap_skin(objs)
     report["hard_edges"] = bake_normals(objs)
@@ -1100,7 +1113,7 @@ def bury_hidden_skin(objs, struct):
                   if b != a.name and not (wing_chain(a) and wing_chain(a) == wing_chain(objs[b])) and boxes_touch(abox, box_, 0.0)]
         # A stage sits inside its root at rest, wherever else that is (step 6.1's run into the body), so only full
         # extension tells which of its faces stay hidden.
-        stage = wing_chain(a) and not a.name.startswith("wing_root")
+        stage = wing_chain(a) and a.name[:-2] in WING_STAGES
         hidden = [False] * len(verts) if stage else buried_verts(verts, others)
         chain_others = None
         if wing_chain(a):
@@ -1209,6 +1222,17 @@ def signed_depth(tree, p):
     return dist if (p - loc).dot(normal) < 0 else -dist
 
 
+def signed_volume(faces):
+    """Six times the signed volume the faces' fans enclose about the origin, summed in double precision: mathutils
+    works in single, where a small shell far from the origin (a V-tail tip's hinge fitting, 24 m out) reads noise."""
+    vol = 0.0
+    for f in faces:
+        (ax, ay, az), *rest = [tuple(v.co) for v in f.verts]
+        for (bx, by, bz), (cx, cy, cz) in zip(rest, rest[1:]):
+            vol += ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)
+    return vol
+
+
 def orient_outward(bm):
     """recalc_face_normals, then every closed shell it left with a negative volume turned out: its heuristic can pick
     the wrong side of a shell with paper-thin sections (step 6's strut foot, a V-tail run of cut sections)."""
@@ -1228,9 +1252,7 @@ def orient_outward(bm):
                     if h.index not in seen:
                         seen.add(h.index)
                         stack.append(h)
-        vol = sum(vs[0].dot(vs[i].cross(vs[i + 1])) for g in shell for vs in [[v.co for v in g.verts]]
-                  for i in range(1, len(vs) - 1))
-        if vol < 0:
+        if signed_volume(shell) < 0:
             bmesh.ops.reverse_faces(bm, faces=shell)
 
 
@@ -1404,7 +1426,8 @@ def build_lod1(parts, objs, world, coll, mat):
 UV_MARGIN_PX = 4
 TRIM_UV_PER_M = 0.5  # box projection for faces on the tiling trims
 MIRRORED = ("wing_", "flap_", "aileron_", "spoiler_", "strut", "jury_strut_", "sponson_", "vtail_", "ruddervator_")
-UV_GROUPS = (("fuselage", ("radar_", "nose", "fuselage_", "tailcone", "wingfairing", "baydoor_", "geardoor_F", "laser_", "spine_")),
+UV_GROUPS = (("fuselage", ("radar_", "nose", "fuselage_", "tailcone", "tail_end", "cheek_", "wingfairing", "baydoor_",
+                           "geardoor_F", "laser_", "spine_")),
              ("wing", ("wing_", "flap_", "aileron_", "spoiler_")),
              ("struts", ("strut", "jury_strut_", "sponson_", "geardoor_LM", "geardoor_RM")),
              ("nacelles", ("nacelle_", "pylon_", "nozzle_", "fan_")),
@@ -1648,8 +1671,22 @@ def bake_normals(objs):
 
 # ---------- metrics ----------
 def world_mesh(obj):
+    """World vertices and polygons of a mesh object, or of a list of them merged (fixed_wing)."""
+    if isinstance(obj, (list, tuple)):
+        verts, polys = [], []
+        for o in obj:
+            v, p = world_mesh(o)
+            polys += [tuple(len(verts) + i for i in poly) for poly in p]
+            verts += v
+        return verts, polys
     mw = obj.matrix_world
     return [mw @ v.co for v in obj.data.vertices], [tuple(p.vertices) for p in obj.data.polygons]
+
+
+def fixed_wing(objs, s):
+    """The fixed wing of side s ("_L"/"_R") whole: wing_root and, with the finer part tree, its outer piece
+    (part_splits), for the checks that measure the stages against the fixed wing."""
+    return [objs[n + s] for n in ("wing_root", "wing_outer") if n + s in objs]
 
 
 def shell_stats(obj):
@@ -1705,7 +1742,8 @@ def engine_clashes(objs):
 
 NACELLE_UNDER_BAND = (0.40, 0.50)  # share of the cowl length behind the wing leading edge
 ENGINE_CLEAR_OF = ("strut", "jury_strut", "wing_root", "strutfairing")  # per side; the first is the strut beside the nozzle
-WING_CHAIN = ("wing_root", "wing_tele1", "wing_tele2")
+WING_CHAIN = ("wing_root", "wing_outer", "wing_tele1", "wing_tele2", "wing_tip")
+WING_STAGES = ("wing_tele1", "wing_tele2", "wing_tip")  # the chain's sliding members
 
 
 def joint_parent(obj):
@@ -1742,7 +1780,7 @@ def inside_root(a, b, objs):
     colliders keep jointed's rule."""
     for s, o in ((a, b), (b, a)):
         side = wing_chain(s)
-        root = objs.get("wing_root" + side) if side and s.name[:-2] != "wing_root" else None
+        root = objs.get("wing_root" + side) if side and s.name[:-2] in WING_STAGES else None
         if root is not None and (joint_parent(root) == o or o.name in bonds(root) or root.name in bonds(o)):
             return True
     return False
@@ -1762,14 +1800,23 @@ def boxes_touch(a, b, margin):
     return box_gap(a, b) <= margin
 
 
-def inside(p, tree):
-    hits, origin, d = 0, p.copy(), Vector((0.0123, 0.0071, 1.0)).normalized()
+def inside(p, tree, d=Vector((0.0123, 0.0071, 1.0))):
+    hits, origin, d = 0, p.copy(), d.normalized()
     while hits < 400:
         loc = tree.ray_cast(origin, d)[0]
         if loc is None:
             break
         hits, origin = hits + 1, loc + d * 1e-5
     return hits % 2 == 1
+
+
+# A thin-walled panel (m4/partition.py) is open where a torn lip turns in, and one ray can pass that opening: two of
+# three rays in different directions must read inside
+BURIED_RAYS = (Vector((0.0123, 0.0071, 1.0)), Vector((0.71, 0.0093, -0.7)), Vector((-0.0061, 1.0, 0.0137)))
+
+
+def buried(p, tree):
+    return sum(inside(p, tree, d) for d in BURIED_RAYS) >= 2
 
 
 def overlaps(objs):
@@ -1789,7 +1836,7 @@ def overlaps(objs):
             n = len(A[1].overlap(B[1]))
             if n:
                 found[f"{a.name}~{b.name}"] = f"{n} intersecting face pairs"
-            elif inside(A[0][0], B[1]) or inside(B[0][0], A[1]):
+            elif buried(A[0][0], B[1]) or buried(B[0][0], A[1]):
                 found[f"{a.name}~{b.name}"] = "one inside the other"
     return found
 
@@ -1920,7 +1967,7 @@ def export_checks(objs, report):
     return checks
 
 
-BUDGET = (("fuselage", 25000, ("nose", "fuselage_", "tailcone", "wingfairing")),
+BUDGET = (("fuselage", 25000, ("nose", "fuselage_", "tailcone", "tail_end", "cheek_", "wingfairing")),
           ("wing_and_struts", 20000, ("wing_", "strut", "jury_strut", "sponson_")),
           ("surfaces", 4000, ("flap_", "aileron_", "spoiler_")), ("vtail", 5000, ("vtail", "ruddervator")),
           ("nacelles", 36000, ("nacelle_", "pylon_", "fan_", "nozzle_")), ("gear", 16000, ("gear_", "wheel_", "geardoor_")),
@@ -1934,7 +1981,7 @@ def budget_group(name):
 def tip_step(objs, side):
     """Retracted: the tip cuff against the fixed wing's end section (chord and thickness), and the gap between."""
     sfx = "_L" if side > 0 else "_R"
-    root = [v for v in world_mesh(objs["wing_root" + sfx])[0]]
+    root = world_mesh(fixed_wing(objs, sfx))[0]
     x_end = max(abs(v.x) for v in root)
     end = [v for v in root if abs(abs(v.x) - x_end) < 1e-3]
     tip = world_mesh(objs["wing_tele2" + sfx])[0]
@@ -2024,7 +2071,7 @@ def measure(objs, extension, label, report):
         checks["hangar_door_fit"] = check(f"{span:.2f} x {height:.2f}", span < HANGAR_DOOR_W and height < HANGAR_DOOR_H,
                                           f"{HANGAR_DOOR_W} x {HANGAR_DOOR_H} m door")
         checks["hangar_depth_fit"] = check(round(length, 3), length < HANGAR_DEPTH, f"< {HANGAR_DEPTH} m deep")
-        nested = {f"{c}{s}_outside_{p}{s}": outside_count(objs[c + s], objs[p + s])
+        nested = {f"{c}{s}_outside_{p}{s}": outside_count(objs[c + s], fixed_wing(objs, s) if p == "wing_root" else objs[p + s])
                   for s in ("_L", "_R") for c, p in (("wing_tele1", "wing_root"), ("wing_tele2", "wing_tele1"))}
         checks["stages_nested_retracted"] = {"outside_vertices": nested, "pass": not any(nested.values())}
         for side, s in ((1, "_L"), (-1, "_R")):
@@ -2403,6 +2450,7 @@ S6_MASS = {"fuselage_M": 15100, "fuselage_F": 8500, "nose": 5958.56, "cockpit": 
                                                          ("strut_inner", 410), ("strut_outer", 1290),
                                                          ("wing_tele1", 2200), ("wing_tele2", 2300))},
            **{f"{p}_{n}": kg for n in (1, 2) for p, kg in (("pylon", 1450), ("nacelle", 8200), ("nozzle", 1600))}}
+S6_MASS_STEP6 = dict(S6_MASS)  # before step 6.1's finer part tree moves mass onto its pieces
 S6_SURFACE_MASS, S6_EMPTY_MASS = 500, 125000
 CONTROL_SURFACES = ("flap_", "aileron_", "spoiler_", "ruddervator_")
 S6_CG_TARGET = 20.64  # round 4's strut-echo V-tail airframe (docs/PROPORTION-STUDY.md round 4 "Physics impact")
@@ -2563,6 +2611,19 @@ S61_MAIN_HINGE = (0.10, 2.1)  # the main gear's hinge axis: metres inside the po
 # section centre there (fus_profile_s6), the turret's pivot height, so the C-RAM's pivot and hardpoint stay put.
 S61_BOAT_TAIL = {"at": 44.0, "top": 5.21, "half_w": 0.75, "crown": 36.0, "side": 37.5, "side_power": 2.0,
                  "belly": 40.0}
+# Owner, 2026-10-18: "make the tail a bit less bulbous and more streamlined/planeish", "just a model edit"; 2026-10-19,
+# of a near-straight taper to a 1.0 x 0.78 m end: "too pointy imo. keep it subtly curved like a real plane". The art's
+# aft body curves down from station 33 at its crown and in from 37.5 at its sides, slimmer than S61_BOAT_TAIL all the
+# way, into a 1.36 x 1.12 m end (its centre held, so the laser turret keeps its pivot) that it reaches at 12 deg in side
+# view and 14 in plan, so the lens, which carries the taper on (m4/fuselage_aft_laser.py), rounds it off blunt. Owner,
+# 2026-10-20: "The top should curve down, the bottom should curve up": a crown_slope under 1.5 (hermite_law's least
+# that never bends back) flattens the crown into the end, which reads as an up-turn (fuselage_aft.crown_profile). The skin
+# under the V-tail roots comes in up to 7 cm, over roots buried 0.3 m whose fillets land on the art's skin. Only the
+# art and the tail's colliders follow it (visual_tail); the blockout's shapes, which the flight model is measured on,
+# keep S61_BOAT_TAIL.
+S61_BOAT_TAIL_VISUAL = {"at": 44.0, "top": 5.12, "half_w": 0.68, "crown": 33.0, "side": 37.5, "side_power": 2.0,
+                        "crown_slope": 1.5, "side_slope": 0.8, "belly": 40.0}
+VISUAL_TAIL_PARTS = ()  # step 6.1: the parts whose colliders follow the art's aft body
 # Owner, 2026-10-16: "Make the entire trailing edge movable and split it into two, so that we can bias one towards pitch
 # and one towards yaw, but if needed, both can do both." The moving trailing edge runs from the root, where the inboard
 # surface turned to its full throw either way still stands root_clear outside the aft body's skin, into the rounded tip,
@@ -2739,6 +2800,27 @@ def configure_step61():
              SMOOTH_BODY=SMOOTH_BODY + ("nose_hatch_L", "nose_hatch_R", "nose_door_visible"))
     LOD1_PARTS["fuselage_R"] = (LOD1_PARTS["fuselage_R"][0],
                                 LOD1_PARTS["fuselage_R"][1] + ("baydoor_AL_visible", "baydoor_AR_visible"))
+    # Damage stage 2 (owner, 2026-10-18): the finer part tree, each piece's mass taken from its source, and LOD1 hulls
+    # on the cores (folding their panels) and the larger pieces only (owner: "skip them on the tiniest pieces").
+    import part_splits
+    masses = dict(S6_MASS_STEP6)
+    for name, kg in part_splits.mass_moves().items():
+        masses[name] = masses.get(name, 0.0) + kg
+    g.update(PART_SPLITS=True, S6_MASS=masses, VISUAL_TAIL_PARTS=("tailcone",))
+    for s in "LR":
+        LOD1_PARTS[f"wing_root_{s}"] = (17, (f"flap_{s}1_visible", f"flap_{s}2_visible", f"flap_track_{s}1", f"flap_track_{s}2"))
+        LOD1_PARTS[f"wing_outer_{s}"] = (17, (f"aileron_{s}_visible", f"spoiler_{s}_visible"))
+        LOD1_PARTS[f"wing_tele2_{s}"] = (17, (f"wing_tip_{s}",))
+        LOD1_PARTS[f"vtail_{s}"] = (17, (f"ruddervator_{s}1_visible",))
+        LOD1_PARTS[f"vtail_tip_{s}"] = (12, (f"ruddervator_{s}2_visible",))
+        LOD1_PARTS[f"sponson_tail_{s}"] = (9, ())
+    LOD1_PARTS["fuselage_F"] = (17, ("fuselage_F_upper", "cheek_L", "cheek_R"))
+    LOD1_PARTS["fuselage_F2"] = (17, ("fuselage_F2_upper",))
+    LOD1_PARTS["fuselage_M"] = (17, ("wingfairing", "fuselage_M_flank_L", "fuselage_M_flank_R"))
+    LOD1_PARTS["fuselage_R"] = (17, ("spine_cover", "spine_cover_A", "fuselage_R_upper_L", "fuselage_R_upper_R",
+                                     "baydoor_AL_visible", "baydoor_AR_visible"))
+    LOD1_PARTS["tailcone"] = (17, ("tailcone_upper",))
+    LOD1_PARTS["tail_end"] = (17, ("tail_end_upper", "radar_R_fairing"))
     # The extended wing is 87 m across: wider frames, and a wider lens on the hero camera.
     S6_STATE_CAMERA["extended"] = {"hero": ("persp", 36), "top": ("ortho", 94), "front": ("ortho", 94),
                                    "rear_full": ("ortho", 94)}
@@ -2795,10 +2877,12 @@ def fus_profile_s6(s):
         q = lambda start: (s - bt[start]) / (bt["at"] - bt[start])
         ramp_end = FUS_BOTTOM + UPSWEEP_SLOPE * (bt["at"] - UPSWEEP_START)
         centre = (FUS_TOP - a["droop"] * ((bt["at"] - a["crown"]) / a["droop_len"]) ** 2 + ramp_end) / 2  # step 6's
+        # a slope key: leave level, arrive at that slope (a near-straight taper into the end, not a pinch)
+        law = lambda u, key, power: hermite_law(u, bt[key]) if key in bt else u ** power
         if s > bt["crown"]:
-            top = FUS_TOP - (FUS_TOP - bt["top"]) * q("crown") ** 2
+            top = FUS_TOP - (FUS_TOP - bt["top"]) * law(q("crown"), "crown_slope", 2)
         if s > bt["side"]:
-            w = FUS_HALF_W - (FUS_HALF_W - bt["half_w"]) * q("side") ** bt["side_power"]
+            w = FUS_HALF_W - (FUS_HALF_W - bt["half_w"]) * law(q("side"), "side_slope", bt["side_power"])
         if s > bt["belly"]:
             bot += (2 * centre - bt["top"] - ramp_end) * q("belly") ** 2
         return w, top, bot
@@ -2807,6 +2891,24 @@ def fus_profile_s6(s):
     if s > a["side"]:
         w = FUS_HALF_W * (1 - a["close"] * (min(s - a["side"], a["close_len"]) / a["close_len"]) ** 1.8)
     return w, top, bot
+
+
+def hermite_law(u, k):
+    """0 to 1 over u, leaving level and arriving at slope k."""
+    return (3 - k) * u * u + (k - 2) * u ** 3
+
+
+@contextlib.contextmanager
+def visual_tail():
+    """The aft body as the art draws it (S61_BOAT_TAIL_VISUAL), for what follows the skin the player sees: the art's
+    hulls and the tail's colliders. The flight model's shapes keep BOAT_TAIL."""
+    global BOAT_TAIL
+    saved = BOAT_TAIL
+    BOAT_TAIL = S61_BOAT_TAIL_VISUAL or saved
+    try:
+        yield
+    finally:
+        BOAT_TAIL = saved
 
 
 def side_x_s6(s, z):
@@ -3831,7 +3933,7 @@ def s6_planform(objs, step=0.1):
     the gross area with the body's share (round 4's measure)."""
     verts, tris = [], []
     for n, o in objs.items():
-        if o.type == "MESH" and n.startswith(("wing_root", "wing_tele")):
+        if o.type == "MESH" and n.startswith(("wing_root", "wing_outer", "wing_tele", "wing_tip")):
             v, p = world_mesh(o)
             tris += [tuple(len(verts) + i for i in poly) for poly in p]
             verts += v
@@ -3873,7 +3975,7 @@ def s6_stage_slide(objs):
         row = {}
         for s in ("_L", "_R"):
             for c, p in (("wing_tele1", "wing_root"), ("wing_tele2", "wing_tele1")):
-                child, parent = objs[c + s], objs[p + s]
+                child, parent = objs[c + s], (fixed_wing(objs, s) if p == "wing_root" else objs[p + s])
                 pv, pp = world_mesh(parent)
                 tree = BVHTree.FromPolygons(pv, pp)
                 x_end = max(abs(v.x) for v in pv) - 0.1
@@ -4054,7 +4156,7 @@ def s6_report(objs, masses):
     if WELL_OPEN:
         # The beam mount's joint excludes only fuselage_R: every other part's collider stands WELL_CLEAR back from the
         # well grown by WELL_CLEAR, and a ray down the well's centreline from 8 m meets nothing above its floor (the
-        # bomber's lid, spine_cover, aside).
+        # bomber's lids, spine_cover and the part tree's other visual pieces, aside).
         lo, hi = well_box(WELL_CLEAR)
         box_hull = convex.hull_mesh(box_corners(lo, hi))
         gaps = {}
@@ -4062,7 +4164,9 @@ def s6_report(objs, masses):
             v, t = world_hull(c)
             if c.parent.name != "fuselage_R" and box_gap((Vector(v.min(0)), Vector(v.max(0))), (lo, hi)) < 1.0:
                 gaps[c.name] = round(convex.hull_gap((v, t), box_hull), 3)
-        tree, _ = smooth_tree(objs, [n for n, o in objs.items() if o.type == "MESH" and n != "spine_cover"])
+        import part_splits
+        lids = ("spine_cover",) + part_splits.VISUAL
+        tree, _ = smooth_tree(objs, [n for n, o in objs.items() if o.type == "MESH" and n not in lids])
         floor = well_box()[0].z
         hits = [tree.ray_cast(Vector((0.0, st(s), 8.0)), Vector((0, 0, -1)))[0] for s in
                 (s0 + 0.05 + (s1 - s0 - 0.1) * k / 100 for k in range(101))]
@@ -4401,4 +4505,5 @@ def main():
         print("CENTURION sheets: " + ", ".join(s6_sheets(out)))
 
 
-main()
+if __name__ == "__main__":
+    main()

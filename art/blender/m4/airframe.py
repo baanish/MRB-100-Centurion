@@ -8,7 +8,8 @@ runs WALL inside the skin round the part's air space, and the cap becomes a brea
 torn edge (break_face). Inside the lining stand the frames, longerons and systems runs (sweep, tube), torn skin tongues
 and broken member ends just past each break (teeth, the members' path past the joint), and the part's real bulkheads.
 
-Everything here is on SLOT, the airframe trim: an original 512 sheet of eight horizontal strips (STRIPS), each tiling
+Everything here is on SLOT, the airframe trim: an original 512 sheet of eight horizontal strips (STRIPS, the last a fuel
+tank's sealed wall), each tiling
 along U, so a member's length runs along U (UV_PER_M) and its section across its strip's V. The builders write those
 UVs into the part's "airframe_uv" layer; detail_centurion's trim pass moves them onto UVMap and writes the sheet
 (write_sheet). The structure is exempt from the closed-shell rule (it is never tested for containment and never
@@ -24,7 +25,7 @@ SLOT = "Centurion_airframe"
 WALL = 0.02  # the skin's thickness at a break face, and the lining's depth inside the skin
 UV_PER_M = 0.5  # the sheet is 2 m long along U
 SHEET_PX, STRIP_PX = 512, 64
-STRIPS = {"web": 0, "flange": 1, "lining": 2, "torn": 3, "cable": 4, "pipe": 5, "plate": 6, "bare": 7}
+STRIPS = {"web": 0, "flange": 1, "lining": 2, "torn": 3, "cable": 4, "pipe": 5, "plate": 6, "wet": 7}
 PAD = 3 / STRIP_PX  # V stays this far inside a strip, so no filter reaches the next one
 
 
@@ -364,9 +365,14 @@ def write_sheet(folder, save_image, normal_from_height):
             r = rivets(mm, v, (0.2, 0.8), 0.1)
             a *= (1 - 0.15 * r)[..., None]
             hh += 0.0008 * r
-        elif role == "bare":
-            a[:] = (0.5, 0.5, 0.5)
-            me, sm = np.full_like(me, 0.6), np.full_like(sm, 0.45)
+        elif role == "wet":  # a fuel tank's sealed wall: dark sealant, glossy, with fillet beads along its seams
+            a[:] = (0.13, 0.16, 0.15)
+            me, sm = np.full_like(me, 0.05), np.full_like(sm, 0.62)
+            bead = np.clip(1 - np.abs((mm % 0.6) - 0.3) / 0.015, 0, 1)
+            a = a * (1 + 0.6 * bead[..., None])
+            hh += 0.0015 * bead
+            r = rivets(mm, v, (0.15, 0.85), 0.06)
+            a *= (1 - 0.2 * r)[..., None]
         a *= (1 + 0.06 * noise[rows])[..., None]
         alb[rows], metal[rows], smooth[rows], height[rows] = a, me, sm, hh
     folder.mkdir(parents=True, exist_ok=True)

@@ -39,7 +39,7 @@ from .surface import FITTING
 
 GROUP = "engines"
 PARTS = ("nacelle_1", "nacelle_2", "pylon_1", "pylon_2", "fan_1", "fan_2", "nozzle_1", "nozzle_2")
-BUDGET_TRIS = 36000  # Lead's round 2 budget call, 2026-10-14: spend the extra 2,000 on visible silhouettes.
+BUDGET_TRIS = 29000  # damage stage 2: reclaim and leaner damage structure (was 36000)
 MIRROR_PARTS = {"nacelle_2": "nacelle_1", "nozzle_2": "nozzle_1"}
 # Close-ups (m4/render.py's view form, positions (x, station, z)); the first four make the contact sheet.
 VIEWS = {
@@ -59,7 +59,7 @@ VIEWS = {
 COWL, SLEEVE, LIP, LINER, PYLON, GEN, CORE_COWL, HEAT_SHIELD = 41, 42, 43, 44, 45, 46, 47, 48
 
 # ---------- nacelle ----------
-SEG = 64  # nacelle ring vertices; vertex 0 on top, under the pylon
+SEG = 48  # nacelle ring vertices; vertex 0 on top, under the pylon (64 before the damage stage's reclaim)
 # The nacelle wall as one closed loop of (r, a, band from this point to the next, UV ring seam here), on the blockout's
 # S6_UF_OUTER and S6_UF_INNER (r 2.125, L 6.8) with the corners rounded: the lip from its highlight, the inlet cowl,
 # the fan cowl doors ending in a 12 mm step down onto the reverser sleeve, the sleeve's boat-tail running on past the
@@ -101,7 +101,7 @@ FAN_A = 1.02  # fan plane: 0.15 of the cowl behind the intake plane
 CORE_HUB = ((0.0, 1.40), (0.62, 1.40), (0.78, 2.85), (0.0, 2.85))
 SPLITTER = ((0.856, 1.600, "mech"), (0.905, 1.700, "matte"), (0.985, 2.050, "matte"), (1.058, 2.800, "matte"),
             (1.000, 2.800, "matte"), (0.880, 2.000, "matte"), (0.836, 1.700, "mech"), (0.840, 1.625, "mech"))
-SPLITTER_SEG = 40
+SPLITTER_SEG = 32
 OGV = (44, 2.06, 0.30, 0.98, 1.905, 42.0)  # count, leading edge a, chord, root and tip radius, turning (deg)
 GENERATOR = (-135.0, 1.18, 3.48, 1.24, 0.30)  # theta (inboard, low), a from, to, width, height above the cowl
 GEN_SEG = 32  # generator fairing vertices across its arc
@@ -135,7 +135,7 @@ BLADE_STACK = 0.03
 SPINNER = ((0, -0.980), (0.035, -0.966), (0.100, -0.890), (0.200, -0.760), (0.300, -0.620), (0.400, -0.470),
            (0.480, -0.330), (0.550, -0.190), (0.595, -0.060), (0.615, 0.050), (0.618, 0.120), (0.618, 0.400),
            (0.600, 0.440), (0, 0.450))  # a cone, its tip 4 cm behind the intake plane
-SPINNER_SEG = 32
+SPINNER_SEG = 20
 
 # ---------- nozzle (a from the cowl's trailing edge, a = 6.8) ----------
 # The saved third-stream collider reaches r 1.150 at a 1.24, inside the nominal profile's r 1.179 shoulder.
@@ -148,11 +148,11 @@ CORE = ((0.0, -4.000, "matte"), (1.058, -4.000, "matte"), (1.126, 0.000, "core")
         (0.894, CORE_EXIT + 0.012, "matte"), (0.883, CORE_EXIT, "matte"), (0.955, 1.700, "matte"),
         (0.0, 1.700, None))
 CORE_TE = next(i for i, c in enumerate(CORE) if c[1] == CORE_EXIT)
-CORE_SEG = 64
+CORE_SEG = 48
 # A 17.5 deg plug flank continues the converging cowl, with a rounded tip 1.88 m beyond the exit.
 PLUG = ((0.0, 1.550), (0.665, 1.550), (0.670, 1.920), (0.660, 2.030),
         (0.044, 3.985), (0.020, 4.060), (0.006, 4.105), (0.0, 4.140))
-PLUG_SEG = 48
+PLUG_SEG = 32
 
 # ---------- pylon (stations) ----------
 PYLON_NOSE, PYLON_TAIL = 15.30, 24.53  # the tail 2 cm short of the wing's trailing edge (24.55 at the pylon)
@@ -567,7 +567,7 @@ def fan(p, centre, mech):
     revolve(p, centre, SPINNER, SPINNER_SEG, [(mech, 0)] * (len(SPINNER) - 1))
     for b in range(FAN_BLADES):
         theta = 2 * math.pi * (b + 0.5) / FAN_BLADES
-        rings = [[p.bm.verts.new(v) for v in blade_section(centre, theta, *sec, xs=BLADE_X[::2] if sec[0] < 0.8 else BLADE_X)]
+        rings = [[p.bm.verts.new(v) for v in blade_section(centre, theta, *sec, xs=BLADE_X[::2])]
                  for sec in BLADE]
         faces = []
         for ra, rb in zip(rings, rings[1:]):

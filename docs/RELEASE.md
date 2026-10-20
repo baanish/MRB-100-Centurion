@@ -4,7 +4,7 @@ Releases come from [baanish/MRB-100-Centurion](https://github.com/baanish/MRB-10
 
 ## Prepare and package locally
 
-1. Set the same version in `src/Centurion/CenturionPlugin.cs`, `src/Centurion/Centurion.csproj` and `unity/Assets/Blueprinter/Mods/centurion/modinfo.json`.
+1. Set the same version in `src/Centurion/CenturionPlugin.cs`, `src/Centurion/Centurion.csproj` and `unity/Assets/Blueprinter/Mods/centurion/modinfo.json`. The scenarios and their generators name the bundle by version (`build/centurion_<version>.nobp`): replace the old name across `tests/agentic` and `tools` byte for byte (Python `read_bytes`/`write_bytes`; `sed -i` on Windows strips the CRLF files), or the playtests keep loading the previous build.
 2. After intentional exports, run `python tools/scrub_fbx.py` and `python tools/export_manifest.py --write`. The scrubber blanks native scene and absolute texture path metadata, preserves relative texture references, and verifies every other FBX node value. Commit `art/export-manifest.json` with the release source. The private checkout ignores the exports; the public checkout commits every export named by that manifest. Builds check those hashes and never re-export from a cached AWACS scene. Close the Unity editor for `unity/`.
 3. Run this single command from the repository root:
 

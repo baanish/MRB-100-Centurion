@@ -34,15 +34,10 @@ VIEWS = {  # flat-shaded geometry checks: (lens, camera (x, station, z), target)
 
 
 def load_detail(path):
-    """detail_centurion.py as a library: its source without the closing main() call."""
-    import types
-    src = path.read_text(encoding="utf-8")
-    body, tail = src.rstrip().rsplit("\n", 1)
-    if tail.strip() != "main()":
-        raise SystemExit(f"{path.name} no longer ends in main()")
-    mod = types.ModuleType("detail_centurion")
-    mod.__file__ = str(path)
-    exec(compile(body, str(path), "exec"), mod.__dict__)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("detail_centurion", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
     return mod
 
 
@@ -77,7 +72,7 @@ def measure_junctions():
     for o in objs.values():
         dc.order_slots(o, list(bl.SLOT_ORDER) + list(dc.LIGHTS))
     for name in ("wingfairing",):
-        print("SHELLS", name, dc.shell_report(objs[name]))
+        print("SHELLS", name, dc.shell_report(bl, objs[name]))
     report = bl.smoothness_report(dc.render_parts())
     Path(opts["out"]).write_text(json.dumps({"blend": opts["blend"], "smoothness": report}, indent=1))
     for k, v in report["junction_creases"].items():

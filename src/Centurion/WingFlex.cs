@@ -13,8 +13,9 @@ namespace Centurion;
 /// the liftNormal and CoM markers, and everything the aero job, the detach rule and the tear rule read stay where they are.
 /// <para>
 /// The bend is a uniformly loaded cantilever clamped at the node (zero offset and slope there), evaluated per vertex from the
-/// vertex's position along the swept span axis in the inner wing's frame. Root, stage 1 and stage 2 use the same function of
-/// position, so they bend as one wing at every extension and stay nested. Its size comes from the load factor
+/// vertex's position along the swept span axis in the inner wing's frame. The inner wing's root and outer pieces, stage 1,
+/// stage 2 and its wingtip (the part tree's pieces, CenturionAuthor's CutParts) use the same function of position, so they
+/// bend as one wing at every extension and stay nested. Its size comes from the load factor
 /// <see cref="TelescopeController"/> computes on every peer from the aircraft's acceleration, through a spring-damper, then
 /// scaled with the span outboard of the node. Near the ground the rigid colliders are what touch it, so there the bend fades
 /// to the wing's weight droop, which its lift relieves with speed: on the runway at flying speed the drawn wing is the rigid one.
@@ -99,14 +100,16 @@ sealed class WingFlex : MonoBehaviour
     sealed class Side
     {
         public string Name = "";
-        public UnitPart Root = null!;
-        public UnitPart Tip = null!;
+        public UnitPart Root = null!, Outer = null!, Stage2 = null!, Tip = null!;
         /// <summary>The bend frame in the inner wing's frame: s along the slide axis from the node, d up, c along the chord.</summary>
         public Matrix4x4 RootToBend, BendToRoot;
-        /// <summary>Stage 2's own mesh and its outermost vertex along the span axis, and the inner wing's outermost s (the tip once the stages are gone).</summary>
-        public FlexMesh? TipMesh;
-        public int TipIndex;
-        public float RootTipS, NodeLateral;
+        /// <summary>
+        /// The wingtip's own mesh and its outermost vertex along the span axis, stage 2's for when the tip is gone, and the
+        /// outermost s of the inner wing with and without its outer piece (the tip once the stages are gone).
+        /// </summary>
+        public FlexMesh? TipMesh, StageMesh;
+        public int TipIndex, StageIndex;
+        public float RootTipS, OuterTipS, NodeLateral;
         /// <summary>The tip's distance from the centreline with both stages run out by their remaining travel: half the airframe's full span.</summary>
         public float FullLateral;
         public readonly List<FlexMesh> Meshes = new();
@@ -161,35 +164,37 @@ sealed class WingFlex : MonoBehaviour
         }
 
         Side left = sides[0];
-        log.Info(Invariant($"wing flex on {aircraft.name}: node {left.NodeLateral:0.00} m out, full span {2f * left.FullLateral:0.00} m, {left.RootTipS:0.00} m of inner wing past it, {sides.Sum(s => s.Meshes.Count)} meshes ({Vertices} vertices) and {sides.Sum(s => s.Riders.Count)} riders"));
+        log.Info(Invariant($"wing flex on {aircraft.name}: node {left.NodeLateral:0.00} m out, full span {2f * left.FullLateral:0.00} m, {left.OuterTipS:0.00} m of inner wing past it, {sides.Sum(s => s.Meshes.Count)} meshes ({Vertices} vertices) and {sides.Sum(s => s.Riders.Count)} riders"));
     }
 
     string? BindSide(string name, Dictionary<string, UnitPart> parts, out Side? side)
     {
         side = null;
-        if (!parts.TryGetValue("wing_root_" + name, out UnitPart root) || !parts.TryGetValue("wing_tele1_" + name, out UnitPart stage1)
-            || !parts.TryGetValue("wing_tele2_" + name, out UnitPart stage2) || !parts.TryGetValue("strut_outer_" + name, out UnitPart strut))
+        if (!parts.TryGetValue("wing_root_" + name, out UnitPart root) || !parts.TryGetValue("wing_outer_" + name, out UnitPart outer)
+            || !parts.TryGetValue("wing_tele1_" + name, out UnitPart stage1) || !parts.TryGetValue("wing_tele2_" + name, out UnitPart stage2)
+            || !parts.TryGetValue("wing_tip_" + name, out UnitPart tipPart) || !parts.TryGetValue("strut_outer_" + name, out UnitPart strut))
         {
-            return $"no wing_root, wing_tele1, wing_tele2 or strut_outer on side {name}";
+            return $"no wing_root, wing_outer, wing_tele1, wing_tele2, wing_tip or strut_outer on side {name}";
         }
 
-        // The span axis is stage 1's slide (CenturionAuthor.AddSlideEnds), from its retracted position: a late joiner's copy can
-        // already be fully out when this binds (TelescopeController jumps it to the owner's extension).
-        Transform rootT = root.transform;
-        Transform? end = rootT.Find(stage1.name + "_extended");
+        // The span axis is stage 1's slide (CenturionAuthor.AddSlideEnds, on the outer wing it slides in), from its retracted
+        // position: a late joiner's copy can already be fully out when this binds (TelescopeController jumps it to the
+        // owner's extension). The bend frame is the root's, which the outer wing shares.
+        Transform rootT = root.transform, outerT = outer.transform;
+        Transform? end = outerT.Find(stage1.name + "_extended");
         if (end == null || telescope.RetractedPosition(stage1) is not Vector3 retracted)
         {
-            return $"{root.name} has no {stage1.name}_extended marker, or {stage1.name} is not a telescope stage";
+            return $"{outer.name} has no {stage1.name}_extended marker, or {stage1.name} is not a telescope stage";
         }
 
-        Vector3 travel = end.localPosition - retracted;
+        Vector3 travel = rootT.InverseTransformVector(outerT.TransformVector(end.localPosition - retracted));
         if (travel.magnitude < 0.5f)
         {
             return Invariant($"{stage1.name}'s slide is {travel.magnitude:0.00} m, too short to read its axis");
         }
 
         // The run left to full extension, from wherever the stage is now.
-        Vector3 slide = end.localPosition - rootT.InverseTransformPoint(stage1.transform.position);
+        Vector3 slide = rootT.InverseTransformVector(outerT.TransformVector(end.localPosition - outerT.InverseTransformPoint(stage1.transform.position)));
         Vector3 span = travel.normalized;
         Vector3 up = (Vector3.up - Vector3.Dot(Vector3.up, span) * span).normalized;
         Vector3 chord = Vector3.Cross(span, up);
@@ -203,7 +208,7 @@ sealed class WingFlex : MonoBehaviour
         Matrix4x4 strutToRoot = rootT.worldToLocalMatrix * strut.transform.localToWorldMatrix;
         Vector3 node = strutVertices.Select(v => strutToRoot.MultiplyPoint3x4(v)).OrderByDescending(p => Vector3.Dot(p, span)).First();
 
-        var s = new Side { Name = name, Root = root, Tip = stage2 };
+        var s = new Side { Name = name, Root = root, Outer = outer, Stage2 = stage2, Tip = tipPart };
         s.RootToBend = Matrix4x4.identity;
         s.RootToBend.SetRow(0, new Vector4(span.x, span.y, span.z, -Vector3.Dot(span, node)));
         s.RootToBend.SetRow(1, new Vector4(up.x, up.y, up.z, -Vector3.Dot(up, node)));
@@ -212,7 +217,7 @@ sealed class WingFlex : MonoBehaviour
         s.NodeLateral = Mathf.Abs(aircraft.transform.InverseTransformPoint(rootT.TransformPoint(node)).x);
         side = s;
 
-        foreach (UnitPart part in new[] { root, stage1, stage2 })
+        foreach (UnitPart part in new[] { root, outer, stage1, stage2, tipPart })
         {
             // The part's own mesh and its LOD1 hull (CenturionAuthor.AddLods) bend; every other non-part child that shows
             // something (the nav light and its effects, the vortex emitter) rides the bent surface rigidly.
@@ -240,13 +245,16 @@ sealed class WingFlex : MonoBehaviour
         }
 
         s.RootTipS = s.Meshes.Where(m => m.Part == root).Max(m => MaxS(m, out _));
-        s.TipMesh = s.Meshes.FirstOrDefault(m => m.transform == stage2.transform);
-        if (s.TipMesh == null)
+        s.OuterTipS = s.Meshes.Where(m => m.Part == root || m.Part == outer).Max(m => MaxS(m, out _));
+        s.TipMesh = s.Meshes.FirstOrDefault(m => m.transform == tipPart.transform);
+        s.StageMesh = s.Meshes.FirstOrDefault(m => m.transform == stage2.transform);
+        if (s.TipMesh == null || s.StageMesh == null)
         {
-            return $"{stage2.name} has no mesh of its own";
+            return $"{tipPart.name} or {stage2.name} has no mesh of its own";
         }
 
         MaxS(s.TipMesh, out s.TipIndex);
+        MaxS(s.StageMesh, out s.StageIndex);
 
         // Each stage's remaining run to its _extended marker (CenturionAuthor.AddSlideEnds), added to the tip where it is now.
         Transform? end2 = stage1.transform.Find(stage2.name + "_extended");
@@ -256,7 +264,7 @@ sealed class WingFlex : MonoBehaviour
         }
 
         Vector3 run2 = stage1.transform.TransformVector(end2.localPosition - stage1.transform.InverseTransformPoint(stage2.transform.position));
-        Vector3 tipFull = stage2.transform.TransformPoint(s.TipMesh.RestVertices[s.TipIndex]) + rootT.TransformVector(slide) + run2;
+        Vector3 tipFull = s.TipMesh.transform.TransformPoint(s.TipMesh.RestVertices[s.TipIndex]) + rootT.TransformVector(slide) + run2;
         s.FullLateral = Mathf.Abs(aircraft.transform.InverseTransformPoint(tipFull).x);
         return null;
 
@@ -381,9 +389,13 @@ sealed class WingFlex : MonoBehaviour
         Transform rootT = side.Root.transform;
         Matrix4x4 worldToBend = side.RootToBend * rootT.worldToLocalMatrix;
         Matrix4x4 bendToWorld = rootT.localToWorldMatrix * side.BendToRoot;
-        FlexMesh? tipMesh = side.TipMesh != null && side.Tip != null && !side.Tip.IsDetached() ? side.TipMesh : null;
-        Vector3 tipWorld = tipMesh != null ? tipMesh.transform.TransformPoint(tipMesh.RestVertices[side.TipIndex])
-            : bendToWorld.MultiplyPoint3x4(new Vector3(side.RootTipS, 0f, 0f));
+        // The outermost piece still on: the wingtip, stage 2, else the inner wing's end with or without its outer piece.
+        bool tipOn = side.Tip != null && !side.Tip.IsDetached(), stageOn = side.Stage2 != null && !side.Stage2.IsDetached();
+        FlexMesh? tipMesh = tipOn ? side.TipMesh : stageOn ? side.StageMesh : null;
+        int tipIndex = tipOn ? side.TipIndex : side.StageIndex;
+        float innerS = side.Outer != null && !side.Outer.IsDetached() ? side.OuterTipS : side.RootTipS;
+        Vector3 tipWorld = tipMesh != null ? tipMesh.transform.TransformPoint(tipMesh.RestVertices[tipIndex])
+            : bendToWorld.MultiplyPoint3x4(new Vector3(innerS, 0f, 0f));
         side.Length = Mathf.Max(worldToBend.MultiplyPoint3x4(tipWorld).x, 0.01f);
 
         float lateral = Mathf.Abs(aircraft.transform.InverseTransformPoint(tipWorld).x) - side.NodeLateral;
@@ -409,7 +421,7 @@ sealed class WingFlex : MonoBehaviour
 
         if (tipMesh != null)
         {
-            Vector3 moved = tipMesh.BentVertex(side.TipIndex) - tipMesh.RestVertices[side.TipIndex];
+            Vector3 moved = tipMesh.BentVertex(tipIndex) - tipMesh.RestVertices[tipIndex];
             side.TipOffset = Vector3.Dot(tipMesh.transform.TransformVector(moved), aircraft.transform.up);
         }
 

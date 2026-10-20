@@ -35,7 +35,6 @@ public static class AircraftReadout
             ["fan_1_turn_deg"] = NotRead,
             ["fan_2_turn_deg"] = NotRead,
             ["aoa_deg"] = NotRead,
-            ["path_deg"] = NotRead,
             ["span_cmd"] = NotRead,
             ["span_frac"] = NotRead,
             ["span_locked"] = NotRead,
@@ -281,8 +280,6 @@ public static class AircraftReadout
             // Body angle of attack: the airflow's angle below the nose in the cockpit's symmetry plane (G2.2).
             Vector3 air = cockpit.transform.InverseTransformDirection(rb.velocity - aircraft.GetWindVelocity());
             state["aoa_deg"] = Round(Mathf.Atan2(-air.y, air.z) * Mathf.Rad2Deg);
-            // Flight path angle, + up, from the inertial velocity FlightPathHold holds (G2.7's 10 deg dive).
-            state["path_deg"] = Round(Mathf.Asin(Mathf.Clamp(rb.velocity.y / Mathf.Max(rb.velocity.magnitude, 1f), -1f, 1f)) * Mathf.Rad2Deg);
         }
 
         return state;

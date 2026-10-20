@@ -36,6 +36,7 @@ static class CenturionSystems
         AddIfMissing<CabinEngineSound>(__instance);
         AddIfMissing<CenturionAi>(__instance);
         AddIfMissing<BayCookoff>(__instance);
+        AddIfMissing<TankFireSpread>(__instance);
     }
 
     static void AddIfMissing<T>(Aircraft aircraft) where T : MonoBehaviour

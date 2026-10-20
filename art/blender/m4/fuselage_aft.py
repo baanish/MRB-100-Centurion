@@ -34,7 +34,7 @@ import numpy as np
 from mathutils import Vector
 
 from . import fuselage_aft_bay as bay
-from . import fuselage_aft_structure as structure
+from . import body_structure
 from . import fuselage_aft_laser as laser
 from . import nose_bay, render
 from . import surface as sf
@@ -44,7 +44,7 @@ from .surface import CHINE_K, DOOR, FITTING, HULL, KEEL, N, RADOME
 GROUP = "fuselage_aft"
 PARTS = ("fuselage_M", "wingfairing", "fuselage_R", "tailcone", "spine_cover", "radar_R_fairing", "laser_turret",
          "laser_barrel", "baydoor_AL_visible", "baydoor_AR_visible")
-BUDGET_TRIS = 23400  # 20,900 (with 900 for the wing-root junction) plus fuselage_R's and fuselage_M's damage structure
+BUDGET_TRIS = 26400  # 23,400 before the damage structure and the tail cone's curve rings (curve_rings)
 MIRROR_PARTS = {"baydoor_AR_visible": "baydoor_AL_visible"}
 STOCK_SLOTS = (laser.LENS,)
 
@@ -93,6 +93,9 @@ TAIL_UV_CUT = 38.3  # the tail cone's island is cut here, so no island runs past
 # tail cone's end section, 3 cm aft of where the tail radar's panel ends (RADAR), so the panel's proud rim stays on skin
 LENS_S = 43.53
 TAIL_ST = (33.0, 37.0, 37.6, TAIL_UV_CUT, 38.9, 39.5, 40.0, 40.4, 40.9, 41.6, 42.1, 42.6, 43.1, 43.5, LENS_S)
+# m: the tail cone's rings are added (curve_rings) until the skin's straight runs stay this close to the boat-tail's
+# curve: the lining (body_structure) lies af.WALL inside the true surface, and showed through runs that sagged more
+CURVE_TOL = 0.005
 
 RADAR = (40.9, 43.5, 140.0, 220.0)  # the blockout's tail radar panel
 RADAR_RISE = (0.004, 0.006, 0.008)  # keep the render rim above the cone's facets, inside the collider band
@@ -619,7 +622,7 @@ def side_corners(corners, side):
 def light(p, c, n, skin, colour_slot, r=0.11, struct=None, sink=0.05):
     """A light: a low skin-coloured base with a lens dome on it (as nose.py's beacons). With struct, the base's
     buried faces are structure."""
-    seg = 24 if r < 0.1 else 32
+    seg = 16 if r < 0.1 else 20
     base = sf.revolve_axis(p, ((r, -sink), (r * 0.82, 0.032), (0, 0.032)), c, n, seg, skin, FITTING)
     profile = ((r * 0.68, 0.02), (r * 0.64, 0.07), (r * 0.38, 0.105), (0, 0.115)) if r < 0.1 else (
         (r * 0.68, 0.02), (r * 0.68, 0.044), (r * 0.64, 0.07), (r * 0.53, 0.09), (r * 0.38, 0.105), (0, 0.115))
@@ -694,10 +697,20 @@ def ball_centre(bl):
     return Vector((0, bl.st(BALL_S), (top + bot) / 2))
 
 
+def curve_rings(surf, stations, tol=CURVE_TOL):
+    """stations with rings added between two wherever the skin's straight run would stand off the curved surface by
+    more than tol, at the crown, the sides or the belly."""
+    def run(a, b):
+        m = (a + b) / 2
+        sag = max((surf.point(m, d) - (surf.point(a, d) + surf.point(b, d)) / 2).length for d in (0.0, 45.0, 90.0, 135.0, 180.0))
+        return [b] if sag <= tol or b - a < 0.2 else run(a, m) + run(m, b)
+    return [stations[0]] + [s for a, b in zip(stations, stations[1:]) for s in run(a, b)]
+
+
 def tail_hull(p, surf, bl, skin, struct):
     """The tail cone: N-vertex rings on the surface to its last ring, where the laser lens takes over; both caps are
     joint faces."""
-    stations, angle = well_rings(bl, TAIL_ST), hull_angles(bl)
+    stations, angle = curve_rings(surf, well_rings(bl, TAIL_ST)), hull_angles(bl)
     g = sf.Grid(p.bm, [[surf.point(s, angle(s, k)) for k in range(N)] for s in stations])
     p.tag(g.faces(), skin, HULL)
     p.tag(sf.cap(p.bm, g.V[0][::-1]), struct)
@@ -746,8 +759,10 @@ def build(bl, surf, slots):
     mirror_rows(p, g, TEXT_BANDS)
     hull_details(bl, surf, p, "fuselage_R", slots)
     bay.interior(bl, surf, {n: parts[n] for n in bay.PARTS}, BAY_DOOR, JOINTS[1], slots)
-    structure.build_fuselage_R(bl, surf, parts["fuselage_R"], slots, JOINTS[1:], BAY_DOOR[1])
-    structure.build_fuselage_M_aft(bl, surf, parts["fuselage_M"], slots, JOINTS[1], BAY_DOOR[0])
+    lo, hi = bl.well_box()
+    well_span = (lo.y + bl.Y0, hi.y + bl.Y0)
+    for name, (s0, s1) in (("fuselage_M", JOINTS[:2]), ("fuselage_R", JOINTS[1:])):
+        body_structure.build_section(bl, surf, parts[name], slots, s0, s1, bays=[BAY_DOOR[:2]], well=well_span)
 
     # ---- tailcone ----
     p = part("tailcone")
@@ -759,6 +774,8 @@ def build(bl, surf, slots):
     mirror_rows(p, g, TEXT_BANDS)
     hull_details(bl, surf, p, "tailcone", slots)
     tail_details(bl, surf, p, slots)
+    lo, hi = bl.well_box()
+    body_structure.build_section(bl, surf, p, slots, JOINTS[2], LENS_S, well=(lo.y + bl.Y0, hi.y + bl.Y0))
 
     # ---- spine_cover ----
     spine_cover(bl, surf, part("spine_cover"), slots)
@@ -879,10 +896,10 @@ def fairing_details(bl, fs, p, slots):
     for side in (1, -1):
         c, n = fs.point(s, side * x), fs.normal(s, side * x)
         look = (n + Vector((side * 0.6, 0.5, 0.0))).normalized()  # outboard and aft, along the wing's leading edge
-        base = sf.revolve_axis(p, ((0.075, -0.02), (0.06, 0.024), (0.0, 0.024)), c, n, 32, SKIN, FITTING)
+        base = sf.revolve_axis(p, ((0.075, -0.02), (0.06, 0.024), (0.0, 0.024)), c, n, 20, SKIN, FITTING)
         buried(p, base, c, n, STRUCT)
         sf.revolve_axis(p, ((0.045, 0.0), (0.045, 0.02), (0.042, 0.028), (0.032, 0.032), (0.0, 0.034)),
-                        c, look, 32, WHITE)
+                        c, look, 20, WHITE)
 
 
 def bevel_rows(a, b, inner_step, bevel=(0.02, 0.06)):
@@ -984,7 +1001,7 @@ def tail_details(bl, surf, p, slots):
     s, a = GPS_DOME
     c, n = surf.point(s, a), surf.normal(s, a)
     buried(p, sf.revolve_axis(p, ((0.17, -0.05), (0.17, 0.01), (0.158, 0.027), (0.13, 0.04),
-                                (0.08, 0.049), (0, 0.052)), c, n, 32, SKIN, FITTING), c, n,
+                                (0.08, 0.049), (0, 0.052)), c, n, 20, SKIN, FITTING), c, n,
            STRUCT)
     s, a = TAIL_LIGHT
     n = (surf.normal(s, a) + Vector((0, 1.4, 0))).normalized()  # looking aft and a little up
@@ -1049,7 +1066,7 @@ def check(bl, objs):
     # The blockout's slot_open (build_centurion awacs_well_clear): rays down the AWACS well's centreline from 8 m meet
     # nothing above its floor but the lid, which AwacsBeam hides.
     lo, hi = bl.well_box()
-    tree, _ = bl.smooth_tree(scene, [o.name for o in meshes if o.name != "spine_cover"])
+    tree, _ = bl.smooth_tree(scene, [o.name for o in meshes if not o.name.startswith("spine_cover")])
     hits = [tree.ray_cast(Vector((0.0, lo.y + 0.05 + (hi.y - lo.y - 0.1) * k / 100, 8.0)), Vector((0, 0, -1)))[0]
             for k in range(101)]
     top = max((h.z for h in hits if h is not None), default=-math.inf)
@@ -1061,11 +1078,33 @@ def check(bl, objs):
     res["bay_fit"] = {"value": {"mounts": fit, "parts": parts, "failing": failing},
                       "limit": f"no store touching a mesh or inside the hull; {bay.ROOM} m or more above and below",
                       "pass": not failing}
-    res.update(laser.checks(bl, objs["laser_turret"], objs["laser_barrel"], objs["tailcone"]))
+    res.update(laser.checks(bl, objs["laser_turret"], objs["laser_barrel"], objs.get("tail_end", objs["tailcone"])))
+    res["crown_curves_down"] = crown_profile(bl)
     for n, o in stages.items():
         o.location = saved[n]
     bpy.context.view_layer.update()
     return res
+
+
+def crown_profile(bl, step=0.05):
+    """The side view's centreline from the crown's start (build_centurion S61_BOAT_TAIL_VISUAL) to the lens's pole,
+    every step metres: the top falls ever more steeply and the bottom rises ever more steeply (owner, 2026-10-20: "The
+    top should curve down, the bottom should curve up"), so neither line flattens or turns back up into the end."""
+    s0 = bl.BOAT_TAIL["crown"]
+    tops, bots = [], []
+    for i in range(int(round((LENS_S + laser.LENS_LENGTH - s0) / step)) + 1):
+        s = s0 + i * step
+        _, top, bot = bl.fus_profile(s)
+        k = laser.round_off(s - LENS_S, laser.LENS_LENGTH) if s > LENS_S else 1.0
+        c = (top + bot) / 2
+        tops.append(c + (top - c) * k)
+        bots.append(c + (bot - c) * k)
+    dt = [b - a for a, b in zip(tops, tops[1:])]
+    db = [b - a for a, b in zip(bots, bots[1:])]
+    bad = [round(s0 + i * step, 2) for i in range(len(dt)) if dt[i] > 1e-6 or db[i] < -1e-6
+           or (i and (dt[i] > dt[i - 1] + 1e-6 or db[i] < db[i - 1] - 1e-6))]
+    return {"value": {"stations": [round(s0, 2), round(s0 + (len(tops) - 1) * step, 2)], "bad": bad[:20]},
+            "limit": f"every {step} m: top falling and steepening, bottom rising and steepening", "pass": not bad}
 
 
 # ---------- paint layout ----------
@@ -1103,7 +1142,9 @@ PANELS = (  # station from, to, angle from, to, corner radius, sides (+1, -1 or 
     (42.0, 42.9, 120.0, 136.0, 0.04, 0),  # turret access, lower flank
     (36.8, 38.0, 152.0, 172.0, 0.04, 0),  # belly ramp, between the V-tail roots
 )
-FLARES = ((32.0, 32.9, 80.0, 94.0),)  # flare dispensers above the sponsons' tapering tails
+# flare dispensers above the sponsons' tapering tails, one plate a side (CenturionAuthor.FlarePlates; the other pair is
+# nose.py's FLARES, owner: "not side by side, in different locations"): station from, to, angle from, to
+FLARES = ((32.0, 32.9, 80.0, 94.0),)
 WALKWAY = (24.9, 37.2, 0.66)  # stations, girth from the centreline: either side of the spine cover
 NOSTEP = ((26.7, 0.98), (36.4, 0.98))  # station, girth (inside TEXT_BANDS)
 SERIAL = ("1043", 29.6, 74.0, 0.56)  # text, station, angle, font size: ahead of the V-tail, so it shows from the side
@@ -1264,19 +1305,7 @@ def paint_hull(cv, text_mask):
     cv.groove(np.abs(spoiler), 0.014, mask=H)
     cv.fasteners(np.abs(spoiler + 0.03), s + ua, 0.0, 0.07, mask=H * (np.abs(spoiler) < 0.05))
 
-    # flare dispensers: a dark plate of cartridge caps
-    for s0, s1, a0, a1 in FLARES:
-        sm = (s0 + s1) / 2
-        v0, v1 = float(c.arc_at(sm, a0)), float(c.arc_at(sm, a1))
-        sdf = rrect_sdf(s, ua, s0, s1, v0, v1, 0.02)
-        cv.paint(cv.fill_coverage(sdf) * H, rgb=(0.15, 0.155, 0.16), smooth=0.3, height=-0.005)
-        cv.paint(cv.coverage(np.abs(sdf + 0.012), 0.024) * H, rgb=(0.33, 0.34, 0.35), height=0.003)
-        cv.groove(np.abs(sdf), 0.014, mask=H)
-        nu, nv = 9, 3
-        gu = s0 + (s1 - s0) * (np.clip(np.floor((s - s0) / (s1 - s0) * nu), 0, nu - 1) + 0.5) / nu
-        gv = v0 + (v1 - v0) * (np.clip(np.floor((ua - v0) / (v1 - v0) * nv), 0, nv - 1) + 0.5) / nv
-        cv.paint(cv.fill_coverage(np.hypot(s - gu, ua - gv) - 0.036) * H * (sdf < -0.01), rgb=(0.06, 0.06, 0.065),
-                 height=-0.003)
+    flare_plates(cv, FLARES, H)
 
     # antenna doublers: a fastener ring round each blade's footprint
     for bs, ba, _, c0, *_ in BLADES:
@@ -1424,6 +1453,25 @@ def paint_fairing(cv, text_mask, edge, wing):
         for st_, gi in NOSTEP_FAIRING:
             cv.decal(text_mask("NO STEP"), (st_, side * gi), 48 / 0.06, (side, 0), mask=F, rgb=STENCIL)
 
+
+
+def flare_plates(cv, plates, mask):
+    """Flare dispensers on both sides, each (station from, to, angle from, to): a dark plate of cartridge caps."""
+    np = cv.xp
+    from .paint import rrect_sdf
+    s, ua, c = cv.s, np.abs(cv.arc), cv.coords
+    for s0, s1, a0, a1 in plates:
+        sm = (s0 + s1) / 2
+        v0, v1 = float(c.arc_at(sm, a0)), float(c.arc_at(sm, a1))
+        sdf = rrect_sdf(s, ua, s0, s1, v0, v1, 0.02)
+        cv.paint(cv.fill_coverage(sdf) * mask, rgb=(0.15, 0.155, 0.16), smooth=0.3, height=-0.005)
+        cv.paint(cv.coverage(np.abs(sdf + 0.012), 0.024) * mask, rgb=(0.33, 0.34, 0.35), height=0.003)
+        cv.groove(np.abs(sdf), 0.014, mask=mask)
+        nu, nv = 9, 3
+        gu = s0 + (s1 - s0) * (np.clip(np.floor((s - s0) / (s1 - s0) * nu), 0, nu - 1) + 0.5) / nu
+        gv = v0 + (v1 - v0) * (np.clip(np.floor((ua - v0) / (v1 - v0) * nv), 0, nv - 1) + 0.5) / nv
+        cv.paint(cv.fill_coverage(np.hypot(s - gu, ua - gv) - 0.036) * mask * (sdf < -0.01), rgb=(0.06, 0.06, 0.065),
+                 height=-0.003)
 
 
 def naca(cv, s0, s1, g, mask):

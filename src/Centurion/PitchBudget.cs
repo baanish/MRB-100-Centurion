@@ -128,7 +128,7 @@ sealed class PitchBudget
                 stageClamped += -Vector3.Dot(passed, right);
                 clampRatio = Mathf.Max(clampRatio, ratio);
             }
-            else if (name.StartsWith("wing_root"))
+            else if (name.StartsWith("wing_root") || name.StartsWith("wing_outer"))
             {
                 wingRoot += force + torque;
             }

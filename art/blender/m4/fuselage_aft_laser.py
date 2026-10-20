@@ -26,10 +26,10 @@ from . import surface as sf
 
 LENS = "laser_lens"  # the lens's slot, which CenturionAuthor binds to its opaque Centurion_lens
 # The lens scales the cone's section about its centre by round_off over LENS_LENGTH past the last hull ring: it follows
-# the boat-tail's taper, then rounds it onto a pole, tangent to the skin at the ring. Its rings sit
-# LENS_LENGTH * sin(phi) past the ring at these phi (degrees), closer toward the pole.
+# the boat-tail's taper, then rounds it onto a pole, tangent to the skin at the ring. Its rings sit where its profile has
+# turned these phi (degrees) from running along the body (turn_at), so they gather where a blunt end turns over.
 LENS_LENGTH, LENS_ROUND = 1.3, 3.0
-LENS_PHI = (0.0, 4.0, 10.0, 18.0, 28.0, 39.0, 51.0, 63.0, 67.0, 71.0, 75.0, 79.0, 82.0, 85.0, 86.5, 88.0, 89.5)
+LENS_PHI = (0.0, 5.0, 14.0, 27.0, 43.0, 59.0, 72.0, 82.0, 89.5)
 # The emitter's token head on the pivot, (radius, height along the aft axis), and how far inside the lens its reach
 # stays at any aim
 EMITTER = ((0.0, -0.05), (0.05, -0.02), (0.05, 0.02), (0.0, 0.05))
@@ -50,10 +50,27 @@ def round_off(d, length):
     return max(0.0, 1 - (d / length) ** LENS_ROUND) ** (1 / LENS_ROUND)
 
 
+def turn_at(phi, radius, length):
+    """How far past the hull ring round_off's profile, on a section of this radius, has turned phi degrees from running
+    along the body (its slope's angle: radius / length * u^2 (1 - u^3)^(-2/3) at u = d / length, for LENS_ROUND 3)."""
+    if phi <= 0.0:
+        return 0.0
+    want = math.tan(math.radians(min(phi, 89.99)))
+    lo, hi = 0.0, 1.0
+    for _ in range(60):
+        u = (lo + hi) / 2
+        slope = radius / length * u * u * (1 - u ** LENS_ROUND) ** (1 / LENS_ROUND - 1)
+        lo, hi = (u, hi) if slope < want else (lo, u)
+    return length * (lo + hi) / 2
+
+
 def lens(bl, surf, p, s0, struct):
     """laser_turret: the lens from the last hull ring s0 to its pole, closed by a flat base across the ring (a joint
     face inside the cone)."""
-    ds = [LENS_LENGTH * math.sin(math.radians(a)) for a in LENS_PHI]
+    ring = section(bl, surf, s0, 1.0)
+    centre = sum(ring, Vector()) / len(ring)
+    radius = sum((v - centre).length for v in ring) / len(ring)
+    ds = [turn_at(a, radius, LENS_LENGTH) for a in LENS_PHI]
     g = sf.Grid(p.bm, [section(bl, surf, s0 + d, round_off(d, LENS_LENGTH)) for d in ds])
     _, top, bot = bl.fus_profile(s0 + LENS_LENGTH)
     pole = p.bm.verts.new(Vector((0, bl.st(s0 + LENS_LENGTH), (top + bot) / 2)))

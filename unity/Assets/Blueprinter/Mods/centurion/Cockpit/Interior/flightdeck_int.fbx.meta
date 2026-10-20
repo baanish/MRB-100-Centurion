@@ -68,7 +68,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: canopy_int
-    second: {fileID: 2100000, guid: c13c8a2214d47824a938014999076711, type: 2}
+    second: {fileID: 2100000, guid: 5f61dececfb814549afdf202d7c980c3, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

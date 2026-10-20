@@ -43,14 +43,17 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     // thrust stops it near 280 m/s TAS. With it it tops out at Mach 0.85 at 6 km and 0.88 at 9 to 11 km (tools/fm
     // centurion_span.py body_rise), as a B-52 does.
     const float BodyRiseMach = 0.82f, BodyRiseGain = 50f;
-    static readonly string[] BodyRiseParts = { "wing_root_L", "wing_root_R", "fuselage_F", "fuselage_R", "nose", "tailcone" };
+    // The inner wing and the body sections are cut into pieces (CenturionAuthor's CutParts), each carrying its share.
+    static readonly string[] BodyRiseParts = { "wing_root_L", "wing_root_R", "wing_outer_L", "wing_outer_R", "fuselage_F", "fuselage_F2",
+        "fuselage_R", "nose", "tailcone", "tail_end" };
     // Added to the authored 12 and 4 m2 at full extension, 5.5 times them: stage 1's area 25 m out multiplies the roll
     // damping, and with these the extended roll rate is 9.7 deg/s at 6 km and 150 m/s, as on step 6.
     const float AileronAreaM2 = 54f, SpoilerAreaM2 = 18f;
-    // The full span adds this to the authored radarSize (CenturionAuthor, 1.5 retracted), so 2.0 extended (owner, 2026-10-17).
+    // The full span adds this to the authored radarSize (CenturionAuthor, 13 retracted), so 26 extended: the span doubles the
+    // footprint the Chimera-scaled value rests on (owner, 2026-10-19).
     // Above 1.0 every stock radar already sees it at twice its maxRange (Radar.cs:174-204, RadarParams.cs:26-43), so the
     // extension costs margin against ground clutter and the jammer, not detection range.
-    const float ExtendedRcs = 0.5f;
+    const float ExtendedRcs = 13f;
     // Drag rudders (B-2 style split ailerons): yaw input adds up to this dragArea to the aileron on the side the nose should
     // turn toward. With the V-tail it holds one engine out at 199 t from 84 m/s, against 90 on the tail alone and the 96 m/s
     // rotation (docs/M2-DESIGN.md, step 6.1). The ailerons' stock splits would do it from data, but they follow the
@@ -388,7 +391,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
             for (int i = 0; i < 2; i++)
             {
                 string name = "wing_tele" + (i + 1) + "_" + side;
-                string parentName = i == 0 ? "wing_root_" + side : "wing_tele1_" + side;
+                string parentName = i == 0 ? "wing_outer_" + side : "wing_tele1_" + side; // stage 1 slides in the outer wing
                 if (!parts.TryGetValue(name, out AeroPart part) || !parts.TryGetValue(parentName, out AeroPart parent))
                 {
                     Stop($"no {name} on {parentName}");

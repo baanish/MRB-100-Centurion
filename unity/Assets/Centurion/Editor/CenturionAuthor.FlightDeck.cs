@@ -11,7 +11,7 @@ namespace Centurion.Editor
 {
     // The Centurion's own flight deck (docs/COCKPIT-DESIGN.md), in place of the cloned Alkyon cockpit: the interior from
     // art/blender/cockpit/flightdeck.py's export in art/export_cockpit, drawn only in cockpit view, with the stock KR-67
-    // sticks, throttles and warning-light strips placed by reference on its pivots; the Darkreach's two
+    // sticks and throttles placed by reference on its pivots; the Darkreach's two
     // crew rigs with their ejection seats, the pilot (pilots[0], the player) on the left and the mission commander on the
     // right; four Canopies (the two escape hatches, the crew door, the cracking inner glass); and the checks that the
     // crew's way out through the hatches is clear of every collider. The cockpit part keeps the Alkyon's systems (its
@@ -44,6 +44,11 @@ namespace Centurion.Editor
         // The screen: a mod copy of the stock glass_int with its mirror finish off (docs/COCKPIT-DESIGN.md "Forward view").
         private static readonly Color ScreenTint = new Color(0.80f, 0.92f, 0.95f, 0.25f);
         private const float ScreenSmoothness = 0.2f;
+        private const string CanopyBaseMap = "Texture2D_15033af04b7f42909945f09cd1b851a9";
+        private const string CanopyMetallic = "Vector1_5ec4e4d573524154b63367e0518c1a6e";
+        // Near-clear undamaged panes: a faint grime trace, no scratch relief or metallic mirror finish.
+        // The stock crack map and Canopy-driven _Cracked_Amount remain independent of this finish.
+        private const float CanopySmoothness = 0.2f, CanopyGrime = 0.02f;
         // Escape hatch Canopies (the Darkreach's canopy with the design's numbers): jettisoned mass, the force up the hatch's
         // own up axis and how long it pushes; the crew door's swing; the inner glass's cracking between the nose's hit
         // points 100 (none) and 70 (full), the Darkreach's.
@@ -60,9 +65,10 @@ namespace Centurion.Editor
         // Interior parts on layer 14 (structure the main camera also draws); the rest on 3, the cockpit layer the overlay
         // camera draws with its 1 cm near plane. As the stock cockpits put their tub and their near items.
         private static readonly HashSet<string> CockpitStructure = new HashSet<string> { CockpitRoot, "band_bezel", "labels", "hatch_liner_L", "hatch_liner_R" };
-        // The lamps the stock CockpitWarningLights flashes on a missile warning: the interior's lenses and the KR-67 strips.
+        // The lamps the stock CockpitWarningLights flashes on a missile warning: the interior's lenses (the caution keys',
+        // the annunciators' and the master warning lamps' on the glareshield, flightdeck.py build_warning_lamps).
         // Never cockpit renderers, which the cockpit camera turns on as it enters: off until a warning.
-        private static readonly HashSet<string> WarningLamps = new HashSet<string> { "warning_lenses", "warning_strip_L", "warning_strip_R" };
+        private static readonly HashSet<string> WarningLamps = new HashSet<string> { "warning_lenses" };
 
         private static Vector3 Prefab(Build b, float station, float height, float outLeft = 0f) =>
             new Vector3(-outLeft, height - b.Blockout.Origin.y, OriginStation - station - b.Blockout.Origin.z);
@@ -141,7 +147,7 @@ namespace Centurion.Editor
             var lamps = (Component)interiorRoot.AddComponent(GameType("CockpitWarningLights"));
             var lampSo = new SerializedObject(lamps);
             var lightRenderers = Prop(lampSo, "lightRenderers");
-            var lampNames = WarningLamps.Where(renderers.ContainsKey).OrderBy(n => n, StringComparer.Ordinal).ToArray();
+            var lampNames = WarningLamps.OrderBy(n => n, StringComparer.Ordinal).ToArray();
             lightRenderers.arraySize = lampNames.Length;
             for (var i = 0; i < lampNames.Length; i++)
                 lightRenderers.GetArrayElementAtIndex(i).objectReferenceValue = renderers[lampNames[i]];
@@ -200,6 +206,9 @@ namespace Centurion.Editor
                 sources.GetArrayElementAtIndex(i).objectReferenceValue = fans[i];
             so.ApplyModifiedPropertiesWithoutUndo();
 
+            foreach (var targetCam in b.Root.GetComponentsInChildren(GameType("TargetCam"), true))
+                Set(targetCam, "targetScreenRenderer", renderers["tacScreen"]);
+
             // The exits and the inner glass, each a Canopy (listed: Aircraft.canopies is serialized, never scanned).
             var canopies = AuthorExits(b, renderers["glass_int"]);
             var listed = Prop(aircraft, "canopies");
@@ -229,6 +238,62 @@ namespace Centurion.Editor
                 throw new InvalidDataException($"The flight deck draws {tris} triangles; G4.1 allows 36,000");
             if ((helmet.position - eye).magnitude > 0.01f)
                 throw new InvalidDataException($"The pilot's helmet camera point sits at {helmet.position}, not the design eye {eye}");
+            CheckWarningLamps(b, lampNames.Select(n => (Object)renderers[n].gameObject).Append(lamps));
+            var glass = renderers["glass_int"].sharedMaterial;
+            var stockGlass = Load<Material>(Stock + "Material/FastBomber1_glass_int_PLACEHOLDER.mat");
+            if (glass.GetTexture(CanopyBaseMap) != ImportExportTexture(interior, "cockpit_glass.png", true, false, CockpitExportFolder)
+                || glass.shader != stockGlass.shader || !glass.HasProperty("_Cracked_Amount")
+                || glass.GetFloat("_Cracked_Amount") != 0f
+                || glass.GetFloat(CanopyMetallic) != 0f || glass.GetFloat("_Smoothness") != CanopySmoothness
+                || glass.GetFloat("_Grime_Intensity") != CanopyGrime || glass.GetFloat("_Scratches_Intensity") != 0f)
+                throw new InvalidDataException("Inner glass must use the uniform cockpit_glass tint and stock cracking shader, with metallic 0, smoothness 0.2, grime 0.02, scratches 0 and no initial cracks.");
+            foreach (var map in new[] { "_Grime", "_SampleTexture2D_51ab9e981153496b807052eb4be84d33_Texture_1_Texture2D", "_SampleTexture2D_5415c280ead44b35b01bd558db4d1a80_Texture_1_Texture2D" })
+                if (!glass.GetTexture(map) || glass.GetTexture(map) != stockGlass.GetTexture(map))
+                    throw new InvalidDataException($"Inner glass must preserve the stock grime, crack and scratch maps: {map}");
+            if (glass.GetVector("_Cracks_Tiling") != stockGlass.GetVector("_Cracks_Tiling"))
+                throw new InvalidDataException("Inner glass must preserve the stock crack tiling.");
+        }
+
+        // Controller references catch unnamed lamps; mesh/material names catch lamps left behind without a controller.
+        private static HashSet<Object> WarningLampObjects(GameObject root)
+        {
+            var objects = new HashSet<Object>();
+            foreach (var (type, field) in new[] { ("CockpitWarningLights", "lightRenderers"), ("MissileWarningLight", "images") })
+                foreach (var controller in root.GetComponentsInChildren(GameType(type), true))
+                {
+                    objects.Add(controller);
+                    if (type == "MissileWarningLight")
+                        objects.Add(controller.gameObject);
+                    var targets = Prop(new SerializedObject(controller), field);
+                    for (var i = 0; i < targets.arraySize; i++)
+                        if (targets.GetArrayElementAtIndex(i).objectReferenceValue is Component target)
+                            objects.Add(target.gameObject);
+                }
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var mesh = renderer is SkinnedMeshRenderer skinned ? skinned.sharedMesh
+                    : renderer.TryGetComponent(out MeshFilter filter) ? filter.sharedMesh : null;
+                if (renderer.GetComponentsInParent<Transform>(true).Any(t => IsWarningLampName(t.name) || IsWarningLampName(t.tag))
+                    || (mesh != null && IsWarningLampName(mesh.name))
+                    || renderer.sharedMaterials.Any(m => m != null && IsWarningLampName(m.name)))
+                    objects.Add(renderer.gameObject);
+            }
+            return objects;
+        }
+
+        private static bool IsWarningLampName(string name)
+        {
+            var key = name.Replace("_", "").Replace("-", "").Replace(" ", "").ToLowerInvariant();
+            return key.Contains("missilewarning") || key.Contains("warninglight") || key.Contains("warninglamp")
+                || key.Contains("warninglens") || key.Contains("warningstrip") || key.Contains("missilethreatlight");
+        }
+
+        private static void CheckWarningLamps(Build b, IEnumerable<Object> allowed)
+        {
+            var unexpected = WarningLampObjects(b.Root).Except(allowed).Select(o =>
+                o is Component c ? $"{PathOf(c.transform, b.Root.transform)}:{c.GetType().Name}" : PathOf(((GameObject)o).transform, b.Root.transform)).ToArray();
+            if (unexpected.Length > 0)
+                throw new InvalidDataException("Stock missile warning lamps remain outside the flight deck's own set: " + string.Join(", ", unexpected));
         }
 
         // The wing display's page (flightdeck.py wing_canvas): a world-space canvas, a millimetre to the unit, off until
@@ -353,6 +418,13 @@ namespace Centurion.Editor
                 return SaveAsset(m, SkinFolder + "/" + name + ".mat");
             }
 
+            var glass = new Material(Load<Material>(Stock + "Material/FastBomber1_glass_int_PLACEHOLDER.mat")) { name = "Centurion_canopy_int" };
+            glass.SetTexture(CanopyBaseMap, ImportExportTexture(interior, "cockpit_glass.png", true, false, CockpitExportFolder));
+            glass.SetFloat(CanopyMetallic, 0f);
+            glass.SetFloat("_Smoothness", CanopySmoothness);
+            glass.SetFloat("_Grime_Intensity", CanopyGrime);
+            glass.SetFloat("_Scratches_Intensity", 0f);
+
             return new Dictionary<string, Material>
             {
                 { "Centurion_cockpit_panel", Atlas("Centurion_cockpit_panel", "cockpit_panel") },
@@ -366,7 +438,7 @@ namespace Centurion.Editor
                 { "hotas", Load<Material>(Stock + "Material/hotas_PLACEHOLDER.mat") },
                 { "CockpitWarningLight", Load<Material>(Stock + "Material/CockpitWarningLight_PLACEHOLDER.mat") },
                 { "tacScreenDisplay", tacScreen },
-                { "canopy_int", Load<Material>(Stock + "Material/FastBomber1_glass_int_PLACEHOLDER.mat") },
+                { "canopy_int", SaveAsset(glass, SkinFolder + "/Centurion_canopy_int.mat") },
                 { "Centurion_band", Screen("Centurion_band", "cockpit_band.png", ScreenTint) },
                 { "Centurion_band_marker", Screen("Centurion_band_marker", "cockpit_marker.png", new Color(1f, 1f, 1f, MarkerOpacity)) },
             };

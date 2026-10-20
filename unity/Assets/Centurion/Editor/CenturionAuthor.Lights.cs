@@ -10,7 +10,7 @@ namespace Centurion.Editor
         {
             foreach (var side in new[] { "L", "R" })
             {
-                var stage = b.Parts["wing_tele2_" + side].transform;
+                var stage = b.Parts["wing_tip_" + side].transform;
                 var tip = b.Meshes[stage.name].Shape.vertices.Select(stage.TransformPoint)
                     .OrderByDescending(v => Mathf.Abs(v.x)).First();
                 var nav = stage.Find("navlight_" + side);

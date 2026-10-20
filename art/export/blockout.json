@@ -1,11 +1,11 @@
 {
- "source_blend": ".cache/art/m4/centurion_m4_retracted.blend",
- "source_sha256": "cd1c2da939a7113f6d42704ca7645ddded3dfd057a2d87165c30130fc1511507",
+ "source_blend": ".cache/wipers/m4/centurion_m4_retracted.blend",
+ "source_sha256": "bc5ee500be2228ccf8f95573f40f16718fbada4210785dee281f5e826cecf8d1",
  "axes": "Unity = (-x, z, -y) of Blender; pivots are world positions, bounds are part-local (in axes_unity)",
  "parts": {
   "aileron_L": {
    "fbx": null,
-   "blender_parent": "wing_root_L",
+   "blender_parent": "wing_outer_L",
    "pivot_blender": [
     12.8,
     0.71183,
@@ -39,6 +39,7 @@
      0.2583584189414978,
      -0.049484290182590485
     ],
+    "bonded_to": "wing_root_L",
     "mass_kg": 500
    }
   },
@@ -73,7 +74,7 @@
     ]
    },
    "props": {},
-   "sha256": "d0f3bbfddae11398409b04a1155c0d4447b2a107c89fa28b46e85c35220c87c3",
+   "sha256": "22333cf9e9042e157867f071fd99f2511cd9cfc5f86dc887baa52f0a0dddca49",
    "bounds_blender": [
     [
      -0.03808,
@@ -129,7 +130,7 @@
   },
   "aileron_R": {
    "fbx": null,
-   "blender_parent": "wing_root_R",
+   "blender_parent": "wing_outer_R",
    "pivot_blender": [
     -12.8,
     0.71183,
@@ -163,6 +164,7 @@
      -0.2583584189414978,
      0.049484290182590485
     ],
+    "bonded_to": "wing_root_R",
     "mass_kg": 500
    }
   },
@@ -197,7 +199,7 @@
     ]
    },
    "props": {},
-   "sha256": "99f54ccb687bdd5e6605bcab5a164c03605349327ebcbf9f7f9995ccc7742ced",
+   "sha256": "39d7a89592dffc2e392195a2daf71884a64b922f4d6c71b06498613942162698",
    "bounds_blender": [
     [
      -7.15844,
@@ -320,7 +322,7 @@
     ]
    },
    "props": {},
-   "sha256": "748f764d44c8911add61d4ddd960942c092ab51c801f06925b63985297b7962c",
+   "sha256": "461d05d1e49784205326612b728677b1beffe794870deadaa381eec292669690",
    "bounds_blender": [
     [
      -4.5,
@@ -443,7 +445,7 @@
     ]
    },
    "props": {},
-   "sha256": "173168f2eb204c00661f0487be125ee78271cb1f2147da27fbd8c5539aaa9598",
+   "sha256": "9eb7f8370b292a51be123d504e3e9576fcf0a44ab6bb242bb2996088233633c5",
    "bounds_blender": [
     [
      -4.5,
@@ -566,7 +568,7 @@
     ]
    },
    "props": {},
-   "sha256": "5582050b58eb77cd3c8cf055f585fba20e56ff11072bc7a4e08a8fec369788c4",
+   "sha256": "49606dec426bf28f3170cf258d8aa10b02f13e94cb7cccb632f5a0fcf7660408",
    "bounds_blender": [
     [
      -4.6002,
@@ -689,7 +691,7 @@
     ]
    },
    "props": {},
-   "sha256": "7035b90c3ca3a7e321324c01ed73220de8fd33a7bdc8b3d1fa4f5f5a23183e41",
+   "sha256": "36f0aff174083a59f10faf32d426dee874d362d7ed0c6912d90ca35d447b7cbd",
    "bounds_blender": [
     [
      -4.6002,
@@ -743,6 +745,328 @@
     ]
    }
   },
+  "cheek_L": {
+   "fbx": "cheek_L.fbx",
+   "blender_parent": "fuselage_F_upper",
+   "pivot_blender": [
+    2.4392,
+    -12.825,
+    4.04741
+   ],
+   "pivot_unity": [
+    -2.4392,
+    4.04741,
+    12.825
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_FL,baydoor_FL_visible,baydoor_FR,baydoor_FR_visible,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,nose,spine_cover,spine_cover_A,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 150.0
+   },
+   "sha256": "5f7ad68cfa53263c18687f072f0de1e35b4690cb26f936a58a5d980967693ccf",
+   "bounds_blender": [
+    [
+     -0.42608,
+     -2.25,
+     -1.01682
+    ],
+    [
+     0.29395,
+     2.35,
+     1.04204
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.29395,
+     -1.01682,
+     -2.35
+    ],
+    [
+     0.42608,
+     1.04204,
+     2.25
+    ]
+   ],
+   "tris": 188,
+   "materials": [
+    [
+     "Centurion_skin",
+     84
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     52
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "cheek_L_colmesh0",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.07714,
+       -0.19062,
+       -0.0
+      ],
+      [
+       0.42218,
+       0.7698,
+       1.927
+      ]
+     ]
+    },
+    {
+     "name": "cheek_L_colmesh1",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.21882,
+       0.01079,
+       -1.927
+      ],
+      [
+       0.22459,
+       0.97043,
+       -0.0
+      ]
+     ]
+    },
+    {
+     "name": "cheek_L_colmesh2",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.10542,
+       -0.91817,
+       -0.0
+      ],
+      [
+       0.19591,
+       0.01834,
+       1.927
+      ]
+     ]
+    },
+    {
+     "name": "cheek_L_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.2487,
+       -0.77302,
+       -1.927
+      ],
+      [
+       -0.02405,
+       0.17703,
+       -0.0
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 284,
+    "bounds_blender": [
+     [
+      -0.41342,
+      -1.95,
+      -0.94283
+     ],
+     [
+      0.27583,
+      1.95,
+      1.00221
+     ]
+    ]
+   }
+  },
+  "cheek_R": {
+   "fbx": "cheek_R.fbx",
+   "blender_parent": "fuselage_F_upper",
+   "pivot_blender": [
+    -2.4392,
+    -12.825,
+    4.04741
+   ],
+   "pivot_unity": [
+    2.4392,
+    4.04741,
+    12.825
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_FL,baydoor_FL_visible,baydoor_FR,baydoor_FR_visible,cheek_L,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,nose,spine_cover,spine_cover_A,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 150.0
+   },
+   "sha256": "b8f1d3d3f2e7cf13198f43c00814e75ec80fada5806734544024c15a0f7c9bc8",
+   "bounds_blender": [
+    [
+     -0.29395,
+     -2.25,
+     -1.01682
+    ],
+    [
+     0.42608,
+     2.35,
+     1.04204
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.42608,
+     -1.01682,
+     -2.35
+    ],
+    [
+     0.29395,
+     1.04204,
+     2.25
+    ]
+   ],
+   "tris": 188,
+   "materials": [
+    [
+     "Centurion_skin",
+     84
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     52
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "cheek_R_colmesh0",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.19591,
+       -0.91817,
+       -0.0
+      ],
+      [
+       0.10542,
+       0.01834,
+       1.927
+      ]
+     ]
+    },
+    {
+     "name": "cheek_R_colmesh1",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.02405,
+       -0.77302,
+       -1.927
+      ],
+      [
+       0.2487,
+       0.17703,
+       -0.0
+      ]
+     ]
+    },
+    {
+     "name": "cheek_R_colmesh2",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.42218,
+       -0.19062,
+       -0.0
+      ],
+      [
+       0.07714,
+       0.7698,
+       1.927
+      ]
+     ]
+    },
+    {
+     "name": "cheek_R_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.22459,
+       0.01079,
+       -1.927
+      ],
+      [
+       0.21882,
+       0.97043,
+       -0.0
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 284,
+    "bounds_blender": [
+     [
+      -0.27583,
+      -1.95,
+      -0.94283
+     ],
+     [
+      0.41342,
+      1.95,
+      1.00221
+     ]
+    ]
+   }
+  },
   "fan_1": {
    "fbx": "fan_1.fbx",
    "blender_parent": "nacelle_1",
@@ -785,36 +1109,36 @@
      -1.0
     ]
    },
-   "sha256": "7b9ace96eb479f785612d0acf32cc5b5c784eba1c934b8f4a55e0013f7a9ccc3",
+   "sha256": "388da560bed6618846dc797d93096d4ee0ef65abb9b394905db78a1905b3350f",
    "bounds_blender": [
     [
-     -1.86499,
+     -1.8633,
      -0.98,
      -1.86486
     ],
     [
-     1.86499,
+     1.8633,
      0.45,
      1.86486
     ]
    ],
    "bounds_unity": [
     [
-     -1.86499,
+     -1.8633,
      -1.86486,
      -0.45
     ],
     [
-     1.86499,
+     1.8633,
      1.86486,
      0.98
     ]
    ],
-   "tris": 5212,
+   "tris": 3164,
    "materials": [
     [
      "jet_mechanical",
-     5212
+     3164
     ]
    ],
    "colliders": [],
@@ -877,36 +1201,36 @@
      -1.0
     ]
    },
-   "sha256": "e3d7ebc7569ad36071c62dd96f7f2c83494a6bc2e6f80d9f209c266085d8b872",
+   "sha256": "d95ce9bd4206d63fbe85e2fa6f5b5af4df7abd82fd8d45dc2e952269e14179b4",
    "bounds_blender": [
     [
-     -1.86499,
+     -1.8633,
      -0.98,
      -1.86486
     ],
     [
-     1.86499,
+     1.8633,
      0.45,
      1.86486
     ]
    ],
    "bounds_unity": [
     [
-     -1.86499,
+     -1.8633,
      -1.86486,
      -0.45
     ],
     [
-     1.86499,
+     1.8633,
      1.86486,
      0.98
     ]
    ],
-   "tris": 5212,
+   "tris": 3164,
    "materials": [
     [
      "jet_mechanical",
-     5212
+     3164
     ]
    ],
    "colliders": [],
@@ -997,7 +1321,7 @@
     ]
    },
    "props": {},
-   "sha256": "983e2bbf81f1d28fba5f5413469c4af89685682dd4fa58c5bd44def69f4ee81c",
+   "sha256": "c4ebc4e0ead2d238bc30d7f83611d234396cb597e2e07d3a0ffe8793e4b5c23f",
    "bounds_blender": [
     [
      -0.00391,
@@ -1026,11 +1350,11 @@
    "materials": [
     [
      "Centurion_skin",
-     574
+     564
     ],
     [
      "aircraft_structure",
-     46
+     56
     ]
    ],
    "colliders": [],
@@ -1121,7 +1445,7 @@
     ]
    },
    "props": {},
-   "sha256": "c0a05c9f5bee953360b567b1a0d3f8cdf055fac1f679b3540fdd8ef081e3ff27",
+   "sha256": "d7530b426ea9d457afe21f8c98a6f34c4f778d4d1d43d8317069088cb2a12a21",
    "bounds_blender": [
     [
      -0.00323,
@@ -1150,11 +1474,11 @@
    "materials": [
     [
      "Centurion_skin",
-     1038
+     1028
     ],
     [
      "aircraft_structure",
-     92
+     102
     ]
    ],
    "colliders": [],
@@ -1245,7 +1569,7 @@
     ]
    },
    "props": {},
-   "sha256": "91906f388f09929268bde4b9badfc1f237a14c4e7cf1f9ce87fdf66a2111070d",
+   "sha256": "a59b3f065126b8faff64481841f9354bd4268a3d6ed228b5bc934c00a5f71817",
    "bounds_blender": [
     [
      -3.40714,
@@ -1274,11 +1598,11 @@
    "materials": [
     [
      "Centurion_skin",
-     574
+     564
     ],
     [
      "aircraft_structure",
-     46
+     56
     ]
    ],
    "colliders": [],
@@ -1369,7 +1693,7 @@
     ]
    },
    "props": {},
-   "sha256": "8523d365a37b87330d230da07691ad39086c4dfdd5ec38bbe4551d278bfcf19f",
+   "sha256": "27b7753915a70ae624ddeded090ede4e43d70a8aa32727e3bfd83add4f5feace",
    "bounds_blender": [
     [
      -4.75584,
@@ -1398,11 +1722,11 @@
    "materials": [
     [
      "Centurion_skin",
-     1038
+     1028
     ],
     [
      "aircraft_structure",
-     92
+     102
     ]
    ],
    "colliders": [],
@@ -1423,9 +1747,441 @@
     ]
    }
   },
+  "flap_track_L1": {
+   "fbx": "flap_track_L1.fbx",
+   "blender_parent": "wing_root_L",
+   "pivot_blender": [
+    4.3,
+    0.90352,
+    5.68592
+   ],
+   "pivot_unity": [
+    -4.3,
+    5.68592,
+    -0.90352
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_L,aileron_L_visible,cheek_L,cheek_R,flap_L1,flap_L1_visible,flap_L2,flap_L2_visible,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_1,spoiler_L,spoiler_L_visible,strut_outer_L,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wing_tele1_L,wingfairing",
+    "mass_kg": 120.0
+   },
+   "sha256": "925d47c99cb9cbc3564a2a4047b9f7c22b0bfd8f41fc1778f4dbb083ba5cdd6f",
+   "bounds_blender": [
+    [
+     -0.2,
+     -7.22023,
+     -0.33839
+    ],
+    [
+     0.2,
+     -1.80431,
+     0.61752
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.2,
+     -0.33839,
+     1.80431
+    ],
+    [
+     0.2,
+     0.61752,
+     7.22023
+    ]
+   ],
+   "tris": 508,
+   "materials": [
+    [
+     "Centurion_skin",
+     318
+    ],
+    [
+     "aircraft_structure",
+     128
+    ],
+    [
+     "light_white",
+     62
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "flap_track_L1_colmesh0",
+     "verts": 8,
+     "tris": 12,
+     "bounds_unity": [
+      [
+       -0.172,
+       -0.232,
+       -1.647
+      ],
+      [
+       0.172,
+       0.232,
+       1.647
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 12,
+    "bounds_blender": [
+     [
+      -0.2,
+      -1.675,
+      -0.26
+     ],
+     [
+      0.2,
+      1.675,
+      0.26
+     ]
+    ]
+   }
+  },
+  "flap_track_L2": {
+   "fbx": "flap_track_L2.fbx",
+   "blender_parent": "wing_root_L",
+   "pivot_blender": [
+    9.8,
+    0.98949,
+    5.48655
+   ],
+   "pivot_unity": [
+    -9.8,
+    5.48655,
+    -0.98949
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_L,aileron_L_visible,cheek_L,cheek_R,flap_L1,flap_L1_visible,flap_L2,flap_L2_visible,flap_track_L1,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_1,spoiler_L,spoiler_L_visible,strut_outer_L,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wing_tele1_L,wingfairing",
+    "mass_kg": 120.0
+   },
+   "sha256": "a5d9863d148dd4617dfa49783cedd368a40db65d98cb8b7463be646610128f5f",
+   "bounds_blender": [
+    [
+     -0.2,
+     -3.06845,
+     -0.315
+    ],
+    [
+     0.2,
+     -1.23343,
+     0.23481
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.2,
+     -0.315,
+     1.23343
+    ],
+    [
+     0.2,
+     0.23481,
+     3.06845
+    ]
+   ],
+   "tris": 318,
+   "materials": [
+    [
+     "Centurion_skin",
+     224
+    ],
+    [
+     "aircraft_structure",
+     94
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "flap_track_L2_colmesh0",
+     "verts": 8,
+     "tris": 12,
+     "bounds_unity": [
+      [
+       -0.172,
+       -0.232,
+       -1.647
+      ],
+      [
+       0.172,
+       0.232,
+       1.647
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 12,
+    "bounds_blender": [
+     [
+      -0.2,
+      -1.675,
+      -0.26
+     ],
+     [
+      0.2,
+      1.675,
+      0.26
+     ]
+    ]
+   }
+  },
+  "flap_track_R1": {
+   "fbx": "flap_track_R1.fbx",
+   "blender_parent": "wing_root_R",
+   "pivot_blender": [
+    -4.3,
+    0.90352,
+    5.68592
+   ],
+   "pivot_unity": [
+    4.3,
+    5.68592,
+    -0.90352
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_R,aileron_R_visible,cheek_L,cheek_R,flap_R1,flap_R1_visible,flap_R2,flap_R2_visible,flap_track_L1,flap_track_L2,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_2,spoiler_R,spoiler_R_visible,strut_outer_R,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wing_tele1_R,wingfairing",
+    "mass_kg": 120.0
+   },
+   "sha256": "72c0845c689de859c55810bf49610dc1ddfd9c05599c182d5df6b0e428069521",
+   "bounds_blender": [
+    [
+     -0.2,
+     -7.22023,
+     -0.33839
+    ],
+    [
+     0.2,
+     -1.80431,
+     0.61752
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.2,
+     -0.33839,
+     1.80431
+    ],
+    [
+     0.2,
+     0.61752,
+     7.22023
+    ]
+   ],
+   "tris": 508,
+   "materials": [
+    [
+     "Centurion_skin",
+     318
+    ],
+    [
+     "aircraft_structure",
+     128
+    ],
+    [
+     "light_white",
+     62
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "flap_track_R1_colmesh0",
+     "verts": 8,
+     "tris": 12,
+     "bounds_unity": [
+      [
+       -0.172,
+       -0.232,
+       -1.647
+      ],
+      [
+       0.172,
+       0.232,
+       1.647
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 12,
+    "bounds_blender": [
+     [
+      -0.2,
+      -1.675,
+      -0.26
+     ],
+     [
+      0.2,
+      1.675,
+      0.26
+     ]
+    ]
+   }
+  },
+  "flap_track_R2": {
+   "fbx": "flap_track_R2.fbx",
+   "blender_parent": "wing_root_R",
+   "pivot_blender": [
+    -9.8,
+    0.98949,
+    5.48655
+   ],
+   "pivot_unity": [
+    9.8,
+    5.48655,
+    -0.98949
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_R,aileron_R_visible,cheek_L,cheek_R,flap_R1,flap_R1_visible,flap_R2,flap_R2_visible,flap_track_L1,flap_track_L2,flap_track_R1,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_2,spoiler_R,spoiler_R_visible,strut_outer_R,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wing_tele1_R,wingfairing",
+    "mass_kg": 120.0
+   },
+   "sha256": "04cb2542f8d9b9b1f0de4deeefde02a764a566db749886b5ee988fedf4214731",
+   "bounds_blender": [
+    [
+     -0.2,
+     -3.06845,
+     -0.315
+    ],
+    [
+     0.2,
+     -1.23343,
+     0.23481
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.2,
+     -0.315,
+     1.23343
+    ],
+    [
+     0.2,
+     0.23481,
+     3.06845
+    ]
+   ],
+   "tris": 318,
+   "materials": [
+    [
+     "Centurion_skin",
+     224
+    ],
+    [
+     "aircraft_structure",
+     94
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "flap_track_R2_colmesh0",
+     "verts": 8,
+     "tris": 12,
+     "bounds_unity": [
+      [
+       -0.172,
+       -0.232,
+       -1.647
+      ],
+      [
+       0.172,
+       0.232,
+       1.647
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 12,
+    "bounds_blender": [
+     [
+      -0.2,
+      -1.675,
+      -0.26
+     ],
+     [
+      0.2,
+      1.675,
+      0.26
+     ]
+    ]
+   }
+  },
   "fuselage_F": {
    "fbx": "fuselage_F.fbx",
-   "blender_parent": "fuselage_M",
+   "blender_parent": "fuselage_F2",
    "pivot_blender": [
     0.0,
     -5.475,
@@ -1454,74 +2210,71 @@
     ]
    },
    "props": {
-    "mass_kg": 8500
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone,tailcone_upper,wingfairing",
+    "mass_kg": 2550.0
    },
-   "sha256": "a11fd46e656f3954b6cb22916a470204b93cf9f9145f6b008c35de812c6d755b",
+   "sha256": "efbb2c9e12c89692c464f0fa610e36c213e4502a358e1b42234be64c680baeca",
    "bounds_blender": [
     [
-     -2.75,
+     -2.5251,
      -10.35839,
      -2.86185
     ],
     [
-     2.75,
-     0.0,
-     2.75
+     2.5251,
+     -5.0,
+     1.77738
     ]
    ],
    "bounds_unity": [
     [
-     -2.75,
+     -2.5251,
      -2.86185,
-     -0.0
+     5.0
     ],
     [
-     2.75,
-     2.75,
+     2.5251,
+     1.77738,
      10.35839
     ]
    ],
-   "tris": 4550,
+   "tris": 2235,
    "materials": [
     [
      "Centurion_skin",
-     3298
+     1100
     ],
     [
      "jet_mechanical",
-     330
+     216
     ],
     [
      "aircraft_structure",
-     342
+     26
     ],
     [
      "light_red",
-     238
+     158
     ],
     [
-     "light_white",
-     238
-    ],
-    [
-     "light_formation",
-     104
+     "Centurion_airframe",
+     735
     ]
    ],
    "colliders": [
     {
      "name": "fuselage_F_colmesh0",
-     "verts": 116,
-     "tris": 228,
+     "verts": 103,
+     "tris": 202,
      "bounds_unity": [
       [
-       -2.72131,
-       -2.72132,
-       0.028
+       -2.63831,
+       -2.6962,
+       5.0
       ],
       [
-       2.72154,
-       2.66907,
+       2.66065,
+       2.45232,
        9.972
       ]
      ]
@@ -1531,17 +2284,1543 @@
     "tris": 30
    },
    "shape": {
-    "tris": 444,
+    "tris": 316,
     "bounds_blender": [
      [
-      -2.75,
+      -2.72344,
       -10.0,
       -2.75
      ],
      [
-      2.75,
+      2.72344,
+      -5.0,
+      2.53115
+     ]
+    ]
+   }
+  },
+  "fuselage_F2": {
+   "fbx": "fuselage_F2.fbx",
+   "blender_parent": "fuselage_M",
+   "pivot_blender": [
+    -0.0,
+    -10.475,
+    3.84058
+   ],
+   "pivot_unity": [
+    0.0,
+    3.84058,
+    10.475
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_FL,baydoor_FL_visible,baydoor_FR,baydoor_FR_visible,cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,nose,spine_cover,spine_cover_A,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 2950.0
+   },
+   "sha256": "30db18dcc4dabf75a41229172150966206b64ce19c52ef687fa913a94dd71276",
+   "bounds_blender": [
+    [
+     -2.70313,
+     0.0,
+     -2.64058
+    ],
+    [
+     2.70348,
+     5.3,
+     2.78579
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.70348,
+     -2.64058,
+     -5.3
+    ],
+    [
+     2.70313,
+     2.78579,
+     -0.0
+    ]
+   ],
+   "tris": 1628,
+   "materials": [
+    [
+     "Centurion_skin",
+     794
+    ],
+    [
+     "jet_mechanical",
+     122
+    ],
+    [
+     "aircraft_structure",
+     36
+    ],
+    [
+     "Centurion_airframe",
+     676
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_F2_colmesh0",
+     "verts": 94,
+     "tris": 184,
+     "bounds_unity": [
+      [
+       -2.72131,
+       -2.6119,
+       -4.972
+      ],
+      [
+       2.72154,
+       2.77849,
+       -0.0
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 30
+   },
+   "shape": {
+    "tris": 252,
+    "bounds_blender": [
+     [
+      -2.75,
       0.0,
-      2.75
+      -2.64058
+     ],
+     [
+      2.75,
+      5.0,
+      2.85942
+     ]
+    ]
+   }
+  },
+  "fuselage_F2_upper": {
+   "fbx": "fuselage_F2_upper.fbx",
+   "blender_parent": "fuselage_F2",
+   "pivot_blender": [
+    -0.0,
+    -7.97507,
+    5.13529
+   ],
+   "pivot_unity": [
+    0.0,
+    5.13529,
+    7.97507
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_FL,baydoor_FL_visible,baydoor_FR,baydoor_FR_visible,cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,nose,spine_cover,spine_cover_A,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 1300.0
+   },
+   "sha256": "972601d8b55a5958451af8ac02d186cf7383e4ffec04f3dc8a8e72fdf08467bc",
+   "bounds_blender": [
+    [
+     -2.75,
+     -2.49993,
+     -2.47683
+    ],
+    [
+     2.75,
+     2.50007,
+     1.56471
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.75,
+     -2.47683,
+     -2.50007
+    ],
+    [
+     2.75,
+     1.56471,
+     2.49993
+    ]
+   ],
+   "tris": 1242,
+   "materials": [
+    [
+     "Centurion_skin",
+     332
+    ],
+    [
+     "aircraft_structure",
+     148
+    ],
+    [
+     "Centurion_airframe",
+     762
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_F2_upper_colmesh0",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.46658,
+       -2.27384,
+       0.8256
+      ],
+      [
+       2.72694,
+       -1.19518,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh1",
+     "verts": 23,
+     "tris": 42,
+     "bounds_unity": [
+      [
+       2.48161,
+       -2.22531,
+       -0.82574
+      ],
+      [
+       2.72694,
+       -1.16705,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh2",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       2.48171,
+       -2.20776,
+       -2.47707
+      ],
+      [
+       2.72694,
+       -1.16705,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.45299,
+       -1.27339,
+       0.8256
+      ],
+      [
+       2.72694,
+       -0.16778,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh4",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.46795,
+       -1.19551,
+       -0.82574
+      ],
+      [
+       2.72694,
+       -0.12909,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       2.46805,
+       -1.16738,
+       -2.47707
+      ],
+      [
+       2.72694,
+       -0.12909,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh6",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.87446,
+       -0.29377,
+       0.8256
+      ],
+      [
+       2.51412,
+       0.70173,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh7",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.88632,
+       -0.18698,
+       -0.82574
+      ],
+      [
+       2.51415,
+       0.74943,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh8",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       1.88658,
+       -0.14845,
+       -2.47707
+      ],
+      [
+       2.51415,
+       0.74943,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh9",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.01342,
+       0.53477,
+       0.8256
+      ],
+      [
+       1.92174,
+       1.28211,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh10",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.02006,
+       0.66644,
+       -0.82574
+      ],
+      [
+       1.92182,
+       1.33587,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh11",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       1.02031,
+       0.71395,
+       -2.47707
+      ],
+      [
+       1.92182,
+       1.33587,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh12",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       0.63071,
+       1.08729,
+       0.8256
+      ],
+      [
+       1.03929,
+       1.40878,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh13",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.63488,
+       1.23595,
+       -0.82574
+      ],
+      [
+       1.03936,
+       1.46386,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh14",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       0.63505,
+       1.28964,
+       -2.47707
+      ],
+      [
+       1.03936,
+       1.46386,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh15",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -0.0,
+       1.20779,
+       0.8256
+      ],
+      [
+       0.64686,
+       1.48581,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh16",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       -0.0,
+       1.36023,
+       -0.82574
+      ],
+      [
+       0.64691,
+       1.54171,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh17",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       -0.0,
+       1.41529,
+       -2.47707
+      ],
+      [
+       0.64691,
+       1.54171,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh18",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -0.64686,
+       1.20779,
+       0.8256
+      ],
+      [
+       -0.0,
+       1.48581,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh19",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       -0.64691,
+       1.36023,
+       -0.82574
+      ],
+      [
+       -0.0,
+       1.54171,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh20",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       -0.64691,
+       1.41529,
+       -2.47707
+      ],
+      [
+       -0.0,
+       1.54171,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh21",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       -1.03929,
+       1.08729,
+       0.8256
+      ],
+      [
+       -0.63071,
+       1.40878,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh22",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -1.03936,
+       1.23595,
+       -0.82574
+      ],
+      [
+       -0.63488,
+       1.46386,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh23",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       -1.03936,
+       1.28964,
+       -2.47707
+      ],
+      [
+       -0.63505,
+       1.46386,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh24",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.92174,
+       0.53477,
+       0.8256
+      ],
+      [
+       -1.01342,
+       1.28211,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh25",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.92182,
+       0.66644,
+       -0.82574
+      ],
+      [
+       -1.02006,
+       1.33587,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh26",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -1.92182,
+       0.71395,
+       -2.47707
+      ],
+      [
+       -1.02031,
+       1.33587,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh27",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.51412,
+       -0.29377,
+       0.8256
+      ],
+      [
+       -1.87446,
+       0.70173,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh28",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.51415,
+       -0.18698,
+       -0.82574
+      ],
+      [
+       -1.88632,
+       0.74943,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh29",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.51415,
+       -0.14845,
+       -2.47707
+      ],
+      [
+       -1.88658,
+       0.74943,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh30",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.27339,
+       0.8256
+      ],
+      [
+       -2.45299,
+       -0.16778,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh31",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.19551,
+       -0.82574
+      ],
+      [
+       -2.46795,
+       -0.12909,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh32",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.16738,
+       -2.47707
+      ],
+      [
+       -2.46805,
+       -0.12909,
+       -0.82574
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh33",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -2.27384,
+       0.8256
+      ],
+      [
+       -2.46658,
+       -1.19518,
+       2.47693
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh34",
+     "verts": 23,
+     "tris": 42,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -2.22531,
+       -0.82574
+      ],
+      [
+       -2.48161,
+       -1.16705,
+       0.8256
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F2_upper_colmesh35",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -2.20776,
+       -2.47707
+      ],
+      [
+       -2.48171,
+       -1.16705,
+       -0.82574
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1800,
+    "bounds_blender": [
+     [
+      -2.75,
+      -2.49993,
+      -2.3035
+     ],
+     [
+      2.75,
+      2.50007,
+      1.56471
+     ]
+    ]
+   }
+  },
+  "fuselage_F_upper": {
+   "fbx": "fuselage_F_upper.fbx",
+   "blender_parent": "fuselage_F",
+   "pivot_blender": [
+    -0.0,
+    -12.97492,
+    4.74932
+   ],
+   "pivot_unity": [
+    0.0,
+    4.74932,
+    12.97492
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_FL,baydoor_FL_visible,baydoor_FR,baydoor_FR_visible,cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,nose,spine_cover,spine_cover_A,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 1400.0
+   },
+   "sha256": "95b2834ebd2031f9c61b3161871b2069121da2af059a1998be64dd9a0113e49f",
+   "bounds_blender": [
+    [
+     -2.73314,
+     -2.50368,
+     -2.35121
+    ],
+    [
+     2.73314,
+     2.49992,
+     1.81874
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.73314,
+     -2.35121,
+     -2.49992
+    ],
+    [
+     2.73314,
+     1.81874,
+     2.50368
+    ]
+   ],
+   "tris": 1868,
+   "materials": [
+    [
+     "Centurion_skin",
+     820
+    ],
+    [
+     "light_white",
+     158
+    ],
+    [
+     "Centurion_airframe",
+     890
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_F_upper_colmesh0",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.01573,
+       -2.13913,
+       0.82575
+      ],
+      [
+       2.44429,
+       -1.13578,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh1",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.21941,
+       -2.04224,
+       -0.82559
+      ],
+      [
+       2.60757,
+       -0.99911,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh2",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.37069,
+       -1.95745,
+       -2.47692
+      ],
+      [
+       2.70919,
+       -0.88974,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.00463,
+       -1.29684,
+       0.82575
+      ],
+      [
+       2.44429,
+       -0.23171,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh4",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.20718,
+       -1.1361,
+       -0.82559
+      ],
+      [
+       2.60757,
+       -0.04331,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh5",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.35763,
+       -0.99943,
+       -2.47692
+      ],
+      [
+       2.70919,
+       0.10739,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh6",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.53221,
+       -0.47535,
+       0.82575
+      ],
+      [
+       2.25347,
+       0.53331,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh7",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.68665,
+       -0.25061,
+       -0.82559
+      ],
+      [
+       2.40398,
+       0.76545,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh8",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.80149,
+       -0.06207,
+       -2.47692
+      ],
+      [
+       2.49769,
+       0.95115,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh9",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.82858,
+       0.21981,
+       0.82575
+      ],
+      [
+       1.72239,
+       1.04384,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh10",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.91189,
+       0.49834,
+       -0.82559
+      ],
+      [
+       1.83739,
+       1.30513,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh11",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.9739,
+       0.73065,
+       -2.47692
+      ],
+      [
+       1.90904,
+       1.51421,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh12",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.5157,
+       0.68372,
+       0.82575
+      ],
+      [
+       0.93142,
+       1.15524,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh13",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       0.56752,
+       0.99781,
+       -0.82559
+      ],
+      [
+       0.99358,
+       1.42288,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh14",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.60611,
+       1.25916,
+       -2.47692
+      ],
+      [
+       1.03234,
+       1.63708,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh15",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       -0.0,
+       0.78496,
+       0.82575
+      ],
+      [
+       0.57971,
+       1.22299,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh16",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -0.0,
+       1.10675,
+       -0.82559
+      ],
+      [
+       0.61839,
+       1.4945,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh17",
+     "verts": 23,
+     "tris": 42,
+     "bounds_unity": [
+      [
+       -0.0,
+       1.37442,
+       -2.47692
+      ],
+      [
+       0.64252,
+       1.7118,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh18",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       -0.57971,
+       0.78496,
+       0.82575
+      ],
+      [
+       -0.0,
+       1.22299,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh19",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -0.61839,
+       1.10675,
+       -0.82559
+      ],
+      [
+       -0.0,
+       1.4945,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh20",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.64252,
+       1.37442,
+       -2.47692
+      ],
+      [
+       -0.0,
+       1.7118,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh21",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.93142,
+       0.68372,
+       0.82575
+      ],
+      [
+       -0.5157,
+       1.15524,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh22",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -0.99358,
+       0.99781,
+       -0.82559
+      ],
+      [
+       -0.56752,
+       1.42288,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh23",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -1.03234,
+       1.25916,
+       -2.47692
+      ],
+      [
+       -0.60611,
+       1.63708,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh24",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.72239,
+       0.21981,
+       0.82575
+      ],
+      [
+       -0.82858,
+       1.04384,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh25",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.83739,
+       0.49834,
+       -0.82559
+      ],
+      [
+       -0.91189,
+       1.30513,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh26",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.90904,
+       0.73065,
+       -2.47692
+      ],
+      [
+       -0.9739,
+       1.51421,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh27",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.25347,
+       -0.47535,
+       0.82575
+      ],
+      [
+       -1.53221,
+       0.53331,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh28",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.40398,
+       -0.25061,
+       -0.82559
+      ],
+      [
+       -1.68665,
+       0.76545,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh29",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.49769,
+       -0.06207,
+       -2.47692
+      ],
+      [
+       -1.80149,
+       0.95115,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh30",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.44429,
+       -1.29684,
+       0.82575
+      ],
+      [
+       -2.00463,
+       -0.23171,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh31",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.60757,
+       -1.1361,
+       -0.82559
+      ],
+      [
+       -2.20718,
+       -0.04331,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh32",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.70919,
+       -0.99943,
+       -2.47692
+      ],
+      [
+       -2.35763,
+       0.10739,
+       -0.82559
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh33",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.44429,
+       -2.13913,
+       0.82575
+      ],
+      [
+       -2.01573,
+       -1.13578,
+       2.47708
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh34",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.60757,
+       -2.04224,
+       -0.82559
+      ],
+      [
+       -2.21941,
+       -0.99911,
+       0.82575
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_F_upper_colmesh35",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.70919,
+       -1.95745,
+       -2.47692
+      ],
+      [
+       -2.37069,
+       -0.88974,
+       -0.82559
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1800,
+    "bounds_blender": [
+     [
+      -2.73314,
+      -2.50008,
+      -2.166
+     ],
+     [
+      2.73314,
+      2.49992,
+      1.73742
      ]
     ]
    }
@@ -1577,46 +3856,47 @@
     ]
    },
    "props": {
-    "mass_kg": 15100
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone,tailcone_upper,wingfairing",
+    "mass_kg": 12500.0
    },
-   "sha256": "61166ebdc12257c32e7d192b6d25964a929c398d5557c797de0506c3923832b3",
+   "sha256": "d9fd3d0bd7e3ba656b700f26a0c7aa9364efdf0503b372f8beef770f54ebdfc4",
    "bounds_blender": [
     [
-     -2.75,
-     -4.0,
+     -2.70313,
+     -4.24,
      -3.09
     ],
     [
-     2.75,
-     4.0,
+     2.70348,
+     4.3,
      2.75
     ]
    ],
    "bounds_unity": [
     [
-     -2.75,
+     -2.70348,
      -3.09,
-     -4.0
+     -4.3
     ],
     [
+     2.70313,
      2.75,
-     2.75,
-     4.0
+     4.24
     ]
    ],
-   "tris": 1068,
+   "tris": 1796,
    "materials": [
     [
      "Centurion_skin",
-     748
+     628
     ],
     [
      "aircraft_structure",
-     216
+     59
     ],
     [
-     "light_formation",
-     104
+     "Centurion_airframe",
+     1109
     ]
    ],
    "colliders": [
@@ -1708,6 +3988,710 @@
     ]
    }
   },
+  "fuselage_M_flank_L": {
+   "fbx": "fuselage_M_flank_L.fbx",
+   "blender_parent": "fuselage_M",
+   "pivot_blender": [
+    2.49591,
+    -1.47499,
+    4.44646
+   ],
+   "pivot_unity": [
+    -2.49591,
+    4.44646,
+    1.47499
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,sponson_L,sponson_R,sponson_tail_L,sponson_tail_R,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 1000.0
+   },
+   "sha256": "b4d4d218eeff62d8264911621b625dd84fe73c81693325e91702a395684ffa00",
+   "bounds_blender": [
+    [
+     -0.6609,
+     -4.00001,
+     -1.788
+    ],
+    [
+     0.25409,
+     3.99999,
+     1.44808
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.25409,
+     -1.788,
+     -3.99999
+    ],
+    [
+     0.6609,
+     1.44808,
+     4.00001
+    ]
+   ],
+   "tris": 428,
+   "materials": [
+    [
+     "Centurion_skin",
+     60
+    ],
+    [
+     "aircraft_structure",
+     12
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     304
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_M_flank_L_colmesh0",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.02641,
+       0.52108,
+       1.98851
+      ],
+      [
+       0.58722,
+       1.41563,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh1",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.02641,
+       0.52108,
+       1e-05
+      ],
+      [
+       0.58722,
+       1.41563,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh2",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.02641,
+       0.52108,
+       -1.98849
+      ],
+      [
+       0.58722,
+       1.41563,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh3",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.02641,
+       0.52108,
+       -3.5363
+      ],
+      [
+       0.58722,
+       1.41563,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh4",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.02641,
+       0.52108,
+       -3.97699
+      ],
+      [
+       0.58722,
+       1.41563,
+       -3.5363
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -0.489,
+       1.98851
+      ],
+      [
+       0.01984,
+       0.54009,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh6",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -0.489,
+       1e-05
+      ],
+      [
+       0.01984,
+       0.54009,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh7",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -0.489,
+       -1.98849
+      ],
+      [
+       0.01984,
+       0.54009,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh8",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -0.489,
+       -3.5363
+      ],
+      [
+       0.01984,
+       0.54009,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh9",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -0.489,
+       -3.97699
+      ],
+      [
+       0.01984,
+       0.54009,
+       -3.5363
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh10",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -1.51893,
+       1.98851
+      ],
+      [
+       0.0142,
+       -0.48886,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh11",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -1.51893,
+       1e-05
+      ],
+      [
+       0.0142,
+       -0.48886,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh12",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -1.51893,
+       -1.98849
+      ],
+      [
+       0.0142,
+       -0.48886,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh13",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -1.51893,
+       -3.5363
+      ],
+      [
+       0.0142,
+       -0.48886,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_L_colmesh14",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.23108,
+       -1.51893,
+       -3.97699
+      ],
+      [
+       0.0142,
+       -0.48886,
+       -3.5363
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 880,
+    "bounds_blender": [
+     [
+      -0.58672,
+      -4.00001,
+      -1.54884
+     ],
+     [
+      0.25409,
+      3.99999,
+      1.44808
+     ]
+    ]
+   }
+  },
+  "fuselage_M_flank_R": {
+   "fbx": "fuselage_M_flank_R.fbx",
+   "blender_parent": "fuselage_M",
+   "pivot_blender": [
+    -2.49591,
+    -1.47499,
+    4.44646
+   ],
+   "pivot_unity": [
+    2.49591,
+    4.44646,
+    1.47499
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,sponson_L,sponson_R,sponson_tail_L,sponson_tail_R,strut_inner_L,strut_inner_R,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R,wingfairing",
+    "mass_kg": 1000.0
+   },
+   "sha256": "f2297d404b56aec83fb1563503bace7ea5cd5a3168c9787422615227a2affe78",
+   "bounds_blender": [
+    [
+     -0.25409,
+     -4.00001,
+     -1.54884
+    ],
+    [
+     0.6609,
+     3.99999,
+     1.44808
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.6609,
+     -1.54884,
+     -3.99999
+    ],
+    [
+     0.25409,
+     1.44808,
+     4.00001
+    ]
+   ],
+   "tris": 408,
+   "materials": [
+    [
+     "Centurion_skin",
+     60
+    ],
+    [
+     "aircraft_structure",
+     12
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     284
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_M_flank_R_colmesh0",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.0142,
+       -1.51893,
+       1.98851
+      ],
+      [
+       0.23108,
+       -0.48886,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh1",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.0142,
+       -1.51893,
+       1e-05
+      ],
+      [
+       0.23108,
+       -0.48886,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh2",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.0142,
+       -1.51893,
+       -1.98849
+      ],
+      [
+       0.23108,
+       -0.48886,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh3",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.0142,
+       -1.51893,
+       -3.5363
+      ],
+      [
+       0.23108,
+       -0.48886,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh4",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.0142,
+       -1.51893,
+       -3.97699
+      ],
+      [
+       0.23108,
+       -0.48886,
+       -3.5363
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.01984,
+       -0.489,
+       1.98851
+      ],
+      [
+       0.23108,
+       0.54009,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh6",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.01984,
+       -0.489,
+       1e-05
+      ],
+      [
+       0.23108,
+       0.54009,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh7",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.01984,
+       -0.489,
+       -1.98849
+      ],
+      [
+       0.23108,
+       0.54009,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh8",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.01984,
+       -0.489,
+       -3.5363
+      ],
+      [
+       0.23108,
+       0.54009,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh9",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.01984,
+       -0.489,
+       -3.97699
+      ],
+      [
+       0.23108,
+       0.54009,
+       -3.5363
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh10",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.58722,
+       0.52108,
+       1.98851
+      ],
+      [
+       0.02641,
+       1.41562,
+       3.97701
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh11",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.58722,
+       0.52108,
+       1e-05
+      ],
+      [
+       0.02641,
+       1.41562,
+       1.98851
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh12",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.58722,
+       0.52108,
+       -1.98849
+      ],
+      [
+       0.02641,
+       1.41562,
+       1e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh13",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.58722,
+       0.52108,
+       -3.5363
+      ],
+      [
+       0.02641,
+       1.41562,
+       -1.98849
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_M_flank_R_colmesh14",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.58722,
+       0.52108,
+       -3.97699
+      ],
+      [
+       0.02641,
+       1.41562,
+       -3.5363
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 880,
+    "bounds_blender": [
+     [
+      -0.25409,
+      -4.00001,
+      -1.54884
+     ],
+     [
+      0.58672,
+      3.99999,
+      1.44808
+     ]
+    ]
+   }
+  },
   "fuselage_R": {
    "fbx": "fuselage_R.fbx",
    "blender_parent": "fuselage_M",
@@ -1739,18 +4723,19 @@
     ]
    },
    "props": {
-    "mass_kg": 11000
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone,tailcone_upper,wingfairing",
+    "mass_kg": 7900.0
    },
-   "sha256": "9660e0a568aa17fd59464507839fed0aefe7983b6a414bf0babc8567fdc95c8f",
+   "sha256": "576d2df5f39efa662a8fcd92da7014eeeb28eba79c9dd91fde33a6346ebbe849",
    "bounds_blender": [
     [
-     -2.75,
-     0.0,
+     -2.73676,
+     -0.24,
      -2.42908
     ],
     [
      2.75,
-     8.0,
+     8.30154,
      2.71403
     ]
    ],
@@ -1758,19 +4743,19 @@
     [
      -2.75,
      -2.42908,
-     -8.0
+     -8.30154
     ],
     [
-     2.75,
+     2.73676,
      2.71403,
-     -0.0
+     0.24
     ]
    ],
-   "tris": 2246,
+   "tris": 2741,
    "materials": [
     [
      "Centurion_skin",
-     1644
+     980
     ],
     [
      "jet_mechanical",
@@ -1778,7 +4763,11 @@
     ],
     [
      "aircraft_structure",
-     366
+     162
+    ],
+    [
+     "Centurion_airframe",
+     1363
     ]
    ],
    "colliders": [
@@ -1921,6 +4910,736 @@
     ]
    }
   },
+  "fuselage_R_upper_L": {
+   "fbx": "fuselage_R_upper_L.fbx",
+   "blender_parent": "fuselage_R",
+   "pivot_blender": [
+    2.23623,
+    6.52497,
+    4.89941
+   ],
+   "pivot_unity": [
+    -2.23623,
+    4.89941,
+    -6.52497
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_AL,baydoor_AL_visible,baydoor_AR,baydoor_AR_visible,cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_R,spine_cover,spine_cover_A,sponson_L,sponson_R,sponson_tail_L,sponson_tail_R,tail_end,tail_end_upper,tailcone,tailcone_upper,vtail_L,vtail_R,vtail_tip_L,vtail_tip_R,wingfairing",
+    "mass_kg": 1400.0
+   },
+   "sha256": "3f61e880ea914dcbb15aa57d03ecf3a32f9705fd72d445215a8b34baa8ff6c3e",
+   "bounds_blender": [
+    [
+     -1.25035,
+     -3.99997,
+     -2.24095
+    ],
+    [
+     0.51377,
+     4.00178,
+     1.68097
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.51377,
+     -2.24095,
+     -4.00178
+    ],
+    [
+     1.25035,
+     1.68097,
+     3.99997
+    ]
+   ],
+   "tris": 796,
+   "materials": [
+    [
+     "Centurion_skin",
+     330
+    ],
+    [
+     "aircraft_structure",
+     34
+    ],
+    [
+     "Centurion_airframe",
+     432
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_R_upper_L_colmesh0",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.2999,
+       0.93559,
+       1.98847
+      ],
+      [
+       1.19114,
+       1.5612,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh1",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.2999,
+       0.93559,
+       -3e-05
+      ],
+      [
+       1.19114,
+       1.5612,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh2",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       0.2999,
+       0.93559,
+       -1.98853
+      ],
+      [
+       1.1915,
+       1.56448,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh3",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       0.30002,
+       0.94803,
+       -3.97703
+      ],
+      [
+       1.19295,
+       1.57694,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh4",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.28319,
+       0.07504,
+       1.98847
+      ],
+      [
+       0.3354,
+       0.97079,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.28319,
+       0.07504,
+       -3e-05
+      ],
+      [
+       0.3354,
+       0.97079,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh6",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.28319,
+       0.07504,
+       -1.98853
+      ],
+      [
+       0.33579,
+       0.98297,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh7",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.28315,
+       0.10055,
+       -3.97703
+      ],
+      [
+       0.33726,
+       1.02916,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh8",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -0.93821,
+       1.98847
+      ],
+      [
+       -0.237,
+       0.09417,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh9",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -0.93821,
+       -3e-05
+      ],
+      [
+       -0.237,
+       0.09417,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh10",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -0.93821,
+       -1.98853
+      ],
+      [
+       -0.23685,
+       0.11944,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh11",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -0.89762,
+       -3.97703
+      ],
+      [
+       -0.23631,
+       0.21523,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh12",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -1.97188,
+       1.98847
+      ],
+      [
+       -0.24548,
+       -0.938,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh13",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -1.97188,
+       -3e-05
+      ],
+      [
+       -0.24548,
+       -0.938,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh14",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -1.97188,
+       -1.98853
+      ],
+      [
+       -0.24534,
+       -0.89741,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_L_colmesh15",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -0.49075,
+       -1.91594,
+       -3.97703
+      ],
+      [
+       -0.24482,
+       -0.74359,
+       -1.98853
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1152,
+    "bounds_blender": [
+     [
+      -1.20422,
+      -3.99997,
+      -2.00179
+     ],
+     [
+      0.51377,
+      4.00003,
+      1.60628
+     ]
+    ]
+   }
+  },
+  "fuselage_R_upper_R": {
+   "fbx": "fuselage_R_upper_R.fbx",
+   "blender_parent": "fuselage_R",
+   "pivot_blender": [
+    -2.23623,
+    6.52497,
+    4.89941
+   ],
+   "pivot_unity": [
+    2.23623,
+    4.89941,
+    -6.52497
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "baydoor_AL,baydoor_AL_visible,baydoor_AR,baydoor_AR_visible,cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,spine_cover,spine_cover_A,sponson_L,sponson_R,sponson_tail_L,sponson_tail_R,tail_end,tail_end_upper,tailcone,tailcone_upper,vtail_L,vtail_R,vtail_tip_L,vtail_tip_R,wingfairing",
+    "mass_kg": 1400.0
+   },
+   "sha256": "dd48dc95c3f4791946fa4114cd79268fb456deca3478f71c1cd6e333977b40b3",
+   "bounds_blender": [
+    [
+     -0.51377,
+     -3.99997,
+     -2.00179
+    ],
+    [
+     1.25035,
+     4.00128,
+     1.68102
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -1.25035,
+     -2.00179,
+     -4.00128
+    ],
+    [
+     0.51377,
+     1.68102,
+     3.99997
+    ]
+   ],
+   "tris": 786,
+   "materials": [
+    [
+     "Centurion_skin",
+     330
+    ],
+    [
+     "aircraft_structure",
+     34
+    ],
+    [
+     "Centurion_airframe",
+     422
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "fuselage_R_upper_R_colmesh0",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.24548,
+       -1.97188,
+       1.98847
+      ],
+      [
+       0.49075,
+       -0.938,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh1",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.24548,
+       -1.97188,
+       -3e-05
+      ],
+      [
+       0.49075,
+       -0.938,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh2",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.24534,
+       -1.97188,
+       -1.98853
+      ],
+      [
+       0.49075,
+       -0.89741,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.24482,
+       -1.91594,
+       -3.97703
+      ],
+      [
+       0.49075,
+       -0.74359,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh4",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.237,
+       -0.93821,
+       1.98847
+      ],
+      [
+       0.49075,
+       0.09417,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       0.237,
+       -0.93821,
+       -3e-05
+      ],
+      [
+       0.49075,
+       0.09417,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh6",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       0.23685,
+       -0.93821,
+       -1.98853
+      ],
+      [
+       0.49075,
+       0.11944,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh7",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       0.23631,
+       -0.89762,
+       -3.97703
+      ],
+      [
+       0.49075,
+       0.21523,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh8",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.3354,
+       0.07504,
+       1.98847
+      ],
+      [
+       0.28319,
+       0.97079,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh9",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -0.3354,
+       0.07504,
+       -3e-05
+      ],
+      [
+       0.28319,
+       0.97079,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh10",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.33579,
+       0.07504,
+       -1.98853
+      ],
+      [
+       0.28319,
+       0.98297,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh11",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -0.33726,
+       0.10055,
+       -3.97703
+      ],
+      [
+       0.28315,
+       1.02916,
+       -1.98853
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh12",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -1.19113,
+       0.93559,
+       1.98847
+      ],
+      [
+       -0.2999,
+       1.5612,
+       3.97697
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh13",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -1.19113,
+       0.93559,
+       -3e-05
+      ],
+      [
+       -0.2999,
+       1.5612,
+       1.98847
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh14",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -1.1915,
+       0.93559,
+       -1.98853
+      ],
+      [
+       -0.2999,
+       1.56448,
+       -3e-05
+      ]
+     ]
+    },
+    {
+     "name": "fuselage_R_upper_R_colmesh15",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -1.19295,
+       0.94803,
+       -3.97703
+      ],
+      [
+       -0.30002,
+       1.57694,
+       -1.98853
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1152,
+    "bounds_blender": [
+     [
+      -0.51377,
+      -3.99997,
+      -2.00179
+     ],
+     [
+      1.20422,
+      4.00003,
+      1.60628
+     ]
+    ]
+   }
+  },
   "gear_F": {
    "fbx": "gear_F.fbx",
    "blender_parent": "nose",
@@ -1954,7 +5673,7 @@
    "props": {
     "retracts": "forward"
    },
-   "sha256": "162ff4ef1199b80eeece58e73ece3f9d7594c35c85d921d453700b40231f0a38",
+   "sha256": "7f2ba6e45e6c5ca1e613b748a7648ac7ee22e09acbe4baea6acecb455d24069a",
    "bounds_blender": [
     [
      -0.62,
@@ -2045,7 +5764,7 @@
     ]
    },
    "props": {},
-   "sha256": "16345d3d9172ece43700500956731696b9e7d81809002787512739346cac6b5d",
+   "sha256": "e9b4932e524ebb42b27dded1d8d74335525d4cf789e2b4dc10c8ad56d059eae0",
    "bounds_blender": [
     [
      -0.215,
@@ -2136,7 +5855,7 @@
     ]
    },
    "props": {},
-   "sha256": "d1e65126cfcf158bcdea46a53d86fafb52c983e1e3c3f15c4d19837b606a4c2f",
+   "sha256": "98b8aa2eb97cf89a8a3607a0523802880764eca258d91af05d3101f31332dbb7",
    "bounds_blender": [
     [
      -1.22958,
@@ -2265,7 +5984,7 @@
     ]
    },
    "props": {},
-   "sha256": "41a3d32a65fba09ca98f52b4c39f02ee9e44a5bf8194e232ebf1d95354f5a568",
+   "sha256": "10bfffc2905b65d3c38ab4d7fda2d629f8e5072f978365c6b7267858ced6db64",
    "bounds_blender": [
     [
      0.00016,
@@ -2388,7 +6107,7 @@
     ]
    },
    "props": {},
-   "sha256": "b64f6eb3c5ba2e1cd4832c6eac3239ffebbbf3a69760bde8075723fbf3959a67",
+   "sha256": "689c2837acf85bf7bfce39c015a973265cac46b8d903fa91aed06fcd911dfa92",
    "bounds_blender": [
     [
      0.00016,
@@ -2511,7 +6230,7 @@
     ]
    },
    "props": {},
-   "sha256": "47da1dc6e13167b61a3b47cf222b4b29d66d032624e6d127d68244b10832c829",
+   "sha256": "9de8d3e8a72bcf35b676eeb29a8dea24e0455a94efefba8091832a943838b777",
    "bounds_blender": [
     [
      -2.37,
@@ -2638,7 +6357,7 @@
     ]
    },
    "props": {},
-   "sha256": "e1353c38736ac8cd81115f76cc695996c01489f8a1272f605f969b5e509d82fc",
+   "sha256": "95d25cdfb26cbb4f19496b8adc18fb085fbc9b7c7545f42f85c1ec3f7f12c2e5",
    "bounds_blender": [
     [
      -2.37,
@@ -2727,7 +6446,7 @@
     ]
    },
    "props": {},
-   "sha256": "71f34cc3d0f7d2d9ed89d724d1e3ceadc7cf568d9a974f51bacec742e18bc90a",
+   "sha256": "cbc9dcadab7c8b3fb776455e72539f846ef61fa114fd6db9c96563cab0abb9f5",
    "bounds_blender": [
     [
      -0.05,
@@ -2779,7 +6498,7 @@
   },
   "laser_turret": {
    "fbx": "laser_turret.fbx",
-   "blender_parent": "tailcone",
+   "blender_parent": "tail_end",
    "pivot_blender": [
     0.0,
     21.825,
@@ -2807,33 +6526,35 @@
      1.0
     ]
    },
-   "props": {},
-   "sha256": "9afe6b7506841901cc98e687b57a8aa14ca0003faab3b9962ef785e87e751c37",
+   "props": {
+    "bonded_to": "tailcone"
+   },
+   "sha256": "2068f9a142bdb72078f621a562199cdaf9150bf738f83c2d4104be5e8b82beda",
    "bounds_blender": [
     [
-     -1.02877,
+     -0.81395,
      -0.77,
-     -0.79908
+     -0.72899
     ],
     [
-     1.02877,
+     0.81395,
      0.53,
-     0.81818
+     0.65945
     ]
    ],
    "bounds_unity": [
     [
-     -1.02877,
-     -0.79908,
+     -0.81395,
+     -0.72899,
      -0.53
     ],
     [
-     1.02877,
-     0.81818,
+     0.81395,
+     0.65945,
      0.77
     ]
    ],
-   "tris": 2174,
+   "tris": 1150,
    "materials": [
     [
      "aircraft_structure",
@@ -2841,7 +6562,7 @@
     ],
     [
      "laser_lens",
-     2112
+     1088
     ]
    ],
    "colliders": [],
@@ -2897,7 +6618,7 @@
    "props": {
     "mass_kg": 8200
    },
-   "sha256": "f66177db4c1a96bb7643983b63c79ae5706b65a4dcea5d2bfe39829d3148c818",
+   "sha256": "c62712c163e618053e5101c9064b2fe5ab7783a40b695c525092b623812043e9",
    "bounds_blender": [
     [
      -2.127,
@@ -2922,15 +6643,15 @@
      0.027
     ]
    ],
-   "tris": 7664,
+   "tris": 6560,
    "materials": [
     [
      "Centurion_skin",
-     4679
+     3891
     ],
     [
      "jet_mechanical",
-     2985
+     2669
     ]
    ],
    "colliders": [
@@ -3004,7 +6725,7 @@
    "props": {
     "mass_kg": 8200
    },
-   "sha256": "4730c3fdb4099ee933c864b6dde11a3a5af0428c6842e581b28af807f8acbceb",
+   "sha256": "433548a4611bd9f92f991a610e3e5100f2149f02198c9f1fc6d0e04219af5e2b",
    "bounds_blender": [
     [
      -2.127,
@@ -3029,15 +6750,15 @@
      0.027
     ]
    ],
-   "tris": 7664,
+   "tris": 6560,
    "materials": [
     [
      "Centurion_skin",
-     4679
+     3891
     ],
     [
      "jet_mechanical",
-     2985
+     2669
     ]
    ],
    "colliders": [
@@ -3109,9 +6830,9 @@
     ]
    },
    "props": {
-    "mass_kg": 8636.29
+    "mass_kg": 9142.06
    },
-   "sha256": "a7da21212ddff0f2b07ff0b3d16e167d8d56d758f61fadfe012d81e3dfda476e",
+   "sha256": "c81fb5ed3a032ba556801a974df2b979cdb674f7d54bb5eb733f3a19b434add0",
    "bounds_blender": [
     [
      -2.24395,
@@ -3136,15 +6857,15 @@
      3.4794
     ]
    ],
-   "tris": 5880,
+   "tris": 5676,
    "materials": [
     [
      "Centurion_skin",
-     3768
+     3858
     ],
     [
      "jet_mechanical",
-     796
+     492
     ],
     [
      "aircraft_structure",
@@ -3152,7 +6873,7 @@
     ],
     [
      "glass",
-     992
+     1002
     ]
    ],
    "colliders": [
@@ -3347,7 +7068,7 @@
     ]
    },
    "props": {},
-   "sha256": "0050ab69053fedbca6d12210b662ecb5edc366468cf2e8495c3265a2f0fe4901",
+   "sha256": "ae2d7971dc9e8f646b527feaf37a759ab4b57121d1ed700d09684da67eb3cf0d",
    "bounds_blender": [
     [
      -0.1729,
@@ -3432,7 +7153,7 @@
     ]
    },
    "props": {},
-   "sha256": "0c601b7f7bff8953392c4501ce5c3b5ca377262261468b44765c3c397050d520",
+   "sha256": "f60a3b770d6f26c90ba314f429cff6238b73c2a9d15f4bcfb6e9842f936da798",
    "bounds_blender": [
     [
      -0.36224,
@@ -3517,7 +7238,7 @@
     ]
    },
    "props": {},
-   "sha256": "44dccaf2c62ce10798eb71900bc5e989f698bc61c022a5b32345116bb91d340c",
+   "sha256": "3048cc536feee191829ee441df3b8503b04477d3af62bd4ccbc684e6afcc0511",
    "bounds_blender": [
     [
      -0.33775,
@@ -3604,7 +7325,7 @@
    "props": {
     "mass_kg": 1600
    },
-   "sha256": "162cf93a4431d36b10f57dac328788b03ae196c05f6178112d6ee1a9121a9ce7",
+   "sha256": "f18b1c39ac4c249fdf64a92fe4a93bdbb25dcd7395eb98c3346bfbc50d42e314",
    "bounds_blender": [
     [
      -1.28998,
@@ -3629,15 +7350,15 @@
      4.0
     ]
    ],
-   "tris": 2348,
+   "tris": 1836,
    "materials": [
     [
      "Centurion_skin",
-     486
+     360
     ],
     [
      "jet_mechanical",
-     1862
+     1476
     ]
    ],
    "colliders": [
@@ -3760,7 +7481,7 @@
    "props": {
     "mass_kg": 1600
    },
-   "sha256": "4e95e903ee9c9981486d01eae1ec6001654f3ee8af8cbe6a3cb3ece66a4d9c03",
+   "sha256": "a1eb23baa62929e407dde7c8d48a7c546e2ccfc30b93abb616b51f4c3dbd4127",
    "bounds_blender": [
     [
      -1.3278,
@@ -3785,15 +7506,15 @@
      4.0
     ]
    ],
-   "tris": 2348,
+   "tris": 1836,
    "materials": [
     [
      "Centurion_skin",
-     486
+     360
     ],
     [
      "jet_mechanical",
-     1862
+     1476
     ]
    ],
    "colliders": [
@@ -3917,7 +7638,7 @@
     "bonded_to": "nozzle_1",
     "mass_kg": 1450
    },
-   "sha256": "6a9757d9f00b3a314a249f352baa1932e87ef45ffbe6cd0440e9036699823637",
+   "sha256": "6094ae4737750fab93f3fe96f16d470c7d3012e3073fdcf309a1fb8e0b80c342",
    "bounds_blender": [
     [
      -0.54602,
@@ -4127,7 +7848,7 @@
     "bonded_to": "nozzle_2",
     "mass_kg": 1450
    },
-   "sha256": "2ed41e60465a25908e0fe576c7704e90d367e323fc68d7d489fd6c7a3dfaedb4",
+   "sha256": "ed33aafc196ec768dd8b12f6adf50512ea5570790494cbf4fcb7451087c07bd6",
    "bounds_blender": [
     [
      -0.56233,
@@ -4336,7 +8057,7 @@
    "props": {
     "mass_kg": 500
    },
-   "sha256": "24755eb53e59b19d10d4e65212eabccfc2884bffe63ad9378107a1890130fbed",
+   "sha256": "f20b92c2e84592392399fe5f54f29b68a5a8d402f25384cfc302d3d07c0e5e60",
    "bounds_blender": [
     [
      -1.58899,
@@ -4412,7 +8133,7 @@
   },
   "radar_R_fairing": {
    "fbx": "radar_R_fairing.fbx",
-   "blender_parent": "tailcone",
+   "blender_parent": "tail_end",
    "pivot_blender": [
     0.0,
     19.725,
@@ -4440,30 +8161,32 @@
      1.0
     ]
    },
-   "props": {},
-   "sha256": "5426cc03bb38ca67ef1393f930c71b9b3dc870300f4e71bf2d0c1fab63a5d3f3",
+   "props": {
+    "bonded_to": "tailcone"
+   },
+   "sha256": "5fb58fde6d554ec787872bf0da71d9eb6426c0a6c314e305da441f3aef078366",
    "bounds_blender": [
     [
-     -1.41788,
-     -1.3024,
-     -0.31672
+     -1.19725,
+     -1.3028,
+     -0.31216
     ],
     [
-     1.41788,
-     1.30147,
-     0.57335
+     1.19725,
+     1.30132,
+     0.61506
     ]
    ],
    "bounds_unity": [
     [
-     -1.41788,
-     -0.31672,
-     -1.30147
+     -1.19725,
+     -0.31216,
+     -1.30132
     ],
     [
-     1.41788,
-     0.57335,
-     1.3024
+     1.19725,
+     0.61506,
+     1.3028
     ]
    ],
    "tris": 474,
@@ -4565,7 +8288,7 @@
     ]
    },
    "props": {},
-   "sha256": "a3e25daf32f640108b9556dd26295d65e5e4d61b3cf3d4513aa2c692a54e247a",
+   "sha256": "df5eee15efdb0452c5618cd5e4664d41ccdc00ac842ebdf738e7806198e9ea1e",
    "bounds_blender": [
     [
      -0.03117,
@@ -4621,7 +8344,7 @@
   },
   "ruddervator_L2": {
    "fbx": null,
-   "blender_parent": "vtail_L",
+   "blender_parent": "vtail_tip_L",
    "pivot_blender": [
     4.66233,
     17.87282,
@@ -4655,6 +8378,7 @@
      0.4558941721916199,
      0.4450169503688812
     ],
+    "bonded_to": "vtail_L",
     "mass_kg": 334.53
    }
   },
@@ -4689,7 +8413,7 @@
     ]
    },
    "props": {},
-   "sha256": "4924c3ca8553d6c1011d75e05077536439a0ad112cef6fdf5e38969cbcc04422",
+   "sha256": "c1f07dd526de5cd0a2824d7b6e5495603b88678850f8d52254e7d7848780c99d",
    "bounds_blender": [
     [
      -0.08992,
@@ -4698,7 +8422,7 @@
     ],
     [
      5.44798,
-     2.04279,
+     2.04278,
      0.1808
     ]
    ],
@@ -4706,7 +8430,7 @@
     [
      -5.44798,
      -0.1808,
-     -2.04279
+     -2.04278
     ],
     [
      0.08992,
@@ -4813,7 +8537,7 @@
     ]
    },
    "props": {},
-   "sha256": "56318285edc8138613b2246bc7d91a828ec59aa28ea71150b5f0f54141df5067",
+   "sha256": "9a67e6818c4a38bda2cf35df7d70b51898002df09dc8f913036a3fd425749843",
    "bounds_blender": [
     [
      -3.26269,
@@ -4869,7 +8593,7 @@
   },
   "ruddervator_R2": {
    "fbx": null,
-   "blender_parent": "vtail_R",
+   "blender_parent": "vtail_tip_R",
    "pivot_blender": [
     -4.66233,
     17.87282,
@@ -4903,6 +8627,7 @@
      -0.4558941721916199,
      -0.4450169503688812
     ],
+    "bonded_to": "vtail_R",
     "mass_kg": 334.53
    }
   },
@@ -4937,7 +8662,7 @@
     ]
    },
    "props": {},
-   "sha256": "46b8e4724cabb3e6d1231ba3c27e74ae81856ebe5cb90f8faada186e9017a885",
+   "sha256": "35b606481aee486380a93bd3043bde537182352c4fa08ea5aa2a43581a95d206",
    "bounds_blender": [
     [
      -5.44798,
@@ -4946,7 +8671,7 @@
     ],
     [
      0.08992,
-     2.04279,
+     2.04278,
      0.1808
     ]
    ],
@@ -4954,7 +8679,7 @@
     [
      -0.08992,
      -0.1808,
-     -2.04279
+     -2.04278
     ],
     [
      5.44798,
@@ -5021,8 +8746,11 @@
      1.0
     ]
    },
-   "props": {},
-   "sha256": "1c8f856e4dd4f24f9919020530bb0dd2b21ae5a555d6689a01c593ca7d8a6f56",
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover_A,tail_end,tail_end_upper,tailcone,tailcone_upper,wingfairing",
+    "mass_kg": 150.0
+   },
+   "sha256": "42f0e47866ce62b5814e92594e6669327336ad48b017aa38a045ff4f2625eb17",
    "bounds_blender": [
     [
      -0.46201,
@@ -5031,54 +8759,150 @@
     ],
     [
      0.46201,
-     5.08,
-     0.03949
+     0.0137,
+     0.03942
     ]
    ],
    "bounds_unity": [
     [
      -0.46201,
      -0.0348,
-     -5.08
+     -0.0137
     ],
     [
      0.46201,
-     0.03949,
+     0.03942,
      5.08
     ]
    ],
-   "tris": 1028,
+   "tris": 568,
    "materials": [
     [
      "Centurion_skin",
-     706
+     376
     ],
     [
      "aircraft_structure",
-     322
+     164
+    ],
+    [
+     "Centurion_airframe",
+     28
     ]
    ],
    "colliders": [],
    "lod1": null,
    "shape": {
-    "tris": 136,
+    "tris": 96,
     "bounds_blender": [
      [
-      -0.46231,
+      -0.46201,
       -5.08,
       -0.03283
      ],
      [
-      0.46231,
-      5.08,
+      0.46201,
+      0.0137,
       0.012
+     ]
+    ]
+   }
+  },
+  "spine_cover_A": {
+   "fbx": "spine_cover_A.fbx",
+   "blender_parent": "fuselage_R",
+   "pivot_blender": [
+    -0.0,
+    7.325,
+    6.68958
+   ],
+   "pivot_unity": [
+    0.0,
+    6.68958,
+    -7.325
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,tail_end,tail_end_upper,tailcone,tailcone_upper,wingfairing",
+    "mass_kg": 150.0
+   },
+   "sha256": "ab1dd76efe268c2d4de8ecfdd92adc80a5da02da18890f7cff615304b43489d6",
+   "bounds_blender": [
+    [
+     -0.462,
+     -0.0,
+     -0.08308
+    ],
+    [
+     0.462,
+     5.0671,
+     0.04988
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.462,
+     -0.08308,
+     -5.0671
+    ],
+    [
+     0.462,
+     0.04988,
+     0.0
+    ]
+   ],
+   "tris": 568,
+   "materials": [
+    [
+     "Centurion_skin",
+     376
+    ],
+    [
+     "aircraft_structure",
+     164
+    ],
+    [
+     "Centurion_airframe",
+     28
+    ]
+   ],
+   "colliders": [],
+   "lod1": null,
+   "shape": {
+    "tris": 76,
+    "bounds_blender": [
+     [
+      -0.46231,
+      -0.0,
+      -0.02236
+     ],
+     [
+      0.46231,
+      5.0663,
+      0.02242
      ]
     ]
    }
   },
   "spoiler_L": {
    "fbx": null,
-   "blender_parent": "wing_root_L",
+   "blender_parent": "wing_outer_L",
    "pivot_blender": [
     12.8,
     -0.22244,
@@ -5112,6 +8936,7 @@
      0.20016039907932281,
      -0.057074252516031265
     ],
+    "bonded_to": "wing_root_L",
     "mass_kg": 500
    }
   },
@@ -5146,7 +8971,7 @@
     ]
    },
    "props": {},
-   "sha256": "766a5624f70071055ffa8ebfc2a48f0c998fe0902c73a79b0caba704fb88b3d7",
+   "sha256": "918f8f58c279611b21b098fd84c2edc50f7d1a3577b9f1fe6030646bebbb8563",
    "bounds_blender": [
     [
      -0.00098,
@@ -5202,7 +9027,7 @@
   },
   "spoiler_R": {
    "fbx": null,
-   "blender_parent": "wing_root_R",
+   "blender_parent": "wing_outer_R",
    "pivot_blender": [
     -12.8,
     -0.22244,
@@ -5236,6 +9061,7 @@
      -0.20016039907932281,
      0.057074252516031265
     ],
+    "bonded_to": "wing_root_R",
     "mass_kg": 500
    }
   },
@@ -5270,7 +9096,7 @@
     ]
    },
    "props": {},
-   "sha256": "0059624775cfb1eb92ed5b99975aea33f34488cd495e93d486faafc7e5ba5527",
+   "sha256": "b62b05aff8001f70c297d6a50ec9e22b58d0e80d001184c620bce28d3fe41f52",
    "bounds_blender": [
     [
      -6.9187,
@@ -5356,9 +9182,9 @@
    },
    "props": {
     "bonded_to": "fuselage_R",
-    "mass_kg": 3500
+    "mass_kg": 2380.0
    },
-   "sha256": "ba59780830be133408f0123c46a57a3ddda38a9c96c1c03c904e4bac06a08b6c",
+   "sha256": "e3d0477ef1098c446307e6be8b42db690b948e5e96810cb4e5c1bba4d797e592",
    "bounds_blender": [
     [
      -1.74733,
@@ -5367,103 +9193,52 @@
     ],
     [
      0.95932,
-     6.83,
-     2.34569
+     2.45,
+     2.30366
     ]
    ],
    "bounds_unity": [
     [
      -0.95932,
      -1.09791,
-     -6.83
+     -2.45
     ],
     [
      1.74733,
-     2.34569,
+     2.30366,
      6.92
     ]
    ],
-   "tris": 2776,
+   "tris": 2281,
    "materials": [
     [
      "Centurion_skin",
-     2503
+     1995
     ],
     [
      "aircraft_structure",
-     221
+     161
     ],
     [
-     "light_formation",
-     52
+     "Centurion_airframe",
+     125
     ]
    ],
    "colliders": [
     {
      "name": "sponson_L_colmesh0",
-     "verts": 108,
-     "tris": 212,
+     "verts": 113,
+     "tris": 222,
      "bounds_unity": [
       [
        -0.798,
        -1.06876,
-       -2.522
+       -2.45
       ],
       [
        0.9711,
-       0.99768,
+       0.99738,
        6.71004
-      ]
-     ]
-    },
-    {
-     "name": "sponson_L_colmesh1",
-     "verts": 110,
-     "tris": 216,
-     "bounds_unity": [
-      [
-       -0.73621,
-       -0.89995,
-       -5.522
-      ],
-      [
-       0.91561,
-       1.13727,
-       -2.578
-      ]
-     ]
-    },
-    {
-     "name": "sponson_L_colmesh2",
-     "verts": 41,
-     "tris": 78,
-     "bounds_unity": [
-      [
-       -0.0809,
-       0.40184,
-       -6.022
-      ],
-      [
-       0.48062,
-       1.07877,
-       -5.578
-      ]
-     ]
-    },
-    {
-     "name": "sponson_L_colmesh3",
-     "verts": 56,
-     "tris": 108,
-     "bounds_unity": [
-      [
-       0.0631,
-       0.62226,
-       -6.64469
-      ],
-      [
-       0.37144,
-       0.99905,
-       -6.078
       ]
      ]
     }
@@ -5472,7 +9247,7 @@
     "tris": 30
    },
    "shape": {
-    "tris": 1008,
+    "tris": 558,
     "bounds_blender": [
      [
       -0.97035,
@@ -5481,7 +9256,7 @@
      ],
      [
       0.8472,
-      6.75,
+      2.45,
       1.54134
      ]
     ]
@@ -5519,9 +9294,9 @@
    },
    "props": {
     "bonded_to": "fuselage_R",
-    "mass_kg": 3500
+    "mass_kg": 2380.0
    },
-   "sha256": "392de855fef1ac52c0a87644d0804447a3b8267808c3a161040574afbdd8d189",
+   "sha256": "27f3eff90f2d61cd04656cdd3a80dd23cc85c0c2d9090a3310fa8ccf2f19d7b7",
    "bounds_blender": [
     [
      -0.95932,
@@ -5530,103 +9305,52 @@
     ],
     [
      1.74733,
-     6.83,
-     2.34569
+     2.45,
+     2.30366
     ]
    ],
    "bounds_unity": [
     [
      -1.74733,
      -1.09791,
-     -6.83
+     -2.45
     ],
     [
      0.95932,
-     2.34569,
+     2.30366,
      6.92
     ]
    ],
-   "tris": 2776,
+   "tris": 2281,
    "materials": [
     [
      "Centurion_skin",
-     2503
+     1995
     ],
     [
      "aircraft_structure",
-     221
+     161
     ],
     [
-     "light_formation",
-     52
+     "Centurion_airframe",
+     125
     ]
    ],
    "colliders": [
     {
      "name": "sponson_R_colmesh0",
-     "verts": 117,
-     "tris": 230,
+     "verts": 45,
+     "tris": 86,
      "bounds_unity": [
       [
-       -0.96434,
+       -0.96362,
        -1.06946,
-       -2.522
+       -2.45
       ],
       [
        0.82074,
-       1.07227,
+       1.07215,
        6.622
-      ]
-     ]
-    },
-    {
-     "name": "sponson_R_colmesh1",
-     "verts": 115,
-     "tris": 226,
-     "bounds_unity": [
-      [
-       -0.91614,
-       -0.89862,
-       -5.522
-      ],
-      [
-       0.73634,
-       1.12434,
-       -2.578
-      ]
-     ]
-    },
-    {
-     "name": "sponson_R_colmesh2",
-     "verts": 41,
-     "tris": 78,
-     "bounds_unity": [
-      [
-       -0.48062,
-       0.40184,
-       -6.022
-      ],
-      [
-       0.0809,
-       1.07877,
-       -5.578
-      ]
-     ]
-    },
-    {
-     "name": "sponson_R_colmesh3",
-     "verts": 56,
-     "tris": 108,
-     "bounds_unity": [
-      [
-       -0.37144,
-       0.62226,
-       -6.64469
-      ],
-      [
-       -0.0631,
-       0.99905,
-       -6.078
       ]
      ]
     }
@@ -5635,7 +9359,7 @@
     "tris": 30
    },
    "shape": {
-    "tris": 1008,
+    "tris": 558,
     "bounds_blender": [
      [
       -0.8472,
@@ -5644,8 +9368,342 @@
      ],
      [
       0.97035,
-      6.75,
+      2.45,
       1.54134
+     ]
+    ]
+   }
+  },
+  "sponson_tail_L": {
+   "fbx": "sponson_tail_L.fbx",
+   "blender_parent": "sponson_L",
+   "pivot_blender": [
+    2.62375,
+    6.125,
+    2.38733
+   ],
+   "pivot_unity": [
+    -2.62375,
+    2.38733,
+    -6.125
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,gear_LM,geardoor_LM,geardoor_LM_visible,sponson_L,tailcone",
+    "mass_kg": 1120.0
+   },
+   "sha256": "279df49235026758f07bd664c6bd751bfe06eddcfd7aa4d96ae465ca00364445",
+   "bounds_blender": [
+    [
+     -0.88112,
+     -0.0,
+     -1.09688
+    ],
+    [
+     0.9059,
+     4.38,
+     2.20836
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.9059,
+     -1.09688,
+     -4.38
+    ],
+    [
+     0.88112,
+     2.20836,
+     0.0
+    ]
+   ],
+   "tris": 993,
+   "materials": [
+    [
+     "Centurion_skin",
+     733
+    ],
+    [
+     "aircraft_structure",
+     83
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     125
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "sponson_tail_L_colmesh0",
+     "verts": 41,
+     "tris": 78,
+     "bounds_unity": [
+      [
+       -0.8691,
+       -1.06261,
+       -0.072
+      ],
+      [
+       0.73945,
+       0.86036,
+       0.0
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_L_colmesh1",
+     "verts": 110,
+     "tris": 216,
+     "bounds_unity": [
+      [
+       -0.86246,
+       -1.03728,
+       -3.072
+      ],
+      [
+       0.78936,
+       0.99994,
+       -0.128
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_L_colmesh2",
+     "verts": 41,
+     "tris": 78,
+     "bounds_unity": [
+      [
+       -0.20715,
+       0.26451,
+       -3.572
+      ],
+      [
+       0.35437,
+       0.94144,
+       -3.128
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_L_colmesh3",
+     "verts": 56,
+     "tris": 108,
+     "bounds_unity": [
+      [
+       -0.06315,
+       0.48493,
+       -4.19469
+      ],
+      [
+       0.24519,
+       0.86173,
+       -3.628
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 14
+   },
+   "shape": {
+    "tris": 558,
+    "bounds_blender": [
+     [
+      -0.83777,
+      -0.0,
+      -1.09525
+     ],
+     [
+      0.90502,
+      4.3,
+      1.37727
+     ]
+    ]
+   }
+  },
+  "sponson_tail_R": {
+   "fbx": "sponson_tail_R.fbx",
+   "blender_parent": "sponson_R",
+   "pivot_blender": [
+    -2.62375,
+    6.125,
+    2.38733
+   ],
+   "pivot_unity": [
+    2.62375,
+    2.38733,
+    -6.125
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,gear_RM,geardoor_RM,geardoor_RM_visible,sponson_R,tailcone",
+    "mass_kg": 1120.0
+   },
+   "sha256": "d28637b82802a0dfd0faebaa6976b0162b09952f00d95d135d550b6a4cfb0441",
+   "bounds_blender": [
+    [
+     -0.9059,
+     -0.0,
+     -1.09688
+    ],
+    [
+     0.88112,
+     4.38,
+     2.20836
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.88112,
+     -1.09688,
+     -4.38
+    ],
+    [
+     0.9059,
+     2.20836,
+     0.0
+    ]
+   ],
+   "tris": 993,
+   "materials": [
+    [
+     "Centurion_skin",
+     733
+    ],
+    [
+     "aircraft_structure",
+     83
+    ],
+    [
+     "light_formation",
+     52
+    ],
+    [
+     "Centurion_airframe",
+     125
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "sponson_tail_R_colmesh0",
+     "verts": 44,
+     "tris": 84,
+     "bounds_unity": [
+      [
+       -0.73945,
+       -1.06325,
+       -0.072
+      ],
+      [
+       0.80511,
+       0.93495,
+       0.0
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_R_colmesh1",
+     "verts": 115,
+     "tris": 226,
+     "bounds_unity": [
+      [
+       -0.78988,
+       -1.03595,
+       -3.072
+      ],
+      [
+       0.86259,
+       0.98701,
+       -0.128
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_R_colmesh2",
+     "verts": 41,
+     "tris": 78,
+     "bounds_unity": [
+      [
+       -0.35437,
+       0.26451,
+       -3.572
+      ],
+      [
+       0.20715,
+       0.94144,
+       -3.128
+      ]
+     ]
+    },
+    {
+     "name": "sponson_tail_R_colmesh3",
+     "verts": 56,
+     "tris": 108,
+     "bounds_unity": [
+      [
+       -0.24519,
+       0.48493,
+       -4.19469
+      ],
+      [
+       0.06315,
+       0.86173,
+       -3.628
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 14
+   },
+   "shape": {
+    "tris": 558,
+    "bounds_blender": [
+     [
+      -0.90502,
+      -0.0,
+      -1.09525
+     ],
+     [
+      0.83777,
+      4.3,
+      1.37727
      ]
     ]
    }
@@ -5694,7 +9752,7 @@
     ],
     "mass_kg": 410
    },
-   "sha256": "c3e0f8833a8e54f087b508ce08011e89c926fe44bd3f64eb3e62d91fb06c7ac0",
+   "sha256": "cdfe37c1d6844e9f65003d166ac99a778d471e6b73465380cf4fdb6567f79abd",
    "bounds_blender": [
     [
      -0.31437,
@@ -5719,15 +9777,15 @@
      1.3716
     ]
    ],
-   "tris": 1484,
+   "tris": 1508,
    "materials": [
     [
      "Centurion_skin",
-     1046
+     1074
     ],
     [
      "aircraft_structure",
-     438
+     434
     ]
    ],
    "colliders": [
@@ -5863,7 +9921,7 @@
     ],
     "mass_kg": 410
    },
-   "sha256": "0432201fd2539cbb4fffdc41fa93f9351ebdb12ce9cc8868d82d5f8bbfff4455",
+   "sha256": "6b4b06b0ba6fc05dcc6b7b9fb69941cd124839fe2ba991f5ee4372537e37b415",
    "bounds_blender": [
     [
      -5.3697,
@@ -5888,15 +9946,15 @@
      1.3716
     ]
    ],
-   "tris": 1484,
+   "tris": 1508,
    "materials": [
     [
      "Centurion_skin",
-     1046
+     1074
     ],
     [
      "aircraft_structure",
-     438
+     434
     ]
    ],
    "colliders": [
@@ -5990,7 +10048,7 @@
   },
   "strut_outer_L": {
    "fbx": "strut_outer_L.fbx",
-   "blender_parent": "wing_root_L",
+   "blender_parent": "wing_outer_L",
    "pivot_blender": [
     19.4,
     1.3644,
@@ -6019,7 +10077,7 @@
     ]
    },
    "props": {
-    "bonded_to": "nacelle_1,nozzle_1",
+    "bonded_to": "nacelle_1,nozzle_1,wing_root_L",
     "line_root": [
      7.249999523162842,
      -3.372958183288574,
@@ -6032,7 +10090,7 @@
     ],
     "mass_kg": 1290
    },
-   "sha256": "287df0e4813571f4d0e2ce16ecb3ac26b2645efc2279810317d294bc5749e567",
+   "sha256": "a7f352cd48b5d546f9a987887527d36c2bb36f877f3ca1c6d1337fe4ae5f884e",
    "bounds_blender": [
     [
      -12.73856,
@@ -6061,11 +10119,11 @@
    "materials": [
     [
      "Centurion_skin",
-     1336
+     1340
     ],
     [
      "aircraft_structure",
-     450
+     446
     ]
    ],
    "colliders": [
@@ -6159,7 +10217,7 @@
   },
   "strut_outer_R": {
    "fbx": "strut_outer_R.fbx",
-   "blender_parent": "wing_root_R",
+   "blender_parent": "wing_outer_R",
    "pivot_blender": [
     -19.4,
     1.3644,
@@ -6188,7 +10246,7 @@
     ]
    },
    "props": {
-    "bonded_to": "nacelle_2,nozzle_2",
+    "bonded_to": "nacelle_2,nozzle_2,wing_root_R",
     "line_root": [
      -7.249999523162842,
      -3.372958183288574,
@@ -6201,7 +10259,7 @@
     ],
     "mass_kg": 1290
    },
-   "sha256": "ad094b349911710507ccb375014dd3e51262a03b8e5ba2468d8418252fc8fc1b",
+   "sha256": "f56e3aa0da1db6b087db3620a0fa13931537018f958c492059098c7da2833797",
    "bounds_blender": [
     [
      -0.26959,
@@ -6230,11 +10288,11 @@
    "materials": [
     [
      "Centurion_skin",
-     1336
+     1340
     ],
     [
      "aircraft_structure",
-     450
+     446
     ]
    ],
    "colliders": [
@@ -6309,6 +10367,856 @@
     ]
    }
   },
+  "tail_end": {
+   "fbx": "tail_end.fbx",
+   "blender_parent": "tailcone",
+   "pivot_blender": [
+    -0.0,
+    15.825,
+    4.57412
+   ],
+   "pivot_unity": [
+    0.0,
+    4.57412,
+    -15.825
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,laser_turret,radar_R_fairing,spine_cover,spine_cover_A,tail_end_upper,tailcone,tailcone_upper,vtail_L,vtail_R,vtail_tip_L,vtail_tip_R,wingfairing",
+    "mass_kg": 1480.0
+   },
+   "sha256": "29839b6c803d3597af1d77e6e59636edbe885a983dc926a70d63a214db8d43f1",
+   "bounds_blender": [
+    [
+     -2.48121,
+     -0.0,
+     -2.00191
+    ],
+    [
+     2.48121,
+     5.53527,
+     0.60323
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.48121,
+     -2.00191,
+     -5.53527
+    ],
+    [
+     2.48121,
+     0.60323,
+     0.0
+    ]
+   ],
+   "tris": 1396,
+   "materials": [
+    [
+     "Centurion_skin",
+     532
+    ],
+    [
+     "aircraft_structure",
+     92
+    ],
+    [
+     "Centurion_airframe",
+     772
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "tail_end_colmesh0",
+     "verts": 90,
+     "tris": 176,
+     "bounds_unity": [
+      [
+       -2.6244,
+       -1.95699,
+       -4.672
+      ],
+      [
+       2.60081,
+       1.53598,
+       0.0
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_colmesh1",
+     "verts": 92,
+     "tris": 180,
+     "bounds_unity": [
+      [
+       -0.95316,
+       -0.88188,
+       -5.672
+      ],
+      [
+       0.95316,
+       0.72433,
+       -4.72799
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 30
+   },
+   "shape": {
+    "tris": 828,
+    "bounds_blender": [
+     [
+      -2.71805,
+      -0.0,
+      -2.00191
+     ],
+     [
+      2.71805,
+      5.7,
+      2.00191
+     ]
+    ]
+   }
+  },
+  "tail_end_upper": {
+   "fbx": "tail_end_upper.fbx",
+   "blender_parent": "tail_end",
+   "pivot_blender": [
+    -0.0,
+    18.43999,
+    5.24812
+   ],
+   "pivot_unity": [
+    0.0,
+    5.24812,
+    -18.43999
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,laser_turret,radar_R_fairing,spine_cover,spine_cover_A,tail_end,tailcone,tailcone_upper,vtail_L,vtail_R,vtail_tip_L,vtail_tip_R,wingfairing",
+    "mass_kg": 700.0
+   },
+   "sha256": "ac144417d546f943c43387febbf067a3f05af5ba4f13cf74cf39c02458766f60",
+   "bounds_blender": [
+    [
+     -2.68565,
+     -2.61499,
+     -1.54439
+    ],
+    [
+     2.68565,
+     2.62075,
+     0.99005
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.68565,
+     -1.54439,
+     -2.62075
+    ],
+    [
+     2.68565,
+     0.99005,
+     2.61499
+    ]
+   ],
+   "tris": 3628,
+   "materials": [
+    [
+     "Centurion_skin",
+     1664
+    ],
+    [
+     "jet_mechanical",
+     252
+    ],
+    [
+     "aircraft_structure",
+     216
+    ],
+    [
+     "glass",
+     328
+    ],
+    [
+     "light_white",
+     94
+    ],
+    [
+     "light_formation",
+     104
+    ],
+    [
+     "Centurion_airframe",
+     970
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "tail_end_upper_colmesh0",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.19357,
+       -1.41565,
+       0.86399
+      ],
+      [
+       2.69488,
+       -0.63021,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh1",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.67566,
+       -1.27694,
+       -0.86402
+      ],
+      [
+       2.41889,
+       -0.63021,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh2",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.89628,
+       -1.14201,
+       -2.59201
+      ],
+      [
+       1.86022,
+       -0.64251,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.18132,
+       -0.6597,
+       0.86399
+      ],
+      [
+       2.69488,
+       0.09472,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh4",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.66627,
+       -0.64275,
+       -0.86402
+      ],
+      [
+       2.41889,
+       0.01479,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh5",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.89122,
+       -0.67131,
+       -2.59201
+      ],
+      [
+       1.86022,
+       -0.14436,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh6",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.66128,
+       0.00067,
+       0.86399
+      ],
+      [
+       2.48382,
+       0.7318,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh7",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.26764,
+       -0.15854,
+       -0.86402
+      ],
+      [
+       2.22928,
+       0.55935,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh8",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.67693,
+       -0.38306,
+       -2.59201
+      ],
+      [
+       1.71421,
+       0.27592,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh9",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.8937,
+       0.53053,
+       0.86399
+      ],
+      [
+       1.89695,
+       1.1553,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh10",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.68089,
+       0.24701,
+       -0.86402
+      ],
+      [
+       1.70214,
+       0.92082,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh11",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       0.3631,
+       -0.14249,
+       -2.59201
+      ],
+      [
+       1.30844,
+       0.55445,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh12",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.55527,
+       0.87772,
+       0.86399
+      ],
+      [
+       1.02466,
+       1.24735,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh13",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.42283,
+       0.5113,
+       -0.86402
+      ],
+      [
+       0.91906,
+       0.99925,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh14",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       0.22544,
+       0.01365,
+       -2.59201
+      ],
+      [
+       0.70616,
+       0.61479,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh15",
+     "verts": 23,
+     "tris": 42,
+     "bounds_unity": [
+      [
+       -0.0,
+       0.95203,
+       0.86399
+      ],
+      [
+       0.63751,
+       1.30324,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh16",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.0,
+       0.56755,
+       -0.86402
+      ],
+      [
+       0.57172,
+       1.04682,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh17",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.0,
+       0.04687,
+       -2.59201
+      ],
+      [
+       0.43922,
+       0.65136,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh18",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.63751,
+       0.95203,
+       0.86399
+      ],
+      [
+       -0.0,
+       1.30324,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh19",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.57172,
+       0.56755,
+       -0.86402
+      ],
+      [
+       -0.0,
+       1.04682,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh20",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.43922,
+       0.04687,
+       -2.59201
+      ],
+      [
+       -0.0,
+       0.65136,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh21",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -1.02466,
+       0.87772,
+       0.86399
+      ],
+      [
+       -0.55527,
+       1.24735,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh22",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.91906,
+       0.5113,
+       -0.86402
+      ],
+      [
+       -0.42283,
+       0.99925,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh23",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -0.70616,
+       0.01365,
+       -2.59201
+      ],
+      [
+       -0.22544,
+       0.61479,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh24",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.89695,
+       0.53053,
+       0.86399
+      ],
+      [
+       -0.8937,
+       1.1553,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh25",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.70214,
+       0.24701,
+       -0.86402
+      ],
+      [
+       -0.68089,
+       0.92082,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh26",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.30844,
+       -0.14249,
+       -2.59201
+      ],
+      [
+       -0.3631,
+       0.55445,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh27",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.48382,
+       0.00067,
+       0.86399
+      ],
+      [
+       -1.66128,
+       0.7318,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh28",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.22928,
+       -0.15854,
+       -0.86402
+      ],
+      [
+       -1.26764,
+       0.55935,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh29",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.71421,
+       -0.38306,
+       -2.59201
+      ],
+      [
+       -0.67693,
+       0.27592,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh30",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.69488,
+       -0.6597,
+       0.86399
+      ],
+      [
+       -2.18132,
+       0.09472,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh31",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.41889,
+       -0.64275,
+       -0.86402
+      ],
+      [
+       -1.66627,
+       0.01479,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh32",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.86022,
+       -0.67131,
+       -2.59201
+      ],
+      [
+       -0.89122,
+       -0.14436,
+       -0.86402
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh33",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.69488,
+       -1.41565,
+       0.86399
+      ],
+      [
+       -2.19357,
+       -0.63021,
+       2.59199
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh34",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.41889,
+       -1.27694,
+       -0.86402
+      ],
+      [
+       -1.67566,
+       -0.63021,
+       0.86399
+      ]
+     ]
+    },
+    {
+     "name": "tail_end_upper_colmesh35",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.86022,
+       -1.14201,
+       -2.59201
+      ],
+      [
+       -0.89628,
+       -0.64251,
+       -0.86402
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1800,
+    "bounds_blender": [
+     [
+      -2.7197,
+      -2.61499,
+      -1.43985
+     ],
+     [
+      2.7197,
+      2.61502,
+      1.32872
+     ]
+    ]
+   }
+  },
   "tailcone": {
    "fbx": "tailcone.fbx",
    "blender_parent": "fuselage_R",
@@ -6340,62 +11248,47 @@
     ]
    },
    "props": {
-    "mass_kg": 4363.71
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone_upper,wingfairing",
+    "mass_kg": 777.94
    },
-   "sha256": "724b494c8ddc1b2e8e8ac66ef3e1027a2d13a6805a23e273589111bfc01428a5",
+   "sha256": "2961d92c9ea7a1e1ee5d44b7f15e1cf6c0bed1dc3e620328082fd5579785f474",
    "bounds_blender": [
     [
-     -2.75,
-     0.0,
+     -2.72629,
+     -0.2409,
      -2.35531
     ],
     [
-     2.75,
-     10.53,
-     3.09
+     2.72629,
+     5.3,
+     2.68403
     ]
    ],
    "bounds_unity": [
     [
-     -2.75,
+     -2.72629,
      -2.35531,
-     -10.53
+     -5.3
     ],
     [
-     2.75,
-     3.09,
-     -0.0
+     2.72629,
+     2.68403,
+     0.2409
     ]
    ],
-   "tris": 4420,
+   "tris": 1172,
    "materials": [
     [
      "Centurion_skin",
-     2696
-    ],
-    [
-     "jet_mechanical",
-     252
-    ],
-    [
-     "aircraft_structure",
-     580
-    ],
-    [
-     "glass",
      328
     ],
     [
-     "light_red",
-     318
+     "aircraft_structure",
+     25
     ],
     [
-     "light_white",
-     142
-    ],
-    [
-     "light_formation",
-     104
+     "Centurion_airframe",
+     819
     ]
    ],
    "colliders": [
@@ -6406,8 +11299,8 @@
      "bounds_unity": [
       [
        -2.72184,
-       -2.32157,
-       -1.472
+       -2.32092,
+       -1.972
       ],
       [
        2.72184,
@@ -6418,34 +11311,34 @@
     },
     {
      "name": "tailcone_colmesh1",
-     "verts": 118,
-     "tris": 232,
+     "verts": 125,
+     "tris": 246,
      "bounds_unity": [
       [
-       -2.72182,
-       -2.04492,
+       -2.72181,
+       -1.95271,
        -2.972
       ],
       [
-       2.72182,
-       2.72191,
-       -1.528
+       2.72181,
+       2.64299,
+       -2.028
       ]
      ]
     },
     {
      "name": "tailcone_colmesh2",
-     "verts": 99,
-     "tris": 194,
+     "verts": 96,
+     "tris": 188,
      "bounds_unity": [
       [
-       -2.72011,
-       -1.76747,
-       -10.97008
+       -2.72078,
+       -1.76798,
+       -5.3
       ],
       [
-       2.72011,
-       2.71938,
+       2.72062,
+       2.55643,
        -3.028
       ]
      ]
@@ -6455,7 +11348,7 @@
     "tris": 30
    },
    "shape": {
-    "tris": 1212,
+    "tris": 508,
     "bounds_blender": [
      [
       -2.75,
@@ -6464,15 +11357,860 @@
      ],
      [
       2.75,
-      11.0,
+      5.3,
       2.75
+     ]
+    ]
+   }
+  },
+  "tailcone_upper": {
+   "fbx": "tailcone_upper.fbx",
+   "blender_parent": "tailcone",
+   "pivot_blender": [
+    0.0,
+    13.17502,
+    5.40248
+   ],
+   "pivot_unity": [
+    -0.0,
+    5.40248,
+    -13.17502
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "cheek_L,cheek_R,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,laser_turret,radar_R_fairing,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone,vtail_L,vtail_R,vtail_tip_L,vtail_tip_R,wingfairing",
+    "mass_kg": 900.0
+   },
+   "sha256": "6d8a83cef8fe46ea346aa02552a0d8461727e98d2161a38fa92c71b367254950",
+   "bounds_blender": [
+    [
+     -2.75,
+     -2.65106,
+     -2.23199
+    ],
+    [
+     2.75,
+     2.64998,
+     1.50404
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -2.75,
+     -2.23199,
+     -2.64998
+    ],
+    [
+     2.75,
+     1.50404,
+     2.65106
+    ]
+   ],
+   "tris": 1826,
+   "materials": [
+    [
+     "Centurion_skin",
+     640
+    ],
+    [
+     "aircraft_structure",
+     102
+    ],
+    [
+     "light_red",
+     198
+    ],
+    [
+     "Centurion_airframe",
+     886
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "tailcone_upper_colmesh0",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       2.48051,
+       -2.20124,
+       0.87569
+      ],
+      [
+       2.72694,
+       -1.07565,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh1",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       2.48043,
+       -1.97963,
+       0.61372
+      ],
+      [
+       2.72694,
+       -1.05166,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh2",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       2.48,
+       -1.94648,
+       -0.87565
+      ],
+      [
+       2.72694,
+       -0.91846,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh3",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.45293,
+       -1.76005,
+       -2.62698
+      ],
+      [
+       2.72694,
+       -0.81554,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh4",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       2.46678,
+       -1.2364,
+       0.87569
+      ],
+      [
+       2.72694,
+       -0.17408,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh5",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       2.4667,
+       -1.07594,
+       0.61372
+      ],
+      [
+       2.72694,
+       -0.15921,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh6",
+     "verts": 25,
+     "tris": 46,
+     "bounds_unity": [
+      [
+       2.46624,
+       -1.05194,
+       -0.87565
+      ],
+      [
+       2.72694,
+       -0.07911,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh7",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       2.43927,
+       -0.91873,
+       -2.62698
+      ],
+      [
+       2.72694,
+       -0.0546,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh8",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       1.88308,
+       -0.29165,
+       0.87569
+      ],
+      [
+       2.51393,
+       0.58829,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh9",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       1.88284,
+       -0.19123,
+       0.61372
+      ],
+      [
+       2.51375,
+       0.5954,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh10",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       1.88142,
+       -0.1762,
+       -0.87565
+      ],
+      [
+       2.51372,
+       0.63034,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh11",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.85926,
+       -0.0952,
+       -2.62698
+      ],
+      [
+       2.51358,
+       0.63034,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh12",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       1.01683,
+       0.50669,
+       0.87569
+      ],
+      [
+       1.92122,
+       1.09642,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh13",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       1.01657,
+       0.55538,
+       0.61372
+      ],
+      [
+       1.92071,
+       1.09828,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh14",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.01498,
+       0.56267,
+       -0.87565
+      ],
+      [
+       1.92064,
+       1.10571,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh15",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       1.0016,
+       0.55061,
+       -2.62698
+      ],
+      [
+       1.92019,
+       1.1027,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh16",
+     "verts": 16,
+     "tris": 28,
+     "bounds_unity": [
+      [
+       0.63261,
+       1.0383,
+       0.87569
+      ],
+      [
+       1.03879,
+       1.20719,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh17",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       0.63243,
+       1.05124,
+       0.61372
+      ],
+      [
+       1.03827,
+       1.20789,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh18",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       0.63127,
+       1.05319,
+       -0.87565
+      ],
+      [
+       1.03819,
+       1.21037,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh19",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       0.62263,
+       0.96172,
+       -2.62698
+      ],
+      [
+       1.03768,
+       1.20558,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh20",
+     "verts": 16,
+     "tris": 28,
+     "bounds_unity": [
+      [
+       0.0,
+       1.15771,
+       -0.87565
+      ],
+      [
+       0.64608,
+       1.27452,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh21",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       0.0,
+       1.05027,
+       -2.62698
+      ],
+      [
+       0.64572,
+       1.26809,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh22",
+     "verts": 16,
+     "tris": 28,
+     "bounds_unity": [
+      [
+       -0.64608,
+       1.15771,
+       -0.87565
+      ],
+      [
+       0.0,
+       1.27452,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh23",
+     "verts": 19,
+     "tris": 34,
+     "bounds_unity": [
+      [
+       -0.64572,
+       1.05027,
+       -2.62698
+      ],
+      [
+       0.0,
+       1.26809,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh24",
+     "verts": 16,
+     "tris": 28,
+     "bounds_unity": [
+      [
+       -1.03879,
+       1.0383,
+       0.87569
+      ],
+      [
+       -0.63261,
+       1.20719,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh25",
+     "verts": 10,
+     "tris": 16,
+     "bounds_unity": [
+      [
+       -1.03827,
+       1.05124,
+       0.61372
+      ],
+      [
+       -0.63243,
+       1.20789,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh26",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -1.03819,
+       1.05319,
+       -0.87565
+      ],
+      [
+       -0.63127,
+       1.21037,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh27",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       -1.03768,
+       0.96172,
+       -2.62698
+      ],
+      [
+       -0.62263,
+       1.20558,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh28",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -1.92122,
+       0.50669,
+       0.87569
+      ],
+      [
+       -1.01683,
+       1.09642,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh29",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -1.92071,
+       0.55538,
+       0.61372
+      ],
+      [
+       -1.01657,
+       1.09828,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh30",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.92064,
+       0.56267,
+       -0.87565
+      ],
+      [
+       -1.01498,
+       1.10571,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh31",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -1.92019,
+       0.55061,
+       -2.62698
+      ],
+      [
+       -1.0016,
+       1.1027,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh32",
+     "verts": 22,
+     "tris": 40,
+     "bounds_unity": [
+      [
+       -2.51393,
+       -0.29165,
+       0.87569
+      ],
+      [
+       -1.88308,
+       0.58829,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh33",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.51375,
+       -0.19123,
+       0.61372
+      ],
+      [
+       -1.88284,
+       0.5954,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh34",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -2.51372,
+       -0.1762,
+       -0.87565
+      ],
+      [
+       -1.88142,
+       0.63034,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh35",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.51358,
+       -0.0952,
+       -2.62698
+      ],
+      [
+       -1.85926,
+       0.63034,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh36",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.2364,
+       0.87569
+      ],
+      [
+       -2.46678,
+       -0.17408,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh37",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.07594,
+       0.61372
+      ],
+      [
+       -2.4667,
+       -0.15921,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh38",
+     "verts": 25,
+     "tris": 46,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.05194,
+       -0.87565
+      ],
+      [
+       -2.46624,
+       -0.07911,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh39",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -0.91873,
+       -2.62698
+      ],
+      [
+       -2.43927,
+       -0.0546,
+       -0.87565
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh40",
+     "verts": 21,
+     "tris": 38,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -2.20124,
+       0.87569
+      ],
+      [
+       -2.48051,
+       -1.07565,
+       2.62702
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh41",
+     "verts": 14,
+     "tris": 24,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.97963,
+       0.61372
+      ],
+      [
+       -2.48043,
+       -1.05166,
+       0.87569
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh42",
+     "verts": 20,
+     "tris": 36,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.94648,
+       -0.87565
+      ],
+      [
+       -2.48,
+       -0.91846,
+       0.61372
+      ]
+     ]
+    },
+    {
+     "name": "tailcone_upper_colmesh43",
+     "verts": 28,
+     "tris": 52,
+     "bounds_unity": [
+      [
+       -2.72694,
+       -1.76005,
+       -2.62698
+      ],
+      [
+       -2.45293,
+       -0.81554,
+       -0.87565
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 1972,
+    "bounds_blender": [
+     [
+      -2.75,
+      -2.65002,
+      -2.23199
+     ],
+     [
+      2.75,
+      2.64998,
+      1.29752
      ]
     ]
    }
   },
   "vtail_L": {
    "fbx": "vtail_L.fbx",
-   "blender_parent": "tailcone",
+   "blender_parent": "tailcone_upper",
    "pivot_blender": [
     1.51,
     13.90625,
@@ -6501,55 +12239,47 @@
     ]
    },
    "props": {
-    "bonded_to": "fuselage_R",
-    "mass_kg": 1500
+    "bonded_to": "fuselage_R,tailcone",
+    "mass_kg": 510.0
    },
-   "sha256": "a2323a26594abc7703f0f867e9cd5e53c15d6a7ca7f9832f3a4743928bb45eb7",
+   "sha256": "f03b558d891cc981d19b93a651e14fb3b50d1b64063942cc998500447f3a9a07",
    "bounds_blender": [
     [
      -0.4018,
-     -2.83914,
+     -2.8379,
      -0.39594
     ],
     [
-     7.24472,
-     7.88731,
-     4.19835
+     3.23924,
+     4.95181,
+     2.01053
     ]
    ],
    "bounds_unity": [
     [
-     -7.24472,
+     -3.23924,
      -0.39594,
-     -7.88731
+     -4.95181
     ],
     [
      0.4018,
-     4.19835,
-     2.83914
+     2.01053,
+     2.8379
     ]
    ],
-   "tris": 3124,
+   "tris": 1836,
    "materials": [
     [
      "Centurion_skin",
-     2212
-    ],
-    [
-     "jet_mechanical",
-     100
+     1178
     ],
     [
      "aircraft_structure",
-     606
+     619
     ],
     [
-     "light_white",
-     94
-    ],
-    [
-     "light_formation",
-     112
+     "Centurion_airframe",
+     39
     ]
    ],
    "colliders": [
@@ -6572,35 +12302,18 @@
     },
     {
      "name": "vtail_L_colmesh1",
-     "verts": 70,
-     "tris": 136,
+     "verts": 31,
+     "tris": 58,
      "bounds_unity": [
       [
-       -6.82637,
+       -3.22906,
        0.53608,
-       -6.04777
+       -3.89216
       ],
       [
        -1.23891,
-       3.998,
+       1.89987,
        0.04465
-      ]
-     ]
-    },
-    {
-     "name": "vtail_L_colmesh2",
-     "verts": 120,
-     "tris": 236,
-     "bounds_unity": [
-      [
-       -7.20389,
-       3.83509,
-       -7.7633
-      ],
-      [
-       -6.75728,
-       4.1698,
-       -3.91727
       ]
      ]
     }
@@ -6609,7 +12322,7 @@
     "tris": 30
    },
    "shape": {
-    "tris": 628,
+    "tris": 206,
     "bounds_blender": [
      [
       -0.40543,
@@ -6617,16 +12330,16 @@
       -0.40223
      ],
      [
-      7.2442,
-      7.82885,
-      4.20175
+      3.2429,
+      4.95181,
+      2.01687
      ]
     ]
    }
   },
   "vtail_R": {
    "fbx": "vtail_R.fbx",
-   "blender_parent": "tailcone",
+   "blender_parent": "tailcone_upper",
    "pivot_blender": [
     -1.51,
     13.90625,
@@ -6655,55 +12368,47 @@
     ]
    },
    "props": {
-    "bonded_to": "fuselage_R",
-    "mass_kg": 1500
+    "bonded_to": "fuselage_R,tailcone",
+    "mass_kg": 510.0
    },
-   "sha256": "72f48dbbc5a178575283b91144e745524faa2a8568fe7f30864bd0723e302e1b",
+   "sha256": "262be005714bd00035ca2124e663bc5298f30d73c8705e45e68995a1c59a12ac",
    "bounds_blender": [
     [
-     -7.24472,
-     -2.83918,
+     -3.23924,
+     -2.8379,
      -0.39594
     ],
     [
      0.4018,
-     7.88731,
-     4.19835
+     4.95181,
+     2.01053
     ]
    ],
    "bounds_unity": [
     [
      -0.4018,
      -0.39594,
-     -7.88731
+     -4.95181
     ],
     [
-     7.24472,
-     4.19835,
-     2.83918
+     3.23924,
+     2.01053,
+     2.8379
     ]
    ],
-   "tris": 3196,
+   "tris": 1920,
    "materials": [
     [
      "Centurion_skin",
-     2267
-    ],
-    [
-     "jet_mechanical",
-     100
+     1240
     ],
     [
      "aircraft_structure",
-     623
+     641
     ],
     [
-     "light_white",
-     94
-    ],
-    [
-     "light_formation",
-     112
+     "Centurion_airframe",
+     39
     ]
    ],
    "colliders": [
@@ -6726,35 +12431,18 @@
     },
     {
      "name": "vtail_R_colmesh1",
-     "verts": 70,
-     "tris": 136,
+     "verts": 30,
+     "tris": 56,
      "bounds_unity": [
       [
        1.23891,
        0.53608,
-       -6.04777
+       -3.89216
       ],
       [
-       6.82637,
-       3.998,
+       3.22906,
+       1.89987,
        0.04465
-      ]
-     ]
-    },
-    {
-     "name": "vtail_R_colmesh2",
-     "verts": 119,
-     "tris": 234,
-     "bounds_unity": [
-      [
-       6.75728,
-       3.83109,
-       -7.76094
-      ],
-      [
-       7.20421,
-       4.16983,
-       -3.91726
       ]
      ]
     }
@@ -6763,17 +12451,291 @@
     "tris": 30
    },
    "shape": {
-    "tris": 628,
+    "tris": 206,
     "bounds_blender": [
      [
-      -7.2442,
+      -3.2429,
       -1.56495,
       -0.40223
      ],
      [
       0.40543,
-      7.82885,
-      4.20175
+      4.95181,
+      2.01687
+     ]
+    ]
+   }
+  },
+  "vtail_tip_L": {
+   "fbx": "vtail_tip_L.fbx",
+   "blender_parent": "vtail_L",
+   "pivot_blender": [
+    4.62769,
+    16.65333,
+    5.1
+   ],
+   "pivot_unity": [
+    -4.62769,
+    5.1,
+    -16.65333
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,ruddervator_L1,ruddervator_L1_visible,ruddervator_L2,ruddervator_L2_visible,tail_end,tail_end_upper,tailcone,tailcone_upper,vtail_L",
+    "mass_kg": 990.0
+   },
+   "sha256": "739ca609effb823eaacb3826f6b7313da2f1b517881402f5d97dbad99e01a4e7",
+   "bounds_blender": [
+    [
+     -0.12155,
+     -2.24894,
+     -0.21053
+    ],
+    [
+     4.12703,
+     5.14023,
+     2.39835
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -4.12703,
+     -0.21053,
+     -5.14023
+    ],
+    [
+     0.12155,
+     2.39835,
+     2.24894
+    ]
+   ],
+   "tris": 1418,
+   "materials": [
+    [
+     "Centurion_skin",
+     1073
+    ],
+    [
+     "jet_mechanical",
+     100
+    ],
+    [
+     "light_white",
+     94
+    ],
+    [
+     "light_formation",
+     112
+    ],
+    [
+     "Centurion_airframe",
+     39
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "vtail_tip_L_colmesh0",
+     "verts": 69,
+     "tris": 134,
+     "bounds_unity": [
+      [
+       -3.70868,
+       -0.19289,
+       -3.30069
+      ],
+      [
+       0.05766,
+       2.198,
+       1.68553
+      ]
+     ]
+    },
+    {
+     "name": "vtail_tip_L_colmesh1",
+     "verts": 120,
+     "tris": 236,
+     "bounds_unity": [
+      [
+       -4.0862,
+       2.03509,
+       -5.01621
+      ],
+      [
+       -3.63959,
+       2.3698,
+       -1.17019
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 20
+   },
+   "shape": {
+    "tris": 502,
+    "bounds_blender": [
+     [
+      -0.12521,
+      -2.24894,
+      -0.21687
+     ],
+     [
+      4.12651,
+      5.08177,
+      2.40175
+     ]
+    ]
+   }
+  },
+  "vtail_tip_R": {
+   "fbx": "vtail_tip_R.fbx",
+   "blender_parent": "vtail_R",
+   "pivot_blender": [
+    -4.62769,
+    16.65333,
+    5.1
+   ],
+   "pivot_unity": [
+    4.62769,
+    5.1,
+    -16.65333
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,ruddervator_R1,ruddervator_R1_visible,ruddervator_R2,ruddervator_R2_visible,tail_end,tail_end_upper,tailcone,tailcone_upper,vtail_R",
+    "mass_kg": 990.0
+   },
+   "sha256": "04e4ac212e121598a4e6d74202bc8f42d0b616d25c3673ff8d1442d7d7d84f4b",
+   "bounds_blender": [
+    [
+     -4.12703,
+     -2.24894,
+     -0.21053
+    ],
+    [
+     0.12155,
+     5.14023,
+     2.39835
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -0.12155,
+     -0.21053,
+     -5.14023
+    ],
+    [
+     4.12703,
+     2.39835,
+     2.24894
+    ]
+   ],
+   "tris": 1418,
+   "materials": [
+    [
+     "Centurion_skin",
+     1073
+    ],
+    [
+     "jet_mechanical",
+     100
+    ],
+    [
+     "light_white",
+     94
+    ],
+    [
+     "light_formation",
+     112
+    ],
+    [
+     "Centurion_airframe",
+     39
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "vtail_tip_R_colmesh0",
+     "verts": 70,
+     "tris": 136,
+     "bounds_unity": [
+      [
+       -0.05766,
+       -0.19289,
+       -3.30069
+      ],
+      [
+       3.70868,
+       2.198,
+       1.68553
+      ]
+     ]
+    },
+    {
+     "name": "vtail_tip_R_colmesh1",
+     "verts": 119,
+     "tris": 234,
+     "bounds_unity": [
+      [
+       3.63959,
+       2.03109,
+       -5.01385
+      ],
+      [
+       4.08652,
+       2.36983,
+       -1.17018
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 20
+   },
+   "shape": {
+    "tris": 502,
+    "bounds_blender": [
+     [
+      -4.12651,
+      -2.24894,
+      -0.21687
+     ],
+     [
+      0.12521,
+      5.08177,
+      2.40175
      ]
     ]
    }
@@ -6809,7 +12771,7 @@
     ]
    },
    "props": {},
-   "sha256": "30706b7052a1743f350755b52ee1b27d18e6bc61ee1218ef7c53d471a909008b",
+   "sha256": "d2118a894ae72b943aa077217488c46f2603fdf62e500abc26bebe48e6dd242b",
    "bounds_blender": [
     [
      -0.552,
@@ -6834,11 +12796,11 @@
      0.55
     ]
    ],
-   "tris": 1760,
+   "tris": 1184,
    "materials": [
     [
      "Centurion_gear",
-     1760
+     1184
     ]
    ],
    "colliders": [],
@@ -6890,7 +12852,7 @@
     ]
    },
    "props": {},
-   "sha256": "86cf681ea98a817ac2098f9664b59c6a88330b04af67abb0a6180c486f55ef54",
+   "sha256": "42b8e83f4cd3677cc02fdec676acb9581c70cc47c59fb7a6fb818cc47ec0c673",
    "bounds_blender": [
     [
      -0.602,
@@ -6915,11 +12877,11 @@
      2.0
     ]
    ],
-   "tris": 4960,
+   "tris": 3616,
    "materials": [
     [
      "Centurion_gear",
-     4960
+     3616
     ]
    ],
    "colliders": [],
@@ -6971,7 +12933,7 @@
     ]
    },
    "props": {},
-   "sha256": "41fab7fd4a8d7d2d138454ebbdb5d6c334031fb76b0bd8fd0958751f13a69623",
+   "sha256": "0db181caf5d7365bb0c9f5a8d45b75d9e16377d609e912b4fe53c219404c328c",
    "bounds_blender": [
     [
      -0.602,
@@ -6996,11 +12958,11 @@
      2.0
     ]
    ],
-   "tris": 4960,
+   "tris": 3616,
    "materials": [
     [
      "Centurion_gear",
-     4960
+     3616
     ]
    ],
    "colliders": [],
@@ -7017,6 +12979,374 @@
       0.6,
       2.0,
       0.6
+     ]
+    ]
+   }
+  },
+  "wing_outer_L": {
+   "fbx": "wing_outer_L.fbx",
+   "blender_parent": "wing_root_L",
+   "pivot_blender": [
+    10.7,
+    -1.26169,
+    5.93603
+   ],
+   "pivot_unity": [
+    -10.7,
+    5.93603,
+    1.26169
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_L,aileron_L_visible,cheek_L,cheek_R,flap_L1,flap_L1_visible,flap_L2,flap_L2_visible,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_1,spoiler_L,spoiler_L_visible,strut_outer_L,wing_outer_R,wing_root_L,wing_root_R,wing_tele1_L,wingfairing",
+    "mass_kg": 5625.0
+   },
+   "sha256": "dde9945f564ba98a4b18a305e5d82dad5511c12693fcc85e790e1c95732a97e0",
+   "bounds_blender": [
+    [
+     0.0,
+     -2.75668,
+     -0.80443
+    ],
+    [
+     9.3,
+     4.25405,
+     0.4157
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -9.3,
+     -0.80443,
+     -4.25405
+    ],
+    [
+     -0.0,
+     0.4157,
+     2.75668
+    ]
+   ],
+   "tris": 1726,
+   "materials": [
+    [
+     "Centurion_skin",
+     1569
+    ],
+    [
+     "jet_mechanical",
+     68
+    ],
+    [
+     "aircraft_structure",
+     46
+    ],
+    [
+     "Centurion_airframe",
+     43
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "wing_outer_L_colmesh0",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       -1.702,
+       -0.35804,
+       -0.89808
+      ],
+      [
+       -0.0,
+       0.38544,
+       2.54773
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_L_colmesh1",
+     "verts": 62,
+     "tris": 120,
+     "bounds_unity": [
+      [
+       -2.032,
+       -0.36719,
+       -3.39428
+      ],
+      [
+       -1.768,
+       0.26145,
+       2.09433
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_L_colmesh2",
+     "verts": 37,
+     "tris": 70,
+     "bounds_unity": [
+      [
+       -5.772,
+       -0.49128,
+       -1.91224
+      ],
+      [
+       -2.098,
+       0.23855,
+       1.97927
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_L_colmesh3",
+     "verts": 18,
+     "tris": 32,
+     "bounds_unity": [
+      [
+       -8.912,
+       -0.59676,
+       -2.42329
+      ],
+      [
+       -5.828,
+       0.00823,
+       -0.16234
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_L_colmesh4",
+     "verts": 58,
+     "tris": 112,
+     "bounds_unity": [
+      [
+       -9.272,
+       -0.60886,
+       -4.15512
+      ],
+      [
+       -8.968,
+       -0.18395,
+       -0.21175
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 30
+   },
+   "shape": {
+    "tris": 416,
+    "bounds_blender": [
+     [
+      0.0,
+      -2.75668,
+      -0.63783
+     ],
+     [
+      9.3,
+      4.2588,
+      0.41353
+     ]
+    ]
+   }
+  },
+  "wing_outer_R": {
+   "fbx": "wing_outer_R.fbx",
+   "blender_parent": "wing_root_R",
+   "pivot_blender": [
+    -10.7,
+    -1.26169,
+    5.93603
+   ],
+   "pivot_unity": [
+    10.7,
+    5.93603,
+    1.26169
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "aileron_R,aileron_R_visible,cheek_L,cheek_R,flap_R1,flap_R1_visible,flap_R2,flap_R2_visible,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,pylon_2,spoiler_R,spoiler_R_visible,strut_outer_R,wing_outer_L,wing_root_L,wing_root_R,wing_tele1_R,wingfairing",
+    "mass_kg": 5625.0
+   },
+   "sha256": "874c88a25ec7a0de94d50be65b61a33ea49643ea0c7f130b27f3662e366e5c78",
+   "bounds_blender": [
+    [
+     -9.3,
+     -2.75668,
+     -0.80443
+    ],
+    [
+     -0.0,
+     4.25405,
+     0.4157
+    ]
+   ],
+   "bounds_unity": [
+    [
+     0.0,
+     -0.80443,
+     -4.25405
+    ],
+    [
+     9.3,
+     0.4157,
+     2.75668
+    ]
+   ],
+   "tris": 1726,
+   "materials": [
+    [
+     "Centurion_skin",
+     1569
+    ],
+    [
+     "jet_mechanical",
+     68
+    ],
+    [
+     "aircraft_structure",
+     46
+    ],
+    [
+     "Centurion_airframe",
+     43
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "wing_outer_R_colmesh0",
+     "verts": 26,
+     "tris": 48,
+     "bounds_unity": [
+      [
+       0.0,
+       -0.35804,
+       -0.89808
+      ],
+      [
+       1.702,
+       0.38544,
+       2.54773
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_R_colmesh1",
+     "verts": 48,
+     "tris": 92,
+     "bounds_unity": [
+      [
+       1.768,
+       -0.36747,
+       -3.39428
+      ],
+      [
+       2.042,
+       0.26145,
+       1.82273
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_R_colmesh2",
+     "verts": 37,
+     "tris": 70,
+     "bounds_unity": [
+      [
+       2.098,
+       -0.49128,
+       -1.91224
+      ],
+      [
+       5.772,
+       0.23855,
+       1.97927
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_R_colmesh3",
+     "verts": 18,
+     "tris": 32,
+     "bounds_unity": [
+      [
+       5.828,
+       -0.59676,
+       -2.42329
+      ],
+      [
+       8.912,
+       0.00823,
+       -0.16234
+      ]
+     ]
+    },
+    {
+     "name": "wing_outer_R_colmesh4",
+     "verts": 58,
+     "tris": 112,
+     "bounds_unity": [
+      [
+       8.968,
+       -0.60886,
+       -4.15512
+      ],
+      [
+       9.272,
+       -0.18395,
+       -0.21175
+      ]
+     ]
+    }
+   ],
+   "lod1": {
+    "tris": 30
+   },
+   "shape": {
+    "tris": 416,
+    "bounds_blender": [
+     [
+      -9.3,
+      -2.75668,
+      -0.63783
+     ],
+     [
+      -0.0,
+      4.2588,
+      0.41353
      ]
     ]
    }
@@ -7053,26 +13383,26 @@
    },
    "props": {
     "bonded_to": "wing_root_R,fuselage_F",
-    "mass_kg": 12500
+    "mass_kg": 6635.0
    },
-   "sha256": "20c375524c0e1b8dfe577b94490e395cd112932357f14ef3b42a8331ecaaf4ee",
+   "sha256": "a1cad24393fdc35297631b3337505762016ba5d682bfde4ee9f002a7bda3c447",
    "bounds_blender": [
     [
      0.0,
      -2.43667,
-     -1.25737
+     -0.79125
     ],
     [
-     20.0,
-     8.34105,
+     10.7,
+     7.43296,
      0.71452
     ]
    ],
    "bounds_unity": [
     [
-     -20.0,
-     -1.25737,
-     -8.34105
+     -10.7,
+     -0.79125,
+     -7.43296
     ],
     [
      -0.0,
@@ -7080,23 +13410,23 @@
      2.43667
     ]
    ],
-   "tris": 3622,
+   "tris": 1246,
    "materials": [
     [
      "Centurion_skin",
-     3185
-    ],
-    [
-     "jet_mechanical",
-     68
+     1034
     ],
     [
      "aircraft_structure",
-     181
+     43
     ],
     [
      "light_white",
-     188
+     126
+    ],
+    [
+     "Centurion_airframe",
+     43
     ]
    ],
    "colliders": [
@@ -7153,12 +13483,12 @@
     },
     {
      "name": "wing_root_L_colmesh3",
-     "verts": 30,
-     "tris": 56,
+     "verts": 40,
+     "tris": 76,
      "bounds_unity": [
       [
-       -12.402,
-       -0.81099,
+       -10.7,
+       -0.75699,
        -5.42095
       ],
       [
@@ -7167,90 +13497,22 @@
        -0.55935
       ]
      ]
-    },
-    {
-     "name": "wing_root_L_colmesh4",
-     "verts": 62,
-     "tris": 120,
-     "bounds_unity": [
-      [
-       -12.732,
-       -0.82013,
-       -7.48128
-      ],
-      [
-       -12.468,
-       -0.1915,
-       -1.99267
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_L_colmesh5",
-     "verts": 37,
-     "tris": 70,
-     "bounds_unity": [
-      [
-       -16.472,
-       -0.94422,
-       -5.99924
-      ],
-      [
-       -12.798,
-       -0.21439,
-       -2.10773
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_L_colmesh6",
-     "verts": 18,
-     "tris": 32,
-     "bounds_unity": [
-      [
-       -19.612,
-       -1.04971,
-       -6.51029
-      ],
-      [
-       -16.528,
-       -0.44472,
-       -4.24934
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_L_colmesh7",
-     "verts": 58,
-     "tris": 112,
-     "bounds_unity": [
-      [
-       -19.972,
-       -1.06181,
-       -8.24212
-      ],
-      [
-       -19.668,
-       -0.6369,
-       -4.29875
-      ]
-     ]
     }
    ],
    "lod1": {
     "tris": 30
    },
    "shape": {
-    "tris": 962,
+    "tris": 626,
     "bounds_blender": [
      [
       0.0,
       -2.43667,
-      -1.09077
+      -0.79183
      ],
      [
-      20.0,
-      8.3458,
+      10.7,
+      7.4332,
       0.71103
      ]
     ]
@@ -7288,50 +13550,50 @@
    },
    "props": {
     "bonded_to": "fuselage_F",
-    "mass_kg": 12500
+    "mass_kg": 6635.0
    },
-   "sha256": "61618d9cb64a73065767cda24c560f711ae5912da0bb7db63a3ef8699d17d2fd",
+   "sha256": "a47c83dc71e82c4004debfc87eec8fcc1c068dd458514174008178bc058a0bb5",
    "bounds_blender": [
     [
-     -20.0,
+     -10.7,
      -2.43667,
-     -1.25737
+     -0.79125
     ],
     [
      0.0,
-     8.34105,
+     7.43296,
      0.71452
     ]
    ],
    "bounds_unity": [
     [
      -0.0,
-     -1.25737,
-     -8.34105
+     -0.79125,
+     -7.43296
     ],
     [
-     20.0,
+     10.7,
      0.71452,
      2.43667
     ]
    ],
-   "tris": 3622,
+   "tris": 1246,
    "materials": [
     [
      "Centurion_skin",
-     3185
-    ],
-    [
-     "jet_mechanical",
-     68
+     1034
     ],
     [
      "aircraft_structure",
-     181
+     43
     ],
     [
      "light_white",
-     188
+     126
+    ],
+    [
+     "Centurion_airframe",
+     43
     ]
    ],
    "colliders": [
@@ -7388,86 +13650,18 @@
     },
     {
      "name": "wing_root_R_colmesh3",
-     "verts": 30,
-     "tris": 56,
+     "verts": 40,
+     "tris": 76,
      "bounds_unity": [
       [
        7.848,
-       -0.81099,
+       -0.75699,
        -5.42095
       ],
       [
-       12.402,
+       10.7,
        0.13253,
        -0.55935
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_R_colmesh4",
-     "verts": 48,
-     "tris": 92,
-     "bounds_unity": [
-      [
-       12.468,
-       -0.82041,
-       -7.48128
-      ],
-      [
-       12.742,
-       -0.1915,
-       -2.26427
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_R_colmesh5",
-     "verts": 37,
-     "tris": 70,
-     "bounds_unity": [
-      [
-       12.798,
-       -0.94422,
-       -5.99924
-      ],
-      [
-       16.472,
-       -0.21439,
-       -2.10773
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_R_colmesh6",
-     "verts": 18,
-     "tris": 32,
-     "bounds_unity": [
-      [
-       16.528,
-       -1.04971,
-       -6.51029
-      ],
-      [
-       19.612,
-       -0.44472,
-       -4.24934
-      ]
-     ]
-    },
-    {
-     "name": "wing_root_R_colmesh7",
-     "verts": 58,
-     "tris": 112,
-     "bounds_unity": [
-      [
-       19.668,
-       -1.06181,
-       -8.24212
-      ],
-      [
-       19.972,
-       -0.6369,
-       -4.29875
       ]
      ]
     }
@@ -7476,16 +13670,16 @@
     "tris": 30
    },
    "shape": {
-    "tris": 962,
+    "tris": 626,
     "bounds_blender": [
      [
-      -20.0,
+      -10.7,
       -2.43667,
-      -1.09077
+      -0.79183
      ],
      [
       0.0,
-      8.3458,
+      7.4332,
       0.71103
      ]
     ]
@@ -7493,7 +13687,7 @@
   },
   "wing_tele1_L": {
    "fbx": "wing_tele1_L.fbx",
-   "blender_parent": "wing_root_L",
+   "blender_parent": "wing_outer_L",
    "pivot_blender": [
     5.89161,
     -3.77004,
@@ -7532,10 +13726,11 @@
     "thickness_m": 0.4217,
     "col_ref_m3": 11.316,
     "rest_location": [
-     5.891605377197266,
-     1.578650951385498,
-     -0.26630735397338867
+     -4.808392524719238,
+     -2.5083494186401367,
+     0.18663501739501953
     ],
+    "bonded_to": "wing_root_L",
     "mass_kg": 2200,
     "slide_axis_unity": [
      -0.96501,
@@ -7543,7 +13738,7 @@
      -0.25857
     ]
    },
-   "sha256": "98b55cdbcb935cf1d6e4bbb988a0273ccd9d727d1c8212311c2a39887460855d",
+   "sha256": "49b2dbd4e82d9e580a6d88aa20fde841c1f44eceb20632e74143a5fe479403cf",
    "bounds_blender": [
     [
      0.0,
@@ -7619,7 +13814,7 @@
   },
   "wing_tele1_R": {
    "fbx": "wing_tele1_R.fbx",
-   "blender_parent": "wing_root_R",
+   "blender_parent": "wing_outer_R",
    "pivot_blender": [
     -5.89161,
     -3.77004,
@@ -7658,10 +13853,11 @@
     "thickness_m": 0.4217,
     "col_ref_m3": 11.316,
     "rest_location": [
-     -5.891605377197266,
-     1.578650951385498,
-     -0.26630735397338867
+     4.808392524719238,
+     -2.5083494186401367,
+     0.18663501739501953
     ],
+    "bonded_to": "wing_root_R",
     "mass_kg": 2200,
     "slide_axis_unity": [
      0.96501,
@@ -7669,7 +13865,7 @@
      -0.25857
     ]
    },
-   "sha256": "5e1a9a85d65a1603a3eb834b104c1bd71df26663fe702d2f565371c85d0ccd25",
+   "sha256": "ab8e77142e6bd36f0566c4329c2870212b661a695e7980b3a9ac15707e27b839",
    "bounds_blender": [
     [
      -14.08909,
@@ -7793,14 +13989,14 @@
      0.09825754165649414,
      -0.016575336456298828
     ],
-    "mass_kg": 2300,
+    "mass_kg": 2060.0,
     "slide_axis_unity": [
      -0.96501,
      -0.04362,
      -0.25857
     ]
    },
-   "sha256": "082e2086752a97a28ed646eab92471bfb7e0bfe8f9f08d9af1f93102549b4873",
+   "sha256": "0ca1f40b65b8c6b18aa47427020c17a673f923869bf83c32f738a37e229b70f0",
    "bounds_blender": [
     [
      0.0,
@@ -7808,16 +14004,16 @@
      -0.80269
     ],
     [
-     15.52169,
-     7.17438,
+     13.81099,
+     6.64437,
      0.23922
     ]
    ],
    "bounds_unity": [
     [
-     -15.52169,
+     -13.81099,
      -0.80269,
-     -7.17438
+     -6.64437
     ],
     [
      -0.0,
@@ -7825,31 +14021,19 @@
      0.78723
     ]
    ],
-   "tris": 2810,
+   "tris": 1422,
    "materials": [
     [
      "Centurion_skin",
-     1938
-    ],
-    [
-     "jet_mechanical",
-     254
+     1121
     ],
     [
      "aircraft_structure",
      254
     ],
     [
-     "light_red",
-     188
-    ],
-    [
-     "light_white",
-     140
-    ],
-    [
-     "light_formation",
-     36
+     "Centurion_airframe",
+     47
     ]
    ],
    "colliders": [
@@ -7889,13 +14073,13 @@
     },
     {
      "name": "wing_tele2_L_colmesh2",
-     "verts": 121,
-     "tris": 238,
+     "verts": 50,
+     "tris": 96,
      "bounds_unity": [
       [
-       -15.44087,
+       -13.81099,
        -0.76686,
-       -6.66282
+       -5.89837
       ],
       [
        -13.78899,
@@ -7909,7 +14093,7 @@
     "tris": 30
    },
    "shape": {
-    "tris": 1212,
+    "tris": 916,
     "bounds_blender": [
      [
       0.0,
@@ -7917,8 +14101,8 @@
       -0.80876
      ],
      [
-      15.52169,
-      6.96405,
+      13.81099,
+      6.68746,
       0.23803
      ]
     ]
@@ -7974,23 +14158,23 @@
      0.09825754165649414,
      -0.016575336456298828
     ],
-    "mass_kg": 2300,
+    "mass_kg": 2060.0,
     "slide_axis_unity": [
      0.96501,
      -0.04362,
      -0.25857
     ]
    },
-   "sha256": "f9446f7c4ff7b74a762cdeec4b40de1d1a34244f2575e0c8100bdc93d2bb4afd",
+   "sha256": "eac248ac2b438be90a972d463ac903739f7c799a30307cd4d09ddf84f2e56a1a",
    "bounds_blender": [
     [
-     -15.52169,
+     -13.81099,
      -0.78723,
      -0.80269
     ],
     [
      0.0,
-     7.17438,
+     6.64437,
      0.23922
     ]
    ],
@@ -7998,39 +14182,27 @@
     [
      -0.0,
      -0.80269,
-     -7.17438
+     -6.64437
     ],
     [
-     15.52169,
+     13.81099,
      0.23922,
      0.78723
     ]
    ],
-   "tris": 2810,
+   "tris": 1422,
    "materials": [
     [
      "Centurion_skin",
-     1938
-    ],
-    [
-     "jet_mechanical",
-     254
+     1121
     ],
     [
      "aircraft_structure",
      254
     ],
     [
-     "light_white",
-     140
-    ],
-    [
-     "light_formation",
-     36
-    ],
-    [
-     "light_green",
-     188
+     "Centurion_airframe",
+     47
     ]
    ],
    "colliders": [
@@ -8070,16 +14242,16 @@
     },
     {
      "name": "wing_tele2_R_colmesh2",
-     "verts": 126,
-     "tris": 248,
+     "verts": 55,
+     "tris": 106,
      "bounds_unity": [
       [
        13.78899,
        -0.76686,
-       -6.60455
+       -5.88726
       ],
       [
-       15.44087,
+       13.81099,
        -0.37518,
        -2.766
       ]
@@ -8090,17 +14262,261 @@
     "tris": 30
    },
    "shape": {
-    "tris": 1212,
+    "tris": 916,
     "bounds_blender": [
      [
-      -15.52169,
+      -13.81099,
       -0.78723,
       -0.80876
      ],
      [
       0.0,
-      6.96405,
+      6.68746,
       0.23803
+     ]
+    ]
+   }
+  },
+  "wing_tip_L": {
+   "fbx": "wing_tip_L.fbx",
+   "blender_parent": "wing_tele2_L",
+   "pivot_blender": [
+    20.0693,
+    1.13494,
+    5.48833
+   ],
+   "pivot_unity": [
+    -20.0693,
+    5.48833,
+    -1.13494
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "wing_tele1_L,wing_tele2_L",
+    "mass_kg": 240.0
+   },
+   "sha256": "f0995302f005323a794f368e5f513f159c0a4b04aab28f661cd8b85be75c139f",
+   "bounds_blender": [
+    [
+     -1e-05,
+     -2.06555,
+     -0.17907
+    ],
+    [
+     1.7107,
+     2.36765,
+     0.28061
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -1.7107,
+     -0.17907,
+     -2.36765
+    ],
+    [
+     1e-05,
+     0.28061,
+     2.06555
+    ]
+   ],
+   "tris": 1576,
+   "materials": [
+    [
+     "Centurion_skin",
+     911
+    ],
+    [
+     "jet_mechanical",
+     254
+    ],
+    [
+     "light_red",
+     188
+    ],
+    [
+     "light_white",
+     140
+    ],
+    [
+     "light_formation",
+     36
+    ],
+    [
+     "Centurion_airframe",
+     47
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "wing_tip_L_colmesh0",
+     "verts": 120,
+     "tris": 236,
+     "bounds_unity": [
+      [
+       -1.62988,
+       -0.1461,
+       -1.85609
+      ],
+      [
+       1e-05,
+       0.24256,
+       2.01952
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 376,
+    "bounds_blender": [
+     [
+      -1e-05,
+      -2.06968,
+      -0.18345
+     ],
+     [
+      1.7107,
+      2.15733,
+      0.27451
+     ]
+    ]
+   }
+  },
+  "wing_tip_R": {
+   "fbx": "wing_tip_R.fbx",
+   "blender_parent": "wing_tele2_R",
+   "pivot_blender": [
+    -20.0693,
+    1.13494,
+    5.48833
+   ],
+   "pivot_unity": [
+    20.0693,
+    5.48833,
+    -1.13494
+   ],
+   "axes_unity": {
+    "right": [
+     1.0,
+     0.0,
+     -0.0
+    ],
+    "up": [
+     -0.0,
+     1.0,
+     -0.0
+    ],
+    "forward": [
+     -0.0,
+     0.0,
+     1.0
+    ]
+   },
+   "props": {
+    "bonded_to": "wing_tele1_R,wing_tele2_R",
+    "mass_kg": 240.0
+   },
+   "sha256": "875a55cc0be2403e17d2d3eb2a0c5404662003c004ec9fcf249ce30e109befed",
+   "bounds_blender": [
+    [
+     -1.7107,
+     -2.06555,
+     -0.17907
+    ],
+    [
+     1e-05,
+     2.36765,
+     0.28061
+    ]
+   ],
+   "bounds_unity": [
+    [
+     -1e-05,
+     -0.17907,
+     -2.36765
+    ],
+    [
+     1.7107,
+     0.28061,
+     2.06555
+    ]
+   ],
+   "tris": 1576,
+   "materials": [
+    [
+     "Centurion_skin",
+     911
+    ],
+    [
+     "jet_mechanical",
+     254
+    ],
+    [
+     "light_white",
+     140
+    ],
+    [
+     "light_formation",
+     36
+    ],
+    [
+     "light_green",
+     188
+    ],
+    [
+     "Centurion_airframe",
+     47
+    ]
+   ],
+   "colliders": [
+    {
+     "name": "wing_tip_R_colmesh0",
+     "verts": 66,
+     "tris": 128,
+     "bounds_unity": [
+      [
+       -1e-05,
+       -0.1461,
+       -1.79783
+      ],
+      [
+       1.62988,
+       0.24256,
+       2.01952
+      ]
+     ]
+    }
+   ],
+   "lod1": null,
+   "shape": {
+    "tris": 376,
+    "bounds_blender": [
+     [
+      -1.7107,
+      -2.06968,
+      -0.18345
+     ],
+     [
+      1e-05,
+      2.15733,
+      0.27451
      ]
     ]
    }
@@ -8136,9 +14552,10 @@
     ]
    },
    "props": {
-    "bonded_to": "wing_root_L,wing_root_R,fuselage_F,fuselage_R"
+    "bonded_to": "cheek_L,cheek_R,flap_track_L1,flap_track_L2,flap_track_R1,flap_track_R2,fuselage_F,fuselage_F2,fuselage_F2_upper,fuselage_F_upper,fuselage_M,fuselage_M_flank_L,fuselage_M_flank_R,fuselage_R,fuselage_R_upper_L,fuselage_R_upper_R,spine_cover,spine_cover_A,tail_end,tail_end_upper,tailcone,tailcone_upper,wing_outer_L,wing_outer_R,wing_root_L,wing_root_R",
+    "mass_kg": 600.0
    },
-   "sha256": "cf760cc64ef789a84b718a96561aeba4f8d0012df73464d9810de7fc27a58cd6",
+   "sha256": "cf4f2293f067c364224d193d285c8a8917d8174e5454b2a13ac1813b68c2fa67",
    "bounds_blender": [
     [
      -2.66897,
@@ -8163,26 +14580,78 @@
      8.8575
     ]
    ],
-   "tris": 5956,
+   "tris": 5500,
    "materials": [
     [
      "Centurion_skin",
-     3752
+     3644
     ],
     [
      "aircraft_structure",
-     1378
+     1342
     ],
     [
      "light_red",
-     318
+     198
     ],
     [
      "light_white",
-     508
+     316
     ]
    ],
-   "colliders": [],
+   "colliders": [
+    {
+     "name": "wingfairing_colmesh0",
+     "verts": 105,
+     "tris": 206,
+     "bounds_unity": [
+      [
+       -0.83082,
+       -0.072,
+       4.41151
+      ],
+      [
+       0.83062,
+       0.37265,
+       7.14501
+      ]
+     ]
+    },
+    {
+     "name": "wingfairing_colmesh1",
+     "verts": 128,
+     "tris": 252,
+     "bounds_unity": [
+      [
+       -0.86269,
+       -0.072,
+       1.62201
+      ],
+      [
+       0.86269,
+       0.40183,
+       4.35551
+      ]
+     ]
+    },
+    {
+     "name": "wingfairing_colmesh2",
+     "verts": 115,
+     "tris": 226,
+     "bounds_unity": [
+      [
+       -0.7734,
+       -0.072,
+       -1.16749
+      ],
+      [
+       0.7734,
+       0.32003,
+       1.56601
+      ]
+     ]
+    }
+   ],
    "lod1": null,
    "shape": {
     "tris": 2620,
@@ -8202,16 +14671,19 @@
   }
  },
  "textures": {
-  "centurion_ao.png": "155aa5ba93213ebbe0d8143dbb461a80da9d3ff699151280f0203c53c85601e7",
-  "centurion_b.png": "9527a739d6ee5dfdcf733b5c60ffee02c7cb8faa6ac37c4e0105faa619265e5e",
-  "centurion_dmg_b.png": "3a05dddafbc3b6a599af1f67eb22609921e22f464c39ee16ce4f8ca655aaae7b",
-  "centurion_dmg_n.png": "7a8b2fb517040467a9cfcb0f2b5c0f2ee7d62f2e97bab3dfee68264d64386d29",
-  "centurion_livery_bdf_forest_green.png": "b42f0e3aaceb1d1c67cd8f311ed84a370e596202ae69d72d42dc701dde6a843e",
-  "centurion_livery_bdf_matte_gray.png": "2e5147958317c0f6ad85b853d797a3281943657c18b220ee26bda69a3a549ed6",
-  "centurion_livery_pala_desert_camo.png": "d18ecbc9c103e126119e915b2a80f6b57273b228410a04c159f5dd6a75f3e8b8",
-  "centurion_livery_pala_matte_black.png": "8da56834f467bf7976ca4a89d4691906ddab42bb16ea3eae5d40c410e754ae2d",
-  "centurion_m.png": "5c48438ce6fb4fa9d28a8f47e8abbff2182fae6673a337c69ae9506f41034eb8",
-  "centurion_n.png": "6763a884b23ff91ae462983fda01bc7525fbc047144383332bfb22468de02313",
+  "airframe_b.png": "cd4d89649e33d47ab65e216286dcba68fff8e51ca5ce05e6902f89b1efd52c88",
+  "airframe_m.png": "d8296c9202590c5d54c2dbb139424e7c24b3e246fde9acd38ab00ad60d9b6f34",
+  "airframe_n.png": "e8117cbc9ab1de15a52abaa508ba93acbad8e5d531aba7b0207170fbb0426594",
+  "centurion_ao.png": "b2028ef9c123ce99ae94ad772a5b72c313cb531f9dc49740c9681c32b2873f6c",
+  "centurion_b.png": "dde3d5870fb38d4ba97ddd9c5bd56eaef90b045d3d094cd7eaa98565833d447b",
+  "centurion_dmg_b.png": "fc4e27a7b4e97d395b0a5007b1f54e8b914da8834fa29b1d4073e0f10fc95b2a",
+  "centurion_dmg_n.png": "16a958a69e4481bdaa3ae6f3ad535fe9675909ff7b225f9957d8f87f5450f612",
+  "centurion_livery_bdf_forest_green.png": "63ee099d87588ccd46809d56c77754818433bbe8a8a55aa35caac80989a3400f",
+  "centurion_livery_bdf_matte_gray.png": "2d5976b84ee583e5ea9ad19b151ca2c0fc0e66c98e7fd13d3664eafbbcb6f99a",
+  "centurion_livery_pala_desert_camo.png": "23f9606c7cb19f753706f11cfa262ea8bfc1ff3b4398ef34f181675cc541fd01",
+  "centurion_livery_pala_matte_black.png": "a34063f3b12e36beeeeb667d058659eb807d07402ded42de7db6ea6d3056e4fe",
+  "centurion_m.png": "e26a67267803e35191cee8bb2f9c9af0d581eba34efc3bd6489cc2219e43ae7d",
+  "centurion_n.png": "c71a64df10a03a59d9b6c8728bd6cecd751e3c909d0b98e893fdd352be1cdc23",
   "gear_trim_b.png": "db13658bae7c35a2b5d1407d9597eec5b385c9a6b4e8f0c9fc95f3cfaa4ffdd6",
   "gear_trim_m.png": "1c14e6487c3f406004222a98b9bcf590d3a6abf1fde272c856bb6a1c4a583b9a",
   "gear_trim_n.png": "50924e7098e10f0229c27f7978f7c3fd4bad4147936b884422e6974e3423febe",

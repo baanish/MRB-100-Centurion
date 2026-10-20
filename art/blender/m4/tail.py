@@ -48,7 +48,7 @@ SURFACES = ("1", "2")
 PARTS = ("vtail_L", "vtail_R") + tuple(f"ruddervator_{s}{n}_visible" for s in "LR" for n in SURFACES)
 # Round 2 Lead's call on budgets, 2026-10-14: spend on visible silhouettes. Round 4 lead's call, 2026-10-15: 164 of the
 # composite's spare for the tip ring at u 0.12 (TIP_U), so the leading edge seen from above leaves the panel under 12 deg.
-BUDGET_TRIS = 7664
+BUDGET_TRIS = 8000  # damage stage 2: reclaim and leaner damage structure (was 7664)
 # vtail_R stays unique for its tail code. The shared atlas can mirror all of it but TAIL_CODE's region on the upper
 # face (about d 3.8 to 5.4 m, chord fractions 0.2 to 0.47) and the NO STEP stencils, once the entry script can mirror
 # part of a part across x = 0.

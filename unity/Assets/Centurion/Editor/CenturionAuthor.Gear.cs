@@ -9,9 +9,21 @@ namespace Centurion.Editor
 {
     public static partial class CenturionAuthor
     {
-        // BuildGear's last step: the nose leg folds and the main wheels turn as the art's.
+        // BuildGear's last step: suspension limits, then the art's folding and wheel rig.
         private static void RigGearAsArt(Build b)
         {
+            // More runway stroke, with extra nose room during derotation.
+            foreach (var gearName in new[] { "gear_L", "gear_R", "gear_F" })
+            {
+                var gear = FindDeep(b.Root.transform, gearName);
+                var so = new SerializedObject(gear.GetComponent(GameType("LandingGear")));
+                var limit = gearName == "gear_F" ? 0.90f : 0.80f;
+                if (limit >= Prop(so, "suspensionTravel").floatValue)
+                    throw new InvalidDataException($"{gearName}: compression limit {limit} must leave suspension travel.");
+                Prop(so, "maxCompression").floatValue = limit;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                b.Report.Add($"gear {gearName}: max compression {limit} m");
+            }
             FoldNoseLegAsArt(b);
             SpinMainWheels(b, "gear_L", "wheel_LM");
             SpinMainWheels(b, "gear_R", "wheel_RM");

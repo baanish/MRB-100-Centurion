@@ -49,7 +49,7 @@ static class TankDiagnostics
         foreach (string name in Names)
         {
             var tank = new Dictionary<string, object> { ["readable"] = false, ["on_fire"] = false, ["fire_active"] = false };
-            foreach (string key in new[] { "fuel_kg", "leak_kg_s", "part_hp", "tank_offset_m", "fire_offset_m", "fire_tank_offset_m",
+            foreach (string key in new[] { "fuel_kg", "leak_kg_s", "part_hp", "burning_s", "tank_offset_m", "fire_offset_m", "fire_tank_offset_m",
                 "fire_x_m", "fire_y_m", "fire_z_m", "fire_check_x_m", "fire_check_y_m", "fire_check_z_m" })
                 tank[key] = AircraftReadout.NotRead;
             tanks[name] = tank;
@@ -61,6 +61,7 @@ static class TankDiagnostics
     {
         if (TankPart == null || OnFire == null || FireSpawn == null || LeakRate == null) return;
         var tanks = (Dictionary<string, object>)state["fuel_tanks"];
+        var spread = aircraft.GetComponent<TankFireSpread>();
         foreach (FuelTank tank in aircraft.GetFuelTanks())
         {
             if (tank == null || TankPart.GetValue(tank) is not UnitPart part) continue;
@@ -73,6 +74,7 @@ static class TankDiagnostics
             values["leak_kg_s"] = AircraftReadout.Round((float)LeakRate.GetValue(tank));
             values["part_hp"] = AircraftReadout.Round(part.hitPoints);
             values["on_fire"] = (bool)OnFire.GetValue(tank);
+            if (spread != null && aircraft.IsServer) values["burning_s"] = AircraftReadout.Round(spread.BurningSeconds(name));
             values["tank_offset_m"] = AircraftReadout.Round(Vector3.Distance(tank.transform.position, centre.position));
             Vector3 check = aircraft.transform.InverseTransformPoint(tank.transform.position);
             values["fire_check_x_m"] = AircraftReadout.Round(check.x);

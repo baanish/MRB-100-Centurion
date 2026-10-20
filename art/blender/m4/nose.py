@@ -25,7 +25,7 @@ from mathutils import Matrix, Vector
 
 import flightdeck_layout as fl
 
-from . import nose_bay, nose_exits, render
+from . import body_structure, nose_bay, nose_exits, render
 from . import surface as sf
 from .surface import DOOR, FITTING, FRAME, HULL, RADOME, N, KEEL, CHINE_K
 from .paint import INTERIOR
@@ -33,7 +33,7 @@ from .paint import INTERIOR
 GROUP = "nose"
 PARTS = ("radar_F_fairing", "nose", "fuselage_F", "geardoor_FL_visible", "geardoor_FR_visible",
          "baydoor_FL_visible", "baydoor_FR_visible", "nose_hatch_L", "nose_hatch_R", "nose_door_visible")
-BUDGET_TRIS = 16000  # 14,000 as built plus the forward bay interior (docs/M4-ART-PLAN.md)
+BUDGET_TRIS = 19000  # damage stage 2: reclaim and leaner damage structure (was 16000)
 # Bay doors share their twins' islands; gear doors keep unique islands for KEEP CLEAR on both sides.
 MIRROR_PARTS = {"baydoor_FR_visible": "baydoor_FL_visible", "nose_hatch_R": "nose_hatch_L"}
 # Close-ups (m4/render.py's view form); the first four make the contact sheet.
@@ -44,6 +44,7 @@ VIEWS = {
     "nose_top": (40, (-5.5, 18.5, 10.8), (0.0, 7.0, 5.2)),
     "glazing": (45, (6.5, 0.5, 6.6), (0.9, 5.2, 4.5)),
     "exits": (32, (7.0, 2.0, 9.0), (0.6, 6.3, 4.4)),
+    "evs_camera": (50, (1.6, 2.1, 5.7), (0.0, 3.9, 4.85)),
 }
 
 RADOME_STATIONS = (0.006, 0.015, 0.028, 0.044, 0.116, 0.218, 0.363, 0.551, 0.798, 1.088, 1.45, 1.885, 2.32, 2.755, 3.19, 3.625)
@@ -87,7 +88,6 @@ PANES = (
     ((5.606, 44.0), (6.591, 50.8), (6.920, 77.1), (4.169, 61.0)),  # side, one post width behind the front
 )
 GLASS_UP, FRAME_UP = 0.012, 0.022
-WIPER = ((4.31, 42.8), (4.19, 6.0))  # base, tip: parked along the front pane
 
 BLADES = (  # station, angle, height, root chord, tip chord, sweep, part
     (9.65, 0.0, 0.38, 0.42, 0.16, 0.22, "fuselage_F"),  # UHF, dorsal
@@ -102,6 +102,10 @@ SATCOM = (11.1, 0.0)  # ahead of the dorsal wing fairing, which leaves the crown
 # Red anti-collision, bottom; the top one is on the wing fairing's crest (fuselage_aft), which covers the crown here.
 BEACONS = ((7.18, 180.0, "fuselage_F"),)
 FORMATION_SIZE = (0.6, 0.08)
+# The forward screen's camera (owner): an enhanced-vision housing on the crown between the radome joint and the
+# windscreen, its dark window looking ahead, where the flight deck screen's EXT CAM view is said to come from (the
+# screen is a window on the pilot's eye in game; nothing renders from here). Station, the body's centre above the skin.
+EVS_CAMERA = (3.85, 0.035)
 
 
 def resolve(surf, corners, side=1):
@@ -188,6 +192,7 @@ def build(bl, surf, slots):
     fwd_fuselage_details(bl, surf, p, slots)
     receptacle(bl, surf, p, slots)
     bay_interior(bl, surf, p, g, slots)
+    body_structure.build_section(bl, surf, p, slots, 7.0, 17.0, bays=[BAY_DOOR[:2]])
 
     # ---- doors ----
     for sfx, side in (("L", 1), ("R", -1)):
@@ -238,9 +243,9 @@ def lift_light(p, surf, s, a, slots, colour_slot, r=0.11):
     """A beacon: a low skin-coloured base with a lens dome on it."""
     SKIN = slots[0]
     c, n = surf.point(s, a), surf.normal(s, a)
-    sf.revolve_axis(p, ((r, -0.05), (r, 0.015), (r * 0.82, 0.032), (0, 0.032)), c, n, 24, SKIN, FITTING)
+    sf.revolve_axis(p, ((r, -0.05), (r, 0.015), (r * 0.82, 0.032), (0, 0.032)), c, n, 16, SKIN, FITTING)
     sf.revolve_axis(p, ((r * 0.68, 0.02), (r * 0.67, 0.045), (r * 0.64, 0.07),
-                       (r * 0.5, 0.092), (r * 0.38, 0.105), (0, 0.115)), c, n, 24, colour_slot)
+                       (r * 0.5, 0.092), (r * 0.38, 0.105), (0, 0.115)), c, n, 16, colour_slot)
 
 
 def window_frame(surf, p, corners, slot):
@@ -278,11 +283,6 @@ def nose_details(bl, surf, p, slots):
         window_frame(surf, p, front[:3] + rear + [front[3]], SKIN)
         sf.surface_patch(p, surf, (front[2], rear[0], rear[3], front[3]), 1, 8,
                          FRAME_UP, -0.012, SKIN, cls=FRAME)
-        # wiper parked along the front pane
-        (s0, a0), (s1, a1) = WIPER
-        points = [surf.point(s0 + (s1 - s0) * t, side * (a0 + (a1 - a0) * t), GLASS_UP + 0.012)
-                  for t in np.linspace(0, 1, 13)]
-        sf.tube(p, points, 0.0125, 6, MECH)
         # pitot probe: a swept strut with the tube running forward
         s, a = PITOT
         base, n = surf.point(s, side * a), surf.normal(s, side * a)
@@ -303,6 +303,20 @@ def nose_details(bl, surf, p, slots):
     for s, a, owner in BEACONS:
         if owner == "nose":
             lift_light(p, surf, s, a, slots, LIGHT)
+    evs_camera(surf, p, slots)
+
+
+def evs_camera(surf, p, slots):
+    """The EVS camera at EVS_CAMERA: a streamlined body 0.30 m long and 0.14 m across in the nose's paint, half sunk in
+    the crown, its blunt front a flat face carrying a 76 mm window of glass, facing straight ahead."""
+    SKIN, GLASS = slots[0], slots[2]
+    s, lift = EVS_CAMERA
+    centre = surf.point(s, 0.0) + surf.normal(s, 0.0) * lift
+    fwd = Vector((0, -1, 0))
+    fs = sf.revolve_axis(p, ((0, -0.20), (0.05, -0.12), (0.07, -0.02), (0.068, 0.07), (0.05, 0.10), (0.038, 0.10), (0, 0.1004)),
+                         centre, fwd, 10, SKIN, FITTING)
+    p.tag([f for f in fs if (f.calc_center_median() - centre).dot(fwd) > 0.0999 and all(
+        (v.co - centre - fwd * (v.co - centre).dot(fwd)).length < 0.039 for v in f.verts)], GLASS)
 
 
 def well_ceiling(s):
@@ -422,7 +436,7 @@ def fwd_fuselage_details(bl, surf, p, slots):
         sf.surface_patch(p, surf, side_corners(corners, side), 1, 6, 0.008, -0.012, FORMATION)
     s, a = GPS_DOME
     sf.revolve_axis(p, ((0.16, -0.05), (0.16, 0.01), (0.145, 0.026), (0.12, 0.04), (0, 0.05)),
-                    surf.point(s, a), surf.normal(s, a), 24, SKIN, FITTING)
+                    surf.point(s, a), surf.normal(s, a), 16, SKIN, FITTING)
 
 
 def gear_door(bl, surf, p, side, slots):
@@ -500,6 +514,10 @@ RESCUE_ARROW = (6.78, 2.45)
 STATIC_PORTS = ((9.15, 101.0), (9.4, 101.0))
 NACA_INLET = (9.0, 9.7, 128.0)
 LOUVRES = (5.42, 5.80, 128.0, 6)  # ahead of the crew door
+# Flare dispensers, one plate a side below the cheeks (CenturionAuthor.FlarePlates; the other pair is fuselage_aft.py's
+# FLARES): station from, to, angle from, to. On fuselage_F's core, under the upper half's seam at 112.5 deg, between
+# the NACA inlet (to 9.7) and the lap at 11.0, the avionics door above (to 118 deg) and the bay door's hinge (141) below.
+FLARES = ((9.95, 10.85, 121.0, 135.0),)
 WALKWAY = (9.7, 12.6, 0.55)  # stations, girth from the centreline
 NO_STEP = (9.2, 0.85)  # station, girth from the centreline
 MODEL_STENCIL = (5.3, 88.0)
@@ -640,8 +658,9 @@ def paint(cv, text_mask):
 
     # NACA inlet and louvres
     s0, s1, a = NACA_INLET
-    from .fuselage_aft import naca
+    from .fuselage_aft import flare_plates, naca
     naca(cv, s0, s1, float(c.arc_at((s0 + s1) / 2, a)), H)
+    flare_plates(cv, FLARES, H)
     s0, s1, a, n = LOUVRES
     z = cv.surf.point((s0 + s1) / 2, a).z  # the slots stand at one height, beside the level avionics door
     for side in (1, -1):

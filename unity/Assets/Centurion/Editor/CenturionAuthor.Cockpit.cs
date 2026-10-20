@@ -36,6 +36,8 @@ namespace Centurion.Editor
             {
                 screen.name = Path.GetFileNameWithoutExtension(TacScreenPath);
                 var edit = new Build { Root = screen };
+                DestroyWithReferences(edit, WarningLampObjects(screen).ToList());
+                CheckWarningLamps(edit, Array.Empty<Object>());
                 ShowEngines(b, edit);
                 ShowHardpoints(b, edit);
                 b.Report.AddRange(edit.Report);

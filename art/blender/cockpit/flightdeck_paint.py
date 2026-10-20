@@ -528,6 +528,9 @@ def fuv_class_names(fd):
 
 
 SCAN_TILE, SCAN_LINES, SCAN_TILE_M = 64, 8, 0.032  # a 64 px tile of 8 scanlines over 3.2 cm: a 4 mm period
+# How much a scanline darkens the screen's colour and adds to its alpha: subtle, a third of the first build's 0.55 and
+# 0.25, which made the world hard to read through it (owner).
+SCAN_DARKEN, SCAN_ALPHA = 0.18, 0.08
 
 
 def uv_band(obj, axis_s, r, y0):
@@ -545,14 +548,15 @@ def uv_band(obj, axis_s, r, y0):
 
 
 def small_maps(folder):
-    """The scanline tile (colour and alpha: lines darker and more opaque) and the camera marker (a red circle and EXT
-    CAM in white on clear, full alpha where drawn; the material's alpha takes it to flightdeck.MARKER_OPACITY)."""
+    """The uniform inner-glass tint, scanline tile (colour and alpha: lines darker and more opaque) and camera marker
+    (a red circle and EXT CAM in white on clear, full alpha where drawn; the material's alpha takes it to
+    flightdeck.MARKER_OPACITY)."""
     t = SCAN_TILE
     row = (np.arange(t) + 0.5) % (t / SCAN_LINES) / (t / SCAN_LINES)
     line = smoothstep(0.55, 0.75, row) * smoothstep(1.0, 0.8, row)
     tile = np.ones((t, t, 4))
-    tile[..., 0:3] = (1.0 - 0.55 * line)[:, None, None]
-    tile[..., 3] = (0.75 + 0.25 * line)[:, None]
+    tile[..., 0:3] = (1.0 - SCAN_DARKEN * line)[:, None, None]
+    tile[..., 3] = (0.75 + SCAN_ALPHA * line)[:, None]
     band = texture.save_image(tile, folder / "cockpit_band.png", srgb=True)
     W, H = 256, 64
     img = np.zeros((H, W, 4))
@@ -569,7 +573,11 @@ def small_maps(folder):
     img[..., 0:3] = img[..., 0:3] * (1 - text[..., None]) + text[..., None] * 0.92
     img[..., 3] = np.maximum(img[..., 3], text)
     marker = texture.save_image(img, folder / "cockpit_marker.png", srgb=True)
-    return {"band": band, "marker": marker}
+    # The stock canopy shader supplies grime, scratches and cracks. Its donor base atlas also paints four pane outlines,
+    # which become false frames under the interior's repeating UVs. Only the tint belongs on these panes.
+    glass = texture.save_image(np.full((4, 4, 4), (43, 36, 27, 117), dtype=float) / 255,
+                               folder / "cockpit_glass.png", srgb=True)
+    return {"band": band, "marker": marker, "glass": glass}
 
 
 # ---------------- review ----------------
@@ -703,12 +711,14 @@ def look(objs, maps, folder, fd):
         return mix.outputs[0]
 
     def glass(nt):
+        tint = image_node(nt, maps["glass"])
         tr = nt.nodes.new("ShaderNodeBsdfTransparent")
-        tr.inputs["Color"].default_value = (0.93, 0.95, 0.94, 1)
+        tr.inputs["Color"].default_value = (1, 1, 1, 1)
         gl = nt.nodes.new("ShaderNodeBsdfGlossy")
+        nt.links.new(tint.outputs["Color"], gl.inputs["Color"])
         gl.inputs["Roughness"].default_value = 0.05
         mix = nt.nodes.new("ShaderNodeMixShader")
-        mix.inputs["Fac"].default_value = 0.05
+        nt.links.new(tint.outputs["Alpha"], mix.inputs["Fac"])
         nt.links.new(tr.outputs[0], mix.inputs[1])
         nt.links.new(gl.outputs[0], mix.inputs[2])
         return mix.outputs[0]

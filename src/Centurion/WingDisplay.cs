@@ -45,7 +45,7 @@ sealed class WingDisplay : MonoBehaviour
         var interior = canvas == null ? null : canvas.transform.parent.GetComponent<Renderer>();
         var template = canvas == null ? null : canvas.transform.Find("text");
         var plan = canvas == null ? null : canvas.transform.Find("page/plan");
-        if (canvas == null || interior == null || template == null || template.GetComponent<TextMeshProUGUI>()?.font == null
+        if (canvas == null || interior == null || template == null || !(template.TryGetComponent(out TextMeshProUGUI text) && text.font != null)
             || plan == null || plan.Find("root") == null || plan.Find("stage1") == null || plan.Find("stage2") == null)
         {
             TelescopeController.Log.Error($"wing display on {aircraft.name}: " + (canvas == null ? $"no {CanvasName} canvas on any part"

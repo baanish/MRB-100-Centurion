@@ -50,6 +50,7 @@ namespace Centurion.Editor
         // to materials. The skin is the mod's own (AuthorSkin), which takes the livery; the rest are the shared trims and
         // the Alkyon's glass and gear.
         private const string SkinSlot = "Centurion_skin";
+        private const string AirframeSlot = "Centurion_airframe"; // art/blender/m4/airframe.py SLOT
         private static readonly Dictionary<string, string> SlotMaterials = new Dictionary<string, string>
         {
             { "jet_mechanical", Stock + "Material/jet_mechanical_PLACEHOLDER.mat" },
@@ -89,6 +90,14 @@ namespace Centurion.Editor
         {
             ("_BaseMap", "mech_trim_b.png", true, false), ("_MainTex", "mech_trim_b.png", true, false),
             ("_MetallicGlossMap", "mech_trim_m.png", false, false),
+        };
+        // The damage structure's trim (art/blender/m4/airframe.py: frames, lining, members, torn edges, the tanks' sealed
+        // walls) on its own copy of the stock Lit material, as the mech trim; seen only where the skin burns through or a
+        // part comes away.
+        private static readonly (string Property, string File, bool SRgb, bool NormalMap)[] AirframeMaps =
+        {
+            ("_BaseMap", "airframe_b.png", true, false), ("_MainTex", "airframe_b.png", true, false),
+            ("_MetallicGlossMap", "airframe_m.png", false, false), ("_BumpMap", "airframe_n.png", false, true),
         };
         // The windscreen and lenses: opaque tinted glazing (sRGB) with the sky's reflection, as the opaque stock canopies are.
         // The Alkyon's glass is transparent over its own canopy layout, which the Centurion's panes, solid slabs laid over
@@ -167,30 +176,58 @@ namespace Centurion.Editor
         // split tail").
         // Braces are extra PartJoints to neighbours whose hulls touch, as the Alkyon's cross joints do (the blend's
         // bonded_to declarations, docs/BLOCKOUT-S6.md "Joints"); WriteJoints resolves them once every part exists.
+        // The finer part tree (art/blender/part_splits.py, docs/M4-ART-PLAN.md "Damage structure") cuts sections, the wing
+        // roots, the stage 2 tips, the V-tail tips and the sponsons' tails into pieces, and lays skin panels round the
+        // body; a cut part's area and drag are on its first piece here and SplitLift shares them out (CutParts).
         private static readonly PartSpec[] Parts =
         {
             Body("fuselage_M", null, 20, 1.0f, "", 15000),
-            Body("fuselage_F", "fuselage_M", 12, 1.0f, "fuselage_F", 3000),
+            Body("fuselage_F2", "fuselage_M", 0, 0, null, 0, "wingfairing"),
+            Body("fuselage_F", "fuselage_F2", 12, 1.0f, "fuselage_F", 3000),
             Body("nose", "fuselage_F", 4, 0.6f, "fuselage_F/fuselage_FF"),
             // The flight deck: the Alkyon cockpit's systems on the Centurion's own interior and crew (BuildFlightDeck).
             new PartSpec { Name = "cockpit", Parent = "nose", Reuse = "fuselage_F/fuselage_FF/cockpit", Mass = 2000, DragArea = 0, Braces = new[] { "radar_F_fairing" } },
             new PartSpec { Name = "radar_F_fairing", Parent = "nose", Reuse = "fuselage_F/fuselage_FF/nose", DragArea = 0.05f },
             Body("fuselage_R", "fuselage_M", 10, 1.0f, "fuselage_R", 3000),
             Body("tailcone", "fuselage_R", 4, 0.6f, "fuselage_R/tail", 3000),
-            Tail("vtail_L"), Tail("vtail_R"),
+            Body("tail_end", "tailcone", 0, 0, null),
+            // Skin panels round the body: a band of skin, lining and members over its core, no lift or drag of their own
+            // (the core keeps the shape the aero is measured on). The V-tails stand on the tail cone's upper half.
+            Plain("fuselage_F_upper", "fuselage_F", 0, null, "fuselage_F2_upper", "nose"),
+            Plain("cheek_L", "fuselage_F_upper", 0, null, "fuselage_F"), Plain("cheek_R", "fuselage_F_upper", 0, null, "fuselage_F"),
+            Plain("fuselage_F2_upper", "fuselage_F2", 0, null, "wingfairing"),
+            Plain("fuselage_M_flank_L", "fuselage_M", 0, null, "sponson_L", "fuselage_F2_upper"),
+            Plain("fuselage_M_flank_R", "fuselage_M", 0, null, "sponson_R", "fuselage_F2_upper"),
+            Plain("fuselage_R_upper_L", "fuselage_R", 0, null, "fuselage_M_flank_L", "sponson_L"),
+            Plain("fuselage_R_upper_R", "fuselage_R", 0, null, "fuselage_M_flank_R", "sponson_R"),
+            Plain("tailcone_upper", "tailcone", 0, null, "fuselage_R_upper_L", "fuselage_R_upper_R"),
+            Plain("tail_end_upper", "tail_end", 0, null, "tailcone_upper"),
+            Tail("vtail_L", "tailcone_upper", 4, "tailcone", "fuselage_R", "tail_end", "tail_end_upper"),
+            Tail("vtail_R", "tailcone_upper", 4, "tailcone", "fuselage_R", "tail_end", "tail_end_upper"),
+            Tail("vtail_tip_L", "vtail_L", 0), Tail("vtail_tip_R", "vtail_R", 0),
             Plain("sponson_L", "fuselage_M", 0.4f, "gearbay_L", "fuselage_R"),
             Plain("sponson_R", "fuselage_M", 0.4f, "gearbay_R", "fuselage_R"),
-            // The swept-back wing's root runs from station 14.69, over fuselage_F, to 24.44, short of fuselage_R. Its lift acts
-            // at the mean aerodynamic chord's quarter point (station 19.4), 0.7 m ahead of its hull centre.
-            WingRoot("wing_root_L", "wingroot_L", "wing_root_R", "fuselage_F"),
-            WingRoot("wing_root_R", "wingroot_R", "fuselage_F"),
+            Plain("sponson_tail_L", "sponson_L", 0, null, "fuselage_R", "tailcone", "fuselage_R_upper_L"),
+            Plain("sponson_tail_R", "sponson_R", 0, null, "fuselage_R", "tailcone", "fuselage_R_upper_R"),
+            // The swept-back wing's root runs from station 14.69, over fuselage_F2, to 24.44, short of fuselage_R. Its lift acts
+            // at the mean aerodynamic chord's quarter point (station 19.4), 0.7 m ahead of its hull centre; the outer wing
+            // (outboard of 10.7 m) takes its share of the area at the same station (SplitLift).
+            WingRoot("wing_root_L", "wingroot_L", "wing_root_R", "fuselage_F2", "fuselage_F2_upper", "fuselage_M_flank_L"),
+            WingRoot("wing_root_R", "wingroot_R", "fuselage_F2", "fuselage_F2_upper", "fuselage_M_flank_R"),
+            WingOuter("wing_outer_L", "wing_root_L"), WingOuter("wing_outer_R", "wing_root_R"),
+            Plain("wingfairing", "fuselage_M", 0, null, "wing_root_L", "wing_root_R"),
             // Telescoping stages, each jointed first to the stage it slides on (TelescopeController makes those joints
-            // sliders). Stage 2 carries the raked tip (blockout step 5) and nests in the inner wing as well as in stage 1, so
-            // it is braced to the inner wing: a jointed pair doesn't collide. Areas are the retracted ones; the controller
-            // gives stage 1 its area with the extension. Stage 1's lift acts at its hull centre: the swept-back wing moves the
-            // neutral point only 0.4 m on extension, where the forward-swept one needed the lift 6 m aft (docs/M2-DESIGN.md).
-            Stage("wing_tele1_L", "wing_root_L", 0f), Stage("wing_tele2_L", "wing_tele1_L", 0f, "wing_root_L"),
-            Stage("wing_tele1_R", "wing_root_R", 0f), Stage("wing_tele2_R", "wing_tele1_R", 0f, "wing_root_R"),
+            // sliders): stage 1 on the outer wing. Both nest in the root and the outer wing as well, so they are braced to
+            // them: a jointed pair doesn't collide. Stage 2 carries the raked tip (blockout step 5), a piece of its own. Areas
+            // are the retracted ones; the controller gives stage 1 its area with the extension. Stage 1's lift acts at its
+            // hull centre: the swept-back wing moves the neutral point only 0.4 m on extension, where the forward-swept one
+            // needed the lift 6 m aft (docs/M2-DESIGN.md).
+            Stage("wing_tele1_L", "wing_outer_L", 0f, "wing_root_L"), Stage("wing_tele2_L", "wing_tele1_L", 0f, "wing_outer_L", "wing_root_L"),
+            Stage("wing_tele1_R", "wing_outer_R", 0f, "wing_root_R"), Stage("wing_tele2_R", "wing_tele1_R", 0f, "wing_outer_R", "wing_root_R"),
+            Plain("wing_tip_L", "wing_tele2_L", 0), Plain("wing_tip_R", "wing_tele2_R", 0),
+            // Flap-track fairings, under the inner wing at each flap.
+            Plain("flap_track_L1", "wing_root_L", 0, null, "flap_L1"), Plain("flap_track_L2", "wing_root_L", 0, null, "flap_L2"),
+            Plain("flap_track_R1", "wing_root_R", 0, null, "flap_R1"), Plain("flap_track_R2", "wing_root_R", 0, null, "flap_R2"),
             // Engine 1 on the left wing, 2 on the right. The aft pylon fairing sits on the core cowl, so the pylon is braced
             // to the nozzle.
             Plain("pylon_1", "wing_root_L", 0, null, "nozzle_1"), Plain("nacelle_1", "pylon_1", 0.6f, null, "wing_root_L"), Plain("nozzle_1", "nacelle_1", 0),
@@ -198,20 +235,36 @@ namespace Centurion.Editor
             // The truss: one straight line from the body side through the engine's axis to the wing, split at the node inside
             // the nacelle into two collinear segments, each braced to the nacelle and the core it passes through (the
             // nozzle part) and to each other, so losing an engine leaves the strut whole from body to wing. The inner one's
-            // flared root reaches over station 17 onto fuselage_F. Each lifts with half its exposed planform (3.5 and 12.4 m²
-            // of 7.0 and 24.8) on a symmetric section whose chord runs with the flow, at its own centre of mass: at the full
-            // planform the 199 t retracted roll reaches the end of the longest runway 3 m/s short of liftoff, at half 6.5
-            // (docs/M2-DESIGN.md, step 6).
-            Wing("strut_inner_L", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1", "strut_outer_L", "fuselage_F"),
-            Wing("strut_outer_L", "wing_root_L", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1"),
-            Wing("strut_inner_R", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2", "strut_outer_R", "fuselage_F"),
-            Wing("strut_outer_R", "wing_root_R", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2"),
+            // flared root reaches over station 17 onto fuselage_F2; the outer one meets the outer wing. Each lifts with half
+            // its exposed planform (3.5 and 12.4 m² of 7.0 and 24.8) on a symmetric section whose chord runs with the flow, at
+            // its own centre of mass: at the full planform the 199 t retracted roll reaches the end of the longest runway
+            // 3 m/s short of liftoff, at half 6.5 (docs/M2-DESIGN.md, step 6).
+            Wing("strut_inner_L", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1", "strut_outer_L", "fuselage_F2"),
+            Wing("strut_outer_L", "wing_outer_L", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1"),
+            Wing("strut_inner_R", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2", "strut_outer_R", "fuselage_F2"),
+            Wing("strut_outer_R", "wing_outer_R", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2"),
         };
+
+        // A part the finer part tree cut in two flies as the whole did: its pieces share the whole's area and drag in the
+        // shares that keep its moment (SplitLift), and their sections, chords and lift frame are measured on their shapes
+        // together, which make up the whole's (ShapeGroup). The first piece carries the whole's name, spec and lift frame.
+        private static readonly string[][] CutParts =
+        {
+            new[] { "fuselage_F", "fuselage_F2" }, new[] { "tailcone", "tail_end" },
+            new[] { "wing_root_L", "wing_outer_L" }, new[] { "wing_root_R", "wing_outer_R" },
+            new[] { "vtail_L", "vtail_tip_L" }, new[] { "vtail_R", "vtail_tip_R" },
+            new[] { "wing_tele2_L", "wing_tip_L" }, new[] { "wing_tele2_R", "wing_tip_R" },
+        };
+
+        // The part tree's pieces the game draws but does not damage, each a mesh on the part that carries its mass: the
+        // spine cover's lids, which the AWACS beam hides (AwacsBeam's cover) and whose colliders would stand in its envelope.
+        private static readonly (string Piece, string Part)[] VisualPieces = { ("spine_cover", "fuselage_R"), ("spine_cover_A", "fuselage_R") };
 
         // Spans are |x| in metres from the centreline; the hinge sits ChordFraction of the local chord ahead of
         // the trailing edge. Flaps between the fuselage and the pylon and outboard of it; spoilers and ailerons
         // outboard of them (SPEC "Wing"); the split tail's surfaces on the trailing 38% of the V-tail. The blockout's hinges and
-        // meshes override these spans where it has them.
+        // meshes override these spans where it has them. Each hangs from the piece of the part tree it sits on: the ailerons
+        // and spoilers from the outer wing, the outboard ruddervators from the V-tail tips.
         // The split tail (owner, 2026-10-16: "Make the entire trailing edge movable and split it into two, so that we can bias
         // one towards pitch and one towards yaw, but if needed, both can do both"): each panel's whole trailing edge moves, as
         // ruddervator_*1 inboard, biased to yaw (pitch 15, yaw 25), low beside the body where its side force rolls the aircraft
@@ -232,20 +285,20 @@ namespace Centurion.Editor
         {
             Surface("flap_L1", "wing_root_L", 3.5f, 6.65f, 0.28f, SurfaceKind.Flap, 7.5f, 30, 0, 10),
             Surface("flap_L2", "wing_root_L", 7.85f, 12.4f, 0.28f, SurfaceKind.Flap, 7.5f, 30, 0, 10),
-            Surface("spoiler_L", "wing_root_L", 12.8f, 19.4f, 0.2f, SurfaceKind.Roll, 4, 15, 0, 40, SplitKind.Rise, 50, 0.03f),
-            Surface("aileron_L", "wing_root_L", 12.8f, 19.6f, 0.25f, SurfaceKind.Roll, 12, 25, 0, 40, SplitKind.Clamshell, 50, 0.1f),
+            Surface("spoiler_L", "wing_outer_L", 12.8f, 19.4f, 0.2f, SurfaceKind.Roll, 4, 15, 0, 40, SplitKind.Rise, 50, 0.03f),
+            Surface("aileron_L", "wing_outer_L", 12.8f, 19.6f, 0.25f, SurfaceKind.Roll, 12, 25, 0, 40, SplitKind.Clamshell, 50, 0.1f),
             Surface("flap_R1", "wing_root_R", 3.5f, 6.65f, 0.28f, SurfaceKind.Flap, 7.5f, 30, 0, 10),
             Surface("flap_R2", "wing_root_R", 7.85f, 12.4f, 0.28f, SurfaceKind.Flap, 7.5f, 30, 0, 10),
-            Surface("spoiler_R", "wing_root_R", 12.8f, 19.4f, 0.2f, SurfaceKind.Roll, 4, 15, 0, 40, SplitKind.Rise, 50, 0.03f),
-            Surface("aileron_R", "wing_root_R", 12.8f, 19.6f, 0.25f, SurfaceKind.Roll, 12, 25, 0, 40, SplitKind.Clamshell, 50, 0.1f),
+            Surface("spoiler_R", "wing_outer_R", 12.8f, 19.4f, 0.2f, SurfaceKind.Roll, 4, 15, 0, 40, SplitKind.Rise, 50, 0.03f),
+            Surface("aileron_R", "wing_outer_R", 12.8f, 19.6f, 0.25f, SurfaceKind.Roll, 12, 25, 0, 40, SplitKind.Clamshell, 50, 0.1f),
             Surface("ruddervator_L1", "vtail_L", 2.81f, 4.59f, 0.38f, SurfaceKind.PitchYaw, 28, 15, 25, 40),
-            Surface("ruddervator_L2", "vtail_L", 4.66f, 8.27f, 0.38f, SurfaceKind.PitchYaw, 56, 30, 8, 40),
+            Surface("ruddervator_L2", "vtail_tip_L", 4.66f, 8.27f, 0.38f, SurfaceKind.PitchYaw, 56, 30, 8, 40),
             Surface("ruddervator_R1", "vtail_R", 2.81f, 4.59f, 0.38f, SurfaceKind.PitchYaw, 28, 15, 25, 40),
-            Surface("ruddervator_R2", "vtail_R", 4.66f, 8.27f, 0.38f, SurfaceKind.PitchYaw, 56, 30, 8, 40),
+            Surface("ruddervator_R2", "vtail_tip_R", 4.66f, 8.27f, 0.38f, SurfaceKind.PitchYaw, 56, 30, 8, 40),
         };
 
-        private static PartSpec Body(string name, string parent, float area, float drag, string reuse, float fuel = 0) =>
-            new PartSpec { Name = name, Parent = parent, WingArea = area, DragArea = drag, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, Lift = Lift.Body, Reuse = reuse, FuelKg = fuel };
+        private static PartSpec Body(string name, string parent, float area, float drag, string reuse, float fuel = 0, params string[] braces) =>
+            new PartSpec { Name = name, Parent = parent, WingArea = area, DragArea = drag, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, Lift = Lift.Body, Reuse = reuse, FuelKg = fuel, Braces = braces };
 
         private static PartSpec Wing(string name, string parent, float area, int airfoil, float extra, string reuse = null, float fuel = 0, params string[] braces) =>
             new PartSpec { Name = name, Parent = parent, WingArea = area, DragArea = 0.05f, Airfoil = airfoil, ExtraIncidence = extra, Lift = Lift.Wing, Reuse = reuse, FuelKg = fuel, Braces = braces };
@@ -253,8 +306,11 @@ namespace Centurion.Editor
         private static PartSpec WingRoot(string name, string reuse, params string[] braces) =>
             new PartSpec { Name = name, Parent = "fuselage_M", WingArea = 72, DragArea = 0.05f, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, LiftAft = -0.7f, Lift = Lift.Wing, Reuse = reuse, Braces = braces };
 
-        private static PartSpec Tail(string name) =>
-            new PartSpec { Name = name, Parent = "tailcone", WingArea = 4, DragArea = 0.05f, Airfoil = TailAirfoil, Incidence = TailIncidenceDeg, Lift = Lift.Wing, Braces = new[] { "fuselage_R" } };
+        private static PartSpec WingOuter(string name, string root, params string[] braces) =>
+            new PartSpec { Name = name, Parent = root, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, Lift = Lift.Wing, Braces = braces };
+
+        private static PartSpec Tail(string name, string parent, float area, params string[] braces) =>
+            new PartSpec { Name = name, Parent = parent, WingArea = area, DragArea = area > 0 ? 0.05f : 0, Airfoil = TailAirfoil, Incidence = TailIncidenceDeg, Lift = Lift.Wing, Braces = braces };
 
         private static PartSpec Plain(string name, string parent, float drag, string reuse = null, params string[] braces) =>
             new PartSpec { Name = name, Parent = parent, DragArea = drag, Reuse = reuse, Braces = braces };
@@ -294,7 +350,7 @@ namespace Centurion.Editor
             AssetDatabase.DeleteAsset(ModFolder + "/centurion_placeholder_loading_screen.png");
             var skin = AuthorSkin(blockout);
             SavedMeshes.Clear();
-            var meshes = ImportBlockout(blockout, SlotMaterialMap(skin, AuthorGear(blockout), AuthorMech(blockout), AuthorGlass()));
+            var meshes = ImportBlockout(blockout, SlotMaterialMap(skin, AuthorGear(blockout), AuthorMech(blockout), AuthorGlass(), AuthorAirframe(blockout)));
 
             var weapons = FindWeaponMounts(BayWeapons);
             // The mod's own mounts: null while a system's authoring is a stub, which leaves its loadout slot and op out.
@@ -412,7 +468,7 @@ namespace Centurion.Editor
             // Span with every telescoping stage run out by its travel along its slide axis (stage 2 carries the tips).
             public float ExtendedSpan()
             {
-                var tips = new[] { "wing_tele2_L", "wing_tele2_R" }.Select(n => Parts[n]).ToArray();
+                var tips = new[] { "wing_tip_L", "wing_tip_R" }.Select(n => Parts[n]).ToArray();
                 var span = tips.Max(t => t.Pivot.x + t.Max.x) - tips.Min(t => t.Pivot.x + t.Min.x);
                 foreach (var stage in Parts.Values.Where(p => p.Props.ContainsKey("travel_m")))
                     span += Convert.ToSingle(stage.Props["travel_m"]) * Mathf.Abs(Vec(stage.Props["slide_axis_unity"]).x);
@@ -437,7 +493,7 @@ namespace Centurion.Editor
         }
 
         // Blockout slot name -> the material it stands for.
-        private static Dictionary<string, Material> SlotMaterialMap(Material skin, Material gear, Material mech, Material glass)
+        private static Dictionary<string, Material> SlotMaterialMap(Material skin, Material gear, Material mech, Material glass, Material airframe)
         {
             var map = SlotMaterials.ToDictionary(s => s.Key, s => Load<Material>(s.Value));
             map[SkinSlot] = skin;
@@ -446,6 +502,8 @@ namespace Centurion.Editor
             if (mech != null)
                 map["jet_mechanical"] = mech;
             map["glass"] = glass;
+            if (airframe != null)
+                map[AirframeSlot] = airframe;
             map["aircraft_structure"] = AuthorStructure();
             map[LensSlot] = AuthorLens();
             return map;
@@ -659,6 +717,19 @@ namespace Centurion.Editor
                 mech.SetTexture(map.Property, ImportExportTexture(blockout, map.File, map.SRgb, map.NormalMap));
             mech.SetFloat("_Smoothness", 1f); // the swatches carry smoothness in the metal map's alpha
             return SaveAsset(mech, SkinFolder + "/Centurion_mech.mat");
+        }
+
+        // The damage structure's trim, when the export carries it (a detailed export with the damage structure); else null.
+        private static Material AuthorAirframe(Blockout blockout)
+        {
+            if (!AirframeMaps.All(m => blockout.Textures.ContainsKey(m.File)))
+                return null;
+            var airframe = OpaqueLit(SlotMaterials["jet_mechanical"], "Centurion_airframe");
+            foreach (var map in AirframeMaps)
+                airframe.SetTexture(map.Property, ImportExportTexture(blockout, map.File, map.SRgb, map.NormalMap));
+            airframe.EnableKeyword("_NORMALMAP");
+            airframe.SetFloat("_Smoothness", 1f); // the trim carries smoothness in the metal map's alpha
+            return SaveAsset(airframe, SkinFolder + "/Centurion_airframe.mat");
         }
 
         private static Material AuthorGlass()
@@ -992,9 +1063,9 @@ namespace Centurion.Editor
             // friendlyIcon and hostileIcon stay the donor's hudIcon_aircraft: every stock aircraft's HUD contact is that triangle.
             Prop(so, "mapIcon").objectReferenceValue = ImportSprite(ModFolder + "/Icons/centurion_map.png");
             Prop(so, "description").stringValue = "Long-endurance multirole bomber with a telescoping high wing, two geared turbofans, nose and tail radars, and a laser point-defence turret. Carries bombs or cruise missiles in two internal bays, or an AWACS radome.";
-            // A B-52-class return on the stock scale (Brawler 0.6, Tarantula 3; owner, 2026-10-17), retracted: TelescopeController
-            // adds up to 0.5 as the wing extends.
-            Num(so, "radarSize", 1.5f);
+            // Retracted, scaled by footprint from Aryx's MC-260 Chimera (radarSize 9 at 34.6 x 40.2 m; owner, 2026-10-19):
+            // TelescopeController adds up to 13 as the wing extends.
+            Num(so, "radarSize", 13f);
             // At 0 the C-RAM never fires: a turret scores a target by its weapon's effectiveness times the carrier's role.
             Num(so, "roleIdentity.antiMissile", 0.3f);
             Num(so, "length", 44.95f);
@@ -1094,6 +1165,7 @@ namespace Centurion.Editor
                 var calibration = CalibrateSurfaceSigns(build);
                 StripDonor(build);
                 BuildParts(build);
+                SplitLift(build);
                 AddSlideEnds(build);
                 BuildSurfaces(build, calibration);
                 Object.DestroyImmediate(calibration.Template.gameObject);
@@ -1198,6 +1270,7 @@ namespace Centurion.Editor
                 var part = spec.Reuse == "" ? root.transform : b.Donor(spec.Reuse);
                 doomed.AddRange(part.Cast<Transform>().Where(t => t.name == "LoD").Select(t => (Object)t.gameObject));
             }
+            doomed.AddRange(WarningLampObjects(root));
             DestroyWithReferences(b, doomed);
 
             // Alkyon names that mean something else now (the Alkyon's "nose" is the radar fairing).
@@ -1279,6 +1352,9 @@ namespace Centurion.Editor
             var template = b.Donor("wing_root_L").GetComponent(aeroType);
             var templateCopy = new GameObject("aeropart_template").AddComponent(aeroType);
             EditorUtility.CopySerialized(template, templateCopy);
+            // The reused donor parts, found by their donor paths before any part moves under a new one (fuselage_F under
+            // fuselage_F2).
+            var donors = Parts.Where(p => p.Reuse != null).ToDictionary(p => p.Name, p => p.Reuse == "" ? b.Root : b.Donor(Renamed(p.Reuse)).gameObject);
             try
             {
                 foreach (var spec in Parts)
@@ -1286,7 +1362,7 @@ namespace Centurion.Editor
                     GameObject go;
                     if (spec.Reuse != null)
                     {
-                        go = spec.Reuse == "" ? b.Root : b.Donor(Renamed(spec.Reuse)).gameObject;
+                        go = donors[spec.Name];
                         go.name = spec.Parent == null ? b.Root.name : spec.Name;
                     }
                     else
@@ -1311,13 +1387,11 @@ namespace Centurion.Editor
                     {
                         RemoveMeshes(go);
                     }
-                    var mass = spec.Mass ?? b.Blockout.Mass(spec.Name);
-                    // The blockout includes the removable laser hardware in the tailcone's mass.
-                    if (spec.Name == "tailcone") mass -= CramMass;
+                    var mass = (spec.Mass ?? b.Blockout.Mass(spec.Name)) + VisualPieces.Where(v => v.Part == spec.Name).Sum(v => b.Blockout.Mass(v.Piece));
+                    // The blockout includes the removable laser hardware in the mass of the part its turret sits on.
+                    if (spec.Name == CramHost) mass -= CramMass;
                     ConfigurePart(b, go, mass, spec.WingArea, spec.DragArea, spec.Airfoil, !spec.KeepDonorMesh);
                     AddJoint(b, spec.Name, spec.Parent, spec.Braces);
-                    if (spec.Lift != Lift.None)
-                        SetLiftNormal(b, spec, go);
                     var tank = go.GetComponent(GameType("FuelTank"));
                     if (spec.FuelKg > 0)
                     {
@@ -1333,6 +1407,9 @@ namespace Centurion.Editor
                     else if (tank != null)
                         Object.DestroyImmediate(tank);
                 }
+                // Once every part stands: a cut part's lift frame is measured on all its pieces' shapes (ShapeGroup).
+                foreach (var spec in Parts.Where(p => p.Lift != Lift.None))
+                    SetLiftNormal(b, spec, b.Parts[spec.Name]);
             }
             finally
             {
@@ -1421,8 +1498,17 @@ namespace Centurion.Editor
             b.Joints[name] = new[] { parent }.Concat(braces).ToList();
         }
 
+        // The joints' solver iterations (AeroPart.CreateJoints sets each part's Rigidbody to them; PhysX runs a jointed island
+        // at its bodies' highest). The part tree hangs heavy ends on light cut cores: fuselage_F (2.55 t) carries the nose,
+        // cockpit and panels (13.3 t) on fuselage_F2 (2.95 t), where the 39-part tree's fuselage_F weighed as much as the
+        // nose. The iterative solver's sag grows with that mass ratio: parked, fuselage_F sat 1.7 cm off fuselage_F2 at 12
+        // iterations, 0.6 cm at 30 and 0.4 cm at 40 (PartStructureCheck, 1 cm tolerance; the anchors made no difference).
+        private const int JointSolverIterations = 40;
+
         // Serialized PartJoints: the first to the parent part (AeroPart.Awake reads joints[0]), then braces.
-        // Strength scales with the mass the joint carries; the game multiplies it by 10 on the simulating peer.
+        // Strength scales with the mass the joint carries, by the part's toughness (Toughness, CenturionAuthor.Damage.cs);
+        // the game multiplies it by 10 on the simulating peer. Each joint is pinned where its two parts meet (JointAnchor):
+        // a cut piece on its cut, a section on its section line, so a bending load is measured, and breaks it, there.
         private static void WriteJoints(Build b)
         {
             var aeroType = GameType("AeroPart");
@@ -1430,6 +1516,7 @@ namespace Centurion.Editor
             Object sound = null;
             if (breakSound.arraySize > 0)
                 sound = breakSound.GetArrayElementAtIndex(0).FindPropertyRelative("breakSound").objectReferenceValue;
+            Physics.SyncTransforms();
             foreach (var go in b.Parts.Values)
             {
                 var part = go.GetComponent(aeroType);
@@ -1441,14 +1528,14 @@ namespace Centurion.Editor
                 var carried = go.GetComponentsInChildren(aeroType, true).Sum(p => new SerializedObject(p).FindProperty("mass").floatValue);
                 for (var i = 0; i < list.Count; i++)
                 {
-                    var force = Mathf.Max(2e5f, carried * 9.81f * 60f);
+                    var force = JointForce(name, carried);
                     var joint = joints.GetArrayElementAtIndex(i);
                     joint.FindPropertyRelative("connectedPart").objectReferenceValue = b.Part(list[i]);
                     joint.FindPropertyRelative("tensor").objectReferenceValue = null;
-                    joint.FindPropertyRelative("solverIterations").intValue = 12;
+                    joint.FindPropertyRelative("solverIterations").intValue = JointSolverIterations;
                     joint.FindPropertyRelative("breakForce").floatValue = force;
                     joint.FindPropertyRelative("breakTorque").floatValue = force * 5f;
-                    joint.FindPropertyRelative("anchor").objectReferenceValue = null;
+                    joint.FindPropertyRelative("anchor").objectReferenceValue = JointAnchor(go, b.Parts[list[i]]);
                     joint.FindPropertyRelative("breakSound").objectReferenceValue = sound;
                     joint.FindPropertyRelative("joint").objectReferenceValue = null;
                 }
@@ -1480,7 +1567,7 @@ namespace Centurion.Editor
         // edge, or the flat face where a control surface's cut-out ends the section). edge is that aft edge's height.
         private static (Vector3 le, Vector3 te, float edge) Section(Build b, string part, float x)
         {
-            var points = SectionAtX(b.Meshes[part].Shape, b.Parts[part].transform.position, x);
+            var points = ShapeGroup(part).SelectMany(p => SectionAtX(b.Meshes[p].Shape, b.Parts[p].transform.position, x)).ToList();
             if (points.Count < 2)
                 throw new InvalidDataException($"{part} has no section at x = {x}");
             var aftZ = points.Min(p => p.z);
@@ -1502,12 +1589,11 @@ namespace Centurion.Editor
         // its chord from the station nearest x whose aft edge is a trailing edge: under 3% of the chord thick.
         private static Vector3 TrailingEdgeChord(Build b, string part, float x)
         {
-            var bounds = b.Meshes[part].Shape.bounds;
-            var offset = b.Parts[part].transform.position.x;
+            var bounds = GroupShapeBounds(b, part);
             for (var d = 0f; d < bounds.size.x; d += 0.25f)
                 foreach (var probe in new[] { x - d, x + d })
                 {
-                    if (probe < bounds.min.x + offset + 0.05f || probe > bounds.max.x + offset - 0.05f)
+                    if (probe < bounds.min.x + 0.05f || probe > bounds.max.x - 0.05f)
                         continue;
                     var (le, te, edge) = Section(b, part, probe);
                     if (edge < 0.03f * Vector3.Distance(le, te))
@@ -1552,9 +1638,9 @@ namespace Centurion.Editor
             var mesh = b.Meshes.TryGetValue(spec.Name, out var m) ? m.Shape : null;
             if (spec.Lift == Lift.Wing && mesh != null)
             {
-                // Area centroid of the upper skin, then the quarter chord of the section through it.
-                var offset = go.transform.position;
-                var centroid = UpperSkinCentroid(mesh) + offset;
+                // Area centroid of the upper skin, then the quarter chord of the section through it; a cut part's pieces
+                // all take the whole's (ShapeGroup).
+                var centroid = UpperSkinCentroid(b, spec.Name);
                 var (le, te) = Chord(b, spec.Name, centroid.x);
                 var (le2, _) = Chord(b, spec.Name, centroid.x + (centroid.x < 0 ? 0.5f : -0.5f));
                 var quarter = Vector3.Lerp(le, te, 0.25f);
@@ -1576,23 +1662,84 @@ namespace Centurion.Editor
                 b.Report.Add($"lift {spec.Name}: {spec.WingArea} m2 at {lift.position} (incidence {-pitch:F2} deg, normal {lift.up}, centerOfLift {centerOfLift.x:F3}, {centerOfLift.y:F3}, {centerOfLift.z:F3})");
         }
 
-        private static Vector3 UpperSkinCentroid(Mesh mesh)
+        // In prefab space, over the part's shape group.
+        private static Vector3 UpperSkinCentroid(Build b, string part)
         {
-            var v = mesh.vertices;
-            var t = mesh.triangles;
             var sum = Vector3.zero;
             var area = 0f;
-            for (var i = 0; i < t.Length; i += 3)
+            foreach (var piece in ShapeGroup(part))
             {
-                var cross = Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]);
-                var normal = cross.normalized;
-                if (normal.y < 0.3f)
-                    continue;
-                var a = cross.magnitude / 2;
-                sum += a * (v[t[i]] + v[t[i + 1]] + v[t[i + 2]]) / 3;
-                area += a;
+                var mesh = b.Meshes[piece].Shape;
+                var offset = b.Parts[piece].transform.position;
+                var v = mesh.vertices;
+                var t = mesh.triangles;
+                for (var i = 0; i < t.Length; i += 3)
+                {
+                    var cross = Vector3.Cross(v[t[i + 1]] - v[t[i]], v[t[i + 2]] - v[t[i]]);
+                    var normal = cross.normalized;
+                    if (normal.y < 0.3f)
+                        continue;
+                    var a = cross.magnitude / 2;
+                    sum += a * ((v[t[i]] + v[t[i + 1]] + v[t[i + 2]]) / 3 + offset);
+                    area += a;
+                }
             }
-            return area > 0 ? sum / area : mesh.bounds.center;
+            return area > 0 ? sum / area : GroupShapeBounds(b, part).center;
+        }
+
+        // The pieces whose shapes together make up part's whole (CutParts), part among them; part alone if it wasn't cut.
+        private static string[] ShapeGroup(string part) => CutParts.FirstOrDefault(g => g.Contains(part)) ?? new[] { part };
+
+        // The shape group's bounds in prefab space.
+        private static Bounds GroupShapeBounds(Build b, string part)
+        {
+            var pieces = ShapeGroup(part).Select(n =>
+            {
+                var bounds = b.Meshes[n].Shape.bounds;
+                bounds.center += b.Parts[n].transform.position;
+                return bounds;
+            });
+            return pieces.Aggregate((a, c) => { a.Encapsulate(c); return a; });
+        }
+
+        // Shares each cut part's area and drag between its two pieces (CutParts) so that their lift, each at its own centre
+        // of mass (complex physics gives every part a Rigidbody, AeroPart.ApplyJobFields), adds up to the whole's: the
+        // shares that keep the whole's moment along the cut's axis (along the span for a wing or V-tail, the body for a
+        // section), and for a wing piece a centerOfLift that puts its lift at the whole's lift station.
+        private static void SplitLift(Build b)
+        {
+            foreach (var group in CutParts)
+            {
+                var whole = Parts.Single(p => p.Name == group[0]);
+                if (whole.WingArea == 0 && whole.DragArea == 0)
+                    continue;
+                var coms = group.Select(n => ((Transform)Prop(new SerializedObject(b.Part(n)), "centerOfMass").objectReferenceValue).position).ToArray();
+                var union = group.SelectMany(n => b.Parts[n].GetComponents<MeshCollider>().Select(c =>
+                {
+                    var bounds = c.sharedMesh.bounds; // parts are axis-aligned at unit scale (BuildParts)
+                    bounds.center = c.transform.TransformPoint(bounds.center);
+                    return bounds;
+                })).Aggregate((a, c) => { a.Encapsulate(c); return a; });
+                var spanwise = whole.Lift == Lift.Wing;
+                float Along(Vector3 p) => spanwise ? Mathf.Abs(p.x) : p.z;
+                // a0 + a1 = A and a0 x0 + a1 x1 = A x, x the whole's centre (its hulls' bounds, as ConfigurePart takes it)
+                var share = (Along(union.center) - Along(coms[0])) / (Along(coms[1]) - Along(coms[0]));
+                if (share <= 0 || share >= 1)
+                    throw new InvalidDataException($"{string.Join(", ", group)}: no area split keeps {whole.Name}'s moment (piece share {share:F3})");
+                var shares = new[] { 1 - share, share };
+                // The whole's lift station: its centre, LiftAft metres aft (prefab -z)
+                var station = union.center.z - whole.LiftAft;
+                for (var i = 0; i < group.Length; i++)
+                {
+                    var part = b.Part(group[i]);
+                    Set(part, "wingArea", whole.WingArea * shares[i]);
+                    Set(part, "dragArea", whole.DragArea * shares[i]);
+                    var aft = spanwise ? coms[i].z - station : 0f;
+                    var lift = (Transform)Prop(new SerializedObject(part), "liftNormal").objectReferenceValue;
+                    Set(part, "centerOfLift", Quaternion.Inverse(lift.rotation) * new Vector3(0, 0, -aft));
+                    b.Report.Add($"lift split {whole.Name}: {group[i]} {whole.WingArea * shares[i]:F3} m2, drag {whole.DragArea * shares[i]:F3}, centre of mass {coms[i]}, lift {aft:F3} m aft of it");
+                }
+            }
         }
 
         private sealed class SignCalibration
@@ -1665,7 +1812,7 @@ namespace Centurion.Editor
                 {
                     var xs = Corners(b.Meshes[visibleName].Shape.bounds).Select(c => Mathf.Abs((b.Blockout.Rotation(visibleName) * c + b.Blockout.Local(visibleName)).x)).ToArray();
                     // Sections come from the host, so stay inside its span.
-                    var hostXs = Corners(b.Meshes[spec.Host].Shape.bounds).Select(c => Mathf.Abs(c.x + host.transform.position.x)).ToArray();
+                    var hostXs = Corners(GroupShapeBounds(b, spec.Host)).Select(c => Mathf.Abs(c.x)).ToArray();
                     spanIn = Mathf.Max(xs.Min(), hostXs.Min()) + 0.1f;
                     spanOut = Mathf.Min(xs.Max(), hostXs.Max()) - 0.1f;
                 }
@@ -1830,34 +1977,54 @@ namespace Centurion.Editor
 
         // ---------- systems: cockpit, radar, cameras, engines, gear, bays ----------
 
-        // The flare dispensers are art/blender/m4/fuselage_aft.py FLARES, the cartridge plates on fuselage_R above the
-        // sponsons' tails (stations 32.0 to 32.9, 80 to 94 deg from the crown), centred at station 32.45, 4.23 m up and
-        // 2.75 m out; the ejection points sit 5 cm off the plates. The Alkyon's points came along under the sponsons at
-        // station 27, inside the main gear bays, so the flares appeared under the aircraft. FlareEjector.EjectFlare spawns
-        // each flare at its point and throws it along the point's +Z at 15 to 35 m/s plus its part's velocity.
-        private const float FlareStation = 32.45f, FlareHeight = 4.233f, FlareOut = 2.80f;
+        // The flare dispensers are cartridge plates a side in two places (owner: "not side by side, in different
+        // locations"): art/blender/m4/nose.py FLARES on fuselage_F's lower sides below the cheeks (stations 9.95 to 10.85,
+        // 121 to 135 deg from the crown), and fuselage_aft.py FLARES on fuselage_R above the sponsons' tails (32.0 to
+        // 32.9, 80 to 94 deg). Each point sits 5 cm off its plate's centre (FlarePlates: blockout station, x out and height)
+        // on a MainBox core: the forward plate is fuselage_F's own skin; the aft plate's skin is the fuselage_R_upper
+        // panel's, its points stay on fuselage_R, so a lost panel leaves them throwing from the hole. Owner,
+        // 2026-10-19: "up the flares to 400 and add 2 more dispensers so they deploy 4 at a time": a release
+        // (FlareEjector.Fire) ejects ejectionGrouping flares from successive points, so with four points and a grouping of
+        // four each release throws one from every plate (FlareEjector.cs:110-137). The Alkyon's two points came along
+        // under the sponsons at station 27, inside the main gear bays, so the flares appeared under the aircraft.
+        // FlareEjector.EjectFlare spawns each flare at its point and throws it along the point's +Z at 15 to 35 m/s plus
+        // its part's velocity; from both plates that line clears every collider at both spans.
+        private static readonly (string Part, float Station, float Out, float Height, string Suffix)[] FlarePlates =
+            { ("fuselage_F", 10.4f, 2.118f, 2.146f, "_fwd"), ("fuselage_R", 32.45f, 2.80f, 4.233f, "") };
+        private const int FlareRounds = 400;
         private static readonly Vector3 FlareThrow = new Vector3(0.8f, -0.55f, -0.25f); // outboard (+X side), down, aft
 
         private static void PlaceFlareEjectors(Build b)
         {
-            var hull = b.Parts["fuselage_R"];
-            var so = new SerializedObject(b.Root.GetComponent(GameType("FlareEjector")));
+            var ejector = b.Root.GetComponent(GameType("FlareEjector"));
+            var so = new SerializedObject(ejector);
             var points = so.FindProperty("ejectionPoints");
             if (points.arraySize != 2)
                 throw new InvalidDataException($"the donor's FlareEjector has {points.arraySize} ejection points, not one a side");
-            for (var i = 0; i < points.arraySize; i++)
-            {
-                var point = points.GetArrayElementAtIndex(i);
-                var t = (Transform)point.FindPropertyRelative("transform").objectReferenceValue;
-                var side = t.name.EndsWith("_L", StringComparison.Ordinal) ? -1f : 1f; // the left wing is -X in the prefab
-                t.SetParent(hull.transform, true);
-                t.SetPositionAndRotation(
-                    new Vector3(side * FlareOut, FlareHeight - b.Blockout.Origin.y, OriginStation - FlareStation - b.Blockout.Origin.z),
-                    Quaternion.LookRotation(Vector3.Scale(FlareThrow, new Vector3(side, 1f, 1f)), Vector3.up));
-                point.FindPropertyRelative("part").objectReferenceValue = hull.GetComponent(GameType("AeroPart"));
-                b.Report.Add($"flares: {t.name} on fuselage_R at {t.position}, throwing along {t.forward}");
-            }
+            var donor = Enumerable.Range(0, 2).Select(i => (Transform)points.GetArrayElementAtIndex(i).FindPropertyRelative("transform").objectReferenceValue).ToArray();
+            points.arraySize = FlarePlates.Length * donor.Length;
+            var k = 0;
+            foreach (var plate in FlarePlates)
+                foreach (var source in donor)
+                {
+                    // The aft plate keeps the donor's points; the forward plate takes a copy of each.
+                    var hull = b.Parts[plate.Part];
+                    var t = plate.Suffix == "" ? source : Object.Instantiate(source.gameObject, hull.transform, true).transform;
+                    t.name = source.name + plate.Suffix;
+                    var side = source.name.EndsWith("_L", StringComparison.Ordinal) ? -1f : 1f; // the left wing is -X in the prefab
+                    t.SetParent(hull.transform, true);
+                    t.SetPositionAndRotation(
+                        new Vector3(side * plate.Out, plate.Height - b.Blockout.Origin.y, OriginStation - plate.Station - b.Blockout.Origin.z),
+                        Quaternion.LookRotation(Vector3.Scale(FlareThrow, new Vector3(side, 1f, 1f)), Vector3.up));
+                    var point = points.GetArrayElementAtIndex(k++);
+                    point.FindPropertyRelative("transform").objectReferenceValue = t;
+                    point.FindPropertyRelative("part").objectReferenceValue = hull.GetComponent(GameType("AeroPart"));
+                    b.Report.Add($"flares: {t.name} on {plate.Part} at {t.position}, throwing along {t.forward}");
+                }
+            Prop(so, "ejectionGrouping").intValue = points.arraySize;
+            Prop(so, "ammo").intValue = FlareRounds;
             so.ApplyModifiedPropertiesWithoutUndo();
+            b.Report.Add($"flares: {FlareRounds} rounds, {points.arraySize} points, {points.arraySize} a release every {Prop(so, "ejectionInterval").floatValue} s");
         }
 
         // The transonic vapour cone, VaporEffect's local-space emitter, which VaporEmitter.Emit turns into the airflow and
@@ -1918,12 +2085,15 @@ namespace Centurion.Editor
             // belly 3.4 m behind the bay, where the stock bombers carry it, with all twelve main wheels in its view.
             tail.Find("landingCam").localPosition = new Vector3(0f, -2.05f, -3f);
 
-            // Nav lights and vortex emitters at the raked tips: stage 2's vertices outboard of the inner wing's end.
+            // Nav lights and vortex emitters at the raked tips, on the wingtip pieces: stage 2's vertices (with its tip's)
+            // outboard of the inner wing's end.
             foreach (var side in new[] { "L", "R" })
             {
-                var stage = b.Parts["wing_tele2_" + side].transform;
-                var rootEnd = b.Meshes["wing_root_" + side].Shape.vertices.Max(v => Mathf.Abs(b.Parts["wing_root_" + side].transform.TransformPoint(v).x));
-                var tipVerts = b.Meshes["wing_tele2_" + side].Shape.vertices.Select(stage.TransformPoint).Where(v => Mathf.Abs(v.x) > rootEnd).ToArray();
+                var stage = b.Parts["wing_tip_" + side].transform;
+                var inner = GroupShapeBounds(b, "wing_root_" + side);
+                var rootEnd = Mathf.Max(Mathf.Abs(inner.min.x), Mathf.Abs(inner.max.x));
+                var tipVerts = ShapeGroup("wing_tele2_" + side).SelectMany(n => b.Meshes[n].Shape.vertices.Select(b.Parts[n].transform.TransformPoint))
+                    .Where(v => Mathf.Abs(v.x) > rootEnd).ToArray();
                 var tb = new Bounds(tipVerts[0], Vector3.zero);
                 foreach (var v in tipVerts)
                     tb.Encapsulate(v);
@@ -1931,7 +2101,7 @@ namespace Centurion.Editor
                 var nav = b.Root.transform.Find("navlight_" + side);
                 nav.SetParent(stage, true);
                 nav.position = new Vector3(outer, tb.center.y, tb.center.z);
-                // Stage 2 or a part it hangs from tearing off fires stage 2's onParentDetached (UnitPart.Detach and
+                // The wingtip or a part it hangs from tearing off fires the tip's onParentDetached (UnitPart.Detach and
                 // UnitPart_OnParentDetached), which puts the light out (NavLights.NavLight_OnDetachedFromUnit).
                 var navLights = new SerializedObject(b.Root.GetComponent(GameType("NavLights")));
                 NavLightEntry(navLights, nav.GetComponent<Renderer>()).FindPropertyRelative("part").objectReferenceValue = b.Part(stage.name);
@@ -2254,19 +2424,20 @@ namespace Centurion.Editor
                 t.position = position;
                 return t;
             }
-            // The AWACS spine well (stations 24.74 to 34.84): its lid, spine_cover, shows on the bomber, and the dorsal mount
-            // goes on the crown at the lid's pivot, the mast sleeve's station, under fuselage_R, which carries its mass and
-            // joint (docs/M3-DESIGN.md "Hardpoint"). AwacsBeam hides the lid when the beam is fitted.
+            // The AWACS spine well (stations 24.74 to 34.84): its lids, spine_cover and spine_cover_A (VisualPieces), show on
+            // the bomber, and the dorsal mount goes on the crown at the forward lid's pivot, the mast sleeve's station, under
+            // fuselage_R, which carries its mass and joint (docs/M3-DESIGN.md "Hardpoint"). AwacsBeam hides the lids when the
+            // beam is fitted.
             AddVisual(b, "spine_cover", aft);
-            AddVisual(b, "laser_turret", aft);
-            var tail = b.Parts["tailcone"].transform;
+            AddVisual(b, "spine_cover_A", aft);
+            var tail = b.Parts[CramHost].transform;
+            AddVisual(b, "laser_turret", tail);
             var sets = new (string name, Transform point, string part, Component[] doors)[]
             {
                 ("Forward Bay", Point("hardpoint_bay_forward", fwd, new Vector3(0, -0.4f, fz)), "fuselage_F", forwardDoors),
                 ("Aft Bay", Point("hardpoint_bay_aft", aft, new Vector3(0, -0.4f, az)), "fuselage_R", aftDoors),
                 ("Dorsal", Point("hardpoint_dorsal", aft, b.Blockout.Local("spine_cover")), "fuselage_R", new Component[0]),
-                ("Laser C-RAM", Point("hardpoint_laser", tail, b.Blockout.Has("laser_turret") ? b.Blockout.Local("laser_turret")
-                    : new Vector3(0, tail.position.y, ShapeBounds(b, "tailcone").min.z + 0.35f)), "tailcone", new Component[0]),
+                ("Laser C-RAM", Point("hardpoint_laser", tail, b.Blockout.Local("laser_turret")), CramHost, new Component[0]),
             };
             var manager = b.Parts["cockpit"].GetComponent(GameType("WeaponManager"));
             var so = new SerializedObject(manager);
@@ -2453,6 +2624,9 @@ namespace Centurion.Editor
             foreach (var component in b.Root.GetComponentsInChildren<Component>(true))
                 if (component == null)
                     problems.Add("a missing script remains");
+            foreach (var targetCam in b.Root.GetComponentsInChildren(GameType("TargetCam"), true))
+                if (Prop(new SerializedObject(targetCam), "targetScreenRenderer").objectReferenceValue == null)
+                    problems.Add($"{PathOf(targetCam.transform, b.Root.transform)}: TargetCam without a targetScreenRenderer");
             problems.AddRange(LiveryCoverage(b, awacsMount));
             problems.AddRange(ColliderOverlaps(b));
             problems.AddRange(EscapeProbe(b));
@@ -2544,6 +2718,7 @@ namespace Centurion.Editor
                 { SkinFolder + "/Centurion_mech.mat", "fan blades, spinners, nozzles, probes and actuators" },
                 { SkinFolder + "/Centurion_gear.mat", "the gear legs and wheels" },
                 { SkinFolder + "/Centurion_structure.mat", "joint faces, cut-out walls, door inner faces and skin a neighbour hides" },
+                { SkinFolder + "/Centurion_airframe.mat", "the damage structure under the skin: frames, lining, members, break faces" },
                 { SlotMaterials["LOD"], "a LOD1 hull" },
                 { Stock + "Material/GroundSupportEquipment_PLACEHOLDER.mat", "the wheel chocks" },
             };

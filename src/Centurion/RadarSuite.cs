@@ -15,6 +15,7 @@ sealed class RadarSuite : MonoBehaviour
 {
     const string FrontName = "radar_F_fairing";
     const string RearName = "radar_R";
+    const string RearPart = "tail_end"; // CenturionAuthor's RearRadarPart
 
     internal static readonly PatchTarget[] PatchTargets =
     {
@@ -119,7 +120,7 @@ sealed class RadarSuite : MonoBehaviour
             {
                 front.Bind(part.GetComponent<Radar>());
             }
-            if (part != null && part.name == "tailcone")
+            if (part != null && part.name == RearPart)
             {
                 rear.Bind(part.transform.Find(RearName)?.GetComponent<Radar>());
             }

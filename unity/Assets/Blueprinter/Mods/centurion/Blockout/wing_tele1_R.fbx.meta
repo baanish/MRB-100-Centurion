@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Centurion_airframe
+    second: {fileID: 2100000, guid: 3f6e81bc8030fe647ad683ba2dfab454, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Centurion_gear
     second: {fileID: 2100000, guid: 67dd394d302c1244092f9e1cb9169be9, type: 2}
   - first:

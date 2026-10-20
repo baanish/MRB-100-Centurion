@@ -19,7 +19,7 @@ namespace Centurion;
 public sealed class CenturionPlugin : BaseUnityPlugin
 {
     public const string Guid = "baanish.centurion";
-    public const string Version = "0.1.2";
+    public const string Version = "0.1.3";
 
     /// <summary>
     /// Seconds between a mission starting and the geometry log, so airbases a client or a carrier registers after the
@@ -28,7 +28,7 @@ public sealed class CenturionPlugin : BaseUnityPlugin
     const float GeometryDelayS = 3f;
 
     /// <summary>Every Harmony patch the mod installs; the C-RAM adds its two (systems-design section 5).</summary>
-    static readonly PatchTarget[] PatchTargets = PlayerInputHold.PatchTargets.Concat(TelescopeController.PatchTargets).Concat(SpoilerRule.PatchTargets).Concat(FlightPathHold.PatchTargets).Concat(SpanGauge.PatchTargets)
+    static readonly PatchTarget[] PatchTargets = PlayerInputHold.PatchTargets.Concat(TelescopeController.PatchTargets).Concat(SpoilerRule.PatchTargets).Concat(SpanGauge.PatchTargets)
         .Concat(CenturionSystems.PatchTargets).Concat(RadarSuite.PatchTargets).Concat(CramPatches.PatchTargets).Concat(PowerReadout.PatchTargets).Concat(MissileJamming.PatchTargets)
         .Concat(CenturionAwacsState.PatchTargets).Concat(AiAirfieldRules.PatchTargets).Concat(BayLoadoutRule.PatchTargets).Concat(FlapPreset.PatchTargets)
         .Concat(OwnerState.PatchTargets).Concat(StartupHold.PatchTargets).Concat(BombRelease.PatchTargets)
@@ -63,7 +63,6 @@ public sealed class CenturionPlugin : BaseUnityPlugin
         PlayerInputHold.Diagnostics = diagnostics;
         TelescopeController.Log = Log;
         SpoilerRule.Log = Log;
-        FlightPathHold.Log = Log;
         TelescopeController.Diagnostics = diagnostics;
         TelescopeController.SpanCommand = spanCommand;
         TelescopeController.PitchBudgetEnabled = Config.Bind("Diagnostics", "PitchBudget", false,
@@ -142,6 +141,9 @@ public sealed class CenturionPlugin : BaseUnityPlugin
         harmony = new Harmony(Guid);
         FeaturesOff = PatchTarget.InstallAll(harmony, PatchTargets, Log);
     }
+
+    // Every plugin has loaded by the first Start, so NOAutopilot is visible to Chainloader here, not in Awake.
+    void Start() => NoAutopilotProfile.Install();
 
     void OnDestroy() => harmony?.UnpatchSelf();
 

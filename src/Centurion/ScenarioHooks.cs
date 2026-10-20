@@ -90,6 +90,7 @@ static class ScenarioHooks
         HoldSpeed(aircraft);
         TankDiagnostics.ApplyHit(aircraft);
         HoldBallast(aircraft);
+        GearDropProbe.Update(aircraft);
         HoldLoadout(aircraft);
         HoldIgnition(aircraft);
         HoldCockpitLook();

@@ -36,7 +36,7 @@ To upgrade manually, close the game and replace `BepInEx/plugins/baanish.centuri
 | Height | 7.51 m (24.6 ft), under the medium hangar's 8 m door |
 | Mass | 125 t empty, 24 t internal fuel, 50 t payload, 199 t maximum takeoff |
 | Engines | Two geared turbofans, 330 kN each, no afterburner |
-| Radar cross-section | 1.5 retracted, 2.0 extended, on the game's radar scale |
+| Radar cross-section | 13 retracted, 26 extended, on the game's radar scale (sized against the MC-260 Chimera's 9) |
 | Ceiling | 55,000 ft official; extended, 17.5 km (about 57,500 ft) at mid weight; retracted, about 14 km (46,000 ft) |
 | Speed | Retract for fast transit near Mach 0.85; extended, drag holds level flight near Mach 0.81 |
 | Endurance | About 3.3 hours of AWACS loiter to 20% fuel, extrapolated from four burns totalling 25 minutes at 15 km and 200 m/s; excludes climb and manoeuvring |
@@ -64,7 +64,7 @@ The span is on **Custom Axis 1**, the axis the Alkyon's wing sweep uses: 0 is re
 - **Near the hangar the wing stays in.** On the ground within about 100 m of a medium hangar the span is held retracted, so a wingtip can't reach the building.
 - **The wing can tear.** Extended past 25%, a load factor above +4 g or below -1 g held for half a second tears both outer stages off. The aircraft flies on at the reduced span, and the extension is locked for the rest of the sortie. At ordinary speeds a hard pull bleeds airspeed long before it gets there. Losing one outer panel to damage triggers an automatic symmetric emergency jettison of the healthy outer panel to prevent asymmetric lift. The damaged wing permanently adds drag; slow down and head home.
 - **Rotation and tail strike.** Rotate to 8 or 9 degrees; the tail strikes at 10.5.
-- **Hands-off pitch.** With the stick centred, the aircraft holds the flight path you released it on (level if you let go within half a degree of level). Past 60 degrees of bank, in the flare, and under AI control the stock attitude hold flies alone.
+- **Pitch control.** With the stick centred, the stock fly-by-wire holds attitude, as on every aircraft.
 - **Airbrakes** open at exactly idle throttle, as on stock aircraft: the ailerons split and the spoilers rise.
 
 ## Wing flex
@@ -114,6 +114,12 @@ The Darkreach ground-attack inventory is the baseline for the bays, plus the sto
 | ARAD-116 | Forward bay only: x4, x8 or x16 |
 
 The Centurion carries no air-to-air missiles and no external pods; its built-in ECM is defensive self-protection. It does not jam enemy radars or replace the offensive Radar Jamming Pod. AI Centurions fly one of eight loadouts, picked evenly: Bombs 500 x93, Bombs 250 x198, Glide Bombs 250 x174, Glide Bombs 500 x68, Tusko-B x48, AShM-300 x36, Bombs 500 x16, and AWACS.
+
+### Bay cook-off
+
+Each bay sits beside a fuselage fuel tank. If that tank burns for 20 seconds, the bay's conventional stores explode once, sized by what is still loaded (up to 5,000 kg), and that section of the aircraft breaks away. Nuclear weapons never cook off. Even the smallest load cooks off: here a single GPO-500 in the aft bay.
+
+![The aft bay's tank burning for 20 seconds, then a single GPO-500 cooking off and the aircraft breaking up](docs/player/media/centurion_cookoff_min.gif)
 
 ## AWACS
 

@@ -1,19 +1,43 @@
 # Changelog
 
-## 0.1.3 (in progress)
+## 0.1.3 (pre-release), 2026-10-20
 
-### Done
+### Cockpit
 
 - The wing status display is drawn with the HUD span gauge's line art, one wing hanging down, with the extension percentage and amber warnings.
+- Clearer, less reflective cockpit glass, and no dark bar above the forward camera screen.
+- Subtler scan lines on the forward camera screen.
+- Missile warning lamps in housings under the forward camera screen, in each seat's view, replacing the strips in the windows.
+- The Alkyon's old missile warning on the tactical screen is removed.
+
+### Exterior
+
+- A slimmer, gently curved tail whose top curves down all the way to the end (appearance only; flight is unchanged).
+- A small external camera housing on the nose, where the forward screen's view comes from.
+- Removed the windscreen wipers.
+
+### Fuel and damage
+
+- A finer damage model: the aircraft breaks into 64 parts instead of 39, including split fuselage skin panels, outer wing sections, wingtips, the tail end and V-tail tips.
+- Internal structure and fuel compartments show through damage, and each part has its own armour and joint strength: skin panels and tips come off first, the main structure last.
 - A burning weapon bay now cooks off after 20 seconds instead of 5, giving the crew time to react.
+- Fuel fires no longer strip the skin in seconds: panels burn slowly and stay on past a bay's 20 s cook-off, and a burning section holds for about 25 s before it burns through. Skin still comes off quickly from weapons, blasts and crashes. A fire spreads to the neighbouring tank after 40 s of burning.
+- Fixed an error logged whenever a breakup took the target camera's part: the cockpit displays now black out instead, as on the Alkyon.
 
-### Planned
+### Weapons and defence
 
-- A finer damage model: the aircraft breaks into 66 pieces instead of 39, including split fuselage skin panels and outer wing sections.
-- Internal structure and fuel compartments visible through damage, with armour and joint strength set for each part.
-- A slimmer, more streamlined tail (appearance only; flight is unchanged).
-- A small external camera on the nose where the forward screen's view comes from, and subtler scan lines on that screen.
-- The missile warning strips move from the windows onto the cockpit panel, and the Alkyon's old missile warning on the tactical screen is removed.
+- Flares raised to 400, released four at a time from four dispensers.
+- Radar cross-section raised to 13 retracted and 26 extended, sized against other large aircraft: the Centurion is harder to hide over terrain and its jamming against radar-guided missiles is weaker.
+
+### Flight
+
+- Stronger landing gear on runways (all three legs survive about 25% harder touchdowns); grass and rough ground still break it.
+- NO-Autopilot flies the Centurion without oscillating: with NO-Autopilot installed, the mod adds a Centurion-only NO-Autopilot profile (never replacing one you already have).
+- Removed the custom flight-path hold. A centred stick now uses the stock fly-by-wire attitude hold, including with NO-Autopilot installed.
+
+### Sound
+
+- A more mechanical, quieter flap motion sound in place of the hiss-heavy one.
 
 ## 0.1.2 (pre-release), 2026-10-19
 

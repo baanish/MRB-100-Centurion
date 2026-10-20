@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
 using static System.FormattableString;
@@ -25,7 +26,8 @@ sealed class AwacsBeam : MonoBehaviour
     /// </summary>
     const string MountRoot = "Centurion_AwacsBeam";
     /// <summary>The bomber's lid over the well: a renderer under fuselage_R with no collider (CenturionAuthor.AddVisual's name).</summary>
-    const string CoverName = "spine_cover_mesh";
+    // The spine cover's lids (CenturionAuthor's VisualPieces), meshes on the carrier part
+    static readonly string[] CoverNames = { "spine_cover_mesh", "spine_cover_A_mesh" };
     const float TravelS = 12f;
     /// <summary>The mast rises over this share of the travel (8 s), the end sections slide out over the rest (4 s).</summary>
     const float MastShare = 2f / 3f;
@@ -64,7 +66,7 @@ sealed class AwacsBeam : MonoBehaviour
     AeroPart? carrier;
     Transform? hardpoint;
     Radar? radar;
-    Renderer? cover;
+    Renderer[] cover = System.Array.Empty<Renderer>();
     /// <summary>The spawn point of the hangar the aircraft started in, which the door readouts measure against; null for
     /// an airborne start. <see cref="HangarGuard.Spawn"/> is the nearest hangar, which changes as the aircraft taxis.</summary>
     Transform? spawnHangar;
@@ -126,9 +128,9 @@ sealed class AwacsBeam : MonoBehaviour
 
         state["awacs_fitted"] = beam.fitted ? 1 : 0;
         state["awacs_state"] = beam.state;
-        if (beam.cover != null)
+        if (beam.cover.Length > 0)
         {
-            state["awacs_cover"] = beam.cover.enabled ? 1 : 0;
+            state["awacs_cover"] = beam.cover[0].enabled ? 1 : 0;
         }
 
         if (!beam.fitted)
@@ -330,11 +332,9 @@ sealed class AwacsBeam : MonoBehaviour
         return nearest != null && Vector3.ProjectOnPlane(nearest.position - aircraft.transform.position, Vector3.up).magnitude < SpawnMatchM ? nearest : null;
     }
 
-    static Renderer? FindCover(UnitPart? carrierPart)
-    {
-        Transform? lid = carrierPart != null ? carrierPart.transform.Find(CoverName) : null;
-        return lid != null ? lid.GetComponent<Renderer>() : null;
-    }
+    static Renderer[] FindCover(UnitPart? carrierPart) =>
+        carrierPart == null ? System.Array.Empty<Renderer>()
+            : CoverNames.Select(n => carrierPart.transform.Find(n)).Where(t => t != null).Select(t => t!.GetComponent<Renderer>()).Where(r => r != null).ToArray();
 
     void FixedUpdate()
     {
@@ -442,9 +442,9 @@ sealed class AwacsBeam : MonoBehaviour
 
     void ShowCover(bool show)
     {
-        if (cover != null)
+        foreach (Renderer lid in cover)
         {
-            cover.enabled = show;
+            lid.enabled = show;
         }
     }
 

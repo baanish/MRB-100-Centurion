@@ -51,8 +51,10 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from m4 import airframe, livery, paint, render, surface, texture  # noqa: E402
+from m4 import airframe, livery, paint, partition, render, surface, texture  # noqa: E402
+import part_splits  # noqa: E402
 from m4.blockout import load_blockout  # noqa: E402
+from build_centurion import orient_outward, signed_volume  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 BLOCKOUT = REPO / ".cache" / "art" / "blockout_s61"
@@ -98,17 +100,19 @@ DEGENERATE = 1e-5  # metres: an edge this short is a collapsed one
 JOINT_PAIRS = (("radar_F_fairing", "nose", 3.625), ("nose", "fuselage_F", 7.0), ("fuselage_F", "fuselage_M", 17.0),
                ("fuselage_M", "fuselage_R", 25.0), ("fuselage_R", "tailcone", 33.0))
 JOINT_GAP, JOINT_TURN = 1e-4, 1.0  # metres between matching skin vertices, degrees between their normals
-# Each group's right-hand parts whose skin islands are their left twin's.
+# Each group's right-hand parts whose skin islands are their left twin's, and the pieces cut from them
+# (part_splits), matched face to face by position (mirror_face_pairs).
 MIRROR_PARTS = {k: v for g in GROUPS.values() for k, v in getattr(g, "MIRROR_PARTS", {}).items()}
+MIRROR_PARTS.update({s["name"]: s["name"].replace("_R", "_L", 1) for s in part_splits.SPLITS if s["source"] in MIRROR_PARTS})
 
 
 def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    opts = {"group": "nose", "span": "retracted", "out": None, "samples": 64, "render": True}
+    opts = {"group": "nose", "span": "retracted", "out": None, "samples": 64, "render": True, "blockout": None}
     i = 0
     while i < len(argv):
         a = argv[i]
-        if a in ("--group", "--span", "--out", "--samples"):
+        if a in ("--group", "--span", "--out", "--samples", "--blockout"):
             opts[a[2:]] = argv[i + 1]
             i += 1
         elif a == "--no-render":
@@ -133,21 +137,22 @@ def parse_args():
 
 
 # ---------- mesh swap ----------
-def swap_mesh(obj, part, mats):
+def swap_mesh(bl, obj, part, mats):
     """Replace obj's mesh with the part's world-space bmesh, keeping the object (name, transform, parent,
     children). The blockout's mesh stays on the object as _blockout_mesh, the shape the game's physics and aero are
     measured on (tools/export_blockout.py writes it as <part>_shape). Edges shorter than DEGENERATE collapse first: Unity drops the zero-area triangles they leave, and its
     submesh counts must match the export's. Returns the face indices whose UVs are copies, and their sources."""
     bm = part.bm
     bmesh.ops.dissolve_degenerate(bm, dist=DEGENERATE, edges=bm.edges[:])
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    orient_outward(bm)  # recalc_face_normals alone can turn a thin wall's shell (skin, lining, break faces) inside out
+    partition.hull_outward(bl, part)
     bm.faces.index_update()
     pairs = [(d.index, s.index) for d, s in part.mirror_pairs if d.is_valid and s.is_valid]
     bmesh.ops.transform(bm, matrix=obj.matrix_world.inverted(), verts=bm.verts)
     if part.envelope is not None:  # a thin-walled part's closed hull, which the bury pass tests containment against
         env = bpy.data.meshes.new(obj.name + "_envelope")
         bmesh.ops.dissolve_degenerate(part.envelope, dist=DEGENERATE, edges=part.envelope.edges[:])
-        bmesh.ops.recalc_face_normals(part.envelope, faces=part.envelope.faces)  # the bury test reads them
+        orient_outward(part.envelope)  # the bury test reads them
         bmesh.ops.transform(part.envelope, matrix=obj.matrix_world.inverted(), verts=part.envelope.verts)
         part.envelope.to_mesh(env)
         part.envelope.free()
@@ -170,14 +175,14 @@ def swap_mesh(obj, part, mats):
 
 def swap_group(bl, group, surf, mats):
     """Build the group and swap its meshes into the scene. Returns its objects and their mirrored face pairs."""
-    parts = group.build(bl, surf, (bl.SKIN, bl.STRUCT, bl.GLASS, bl.MECH) + LIGHTS)
-    missing = set(group.PARTS) ^ set(parts)
+    parts = partition.apply(bl, group.build(bl, surf, (bl.SKIN, bl.STRUCT, bl.GLASS, bl.MECH) + LIGHTS))
+    missing = (set(group.PARTS) | set(partition.piece_names(group.PARTS))) ^ set(parts)
     if missing:
         raise SystemExit(f"{group.GROUP}: PARTS and build() disagree on {sorted(missing)}")
     objs, mirrored = {}, {}
     for name, part in parts.items():
         obj = bpy.data.objects[name]
-        mirrored[name] = swap_mesh(obj, part, mats)
+        mirrored[name] = swap_mesh(bl, obj, part, mats)
         objs[name] = obj
     return objs, mirrored
 
@@ -244,6 +249,25 @@ def copy_mirrored_uvs(dst, dst_faces, src, src_faces):
             bad += dist > 1e-3
             duv[li].uv = suv[sl].uv
     return bad
+
+
+def mirror_face_pairs(bl, dst, src):
+    """dst's skin faces and, for each, src's skin face at its mirror image across x = 0 (centres within 1 mm): a right
+    part and its left twin, built face for face or cut identically."""
+    from mathutils.kdtree import KDTree
+    s_faces = bl.slot_faces(src, bl.SKIN)
+    tree = KDTree(len(s_faces))
+    for i in s_faces:
+        tree.insert(src.matrix_world @ src.data.polygons[i].center, i)
+    tree.balance()
+    dsts, srcs = [], []
+    for i in bl.slot_faces(dst, bl.SKIN):
+        c = dst.matrix_world @ dst.data.polygons[i].center
+        co, j, d = tree.find(Vector((-c.x, c.y, c.z)))
+        if co is not None and d < 1e-3:
+            dsts.append(i)
+            srcs.append(j)
+    return dsts, srcs
 
 
 def mech_role(name, centre, duct):
@@ -375,23 +399,27 @@ def joint_continuity(bl, objs):
             continue
         y = bl.st(s)
         rings = []
-        for name in (a, b):
-            o = objs[name]
-            me, mw = o.data, o.matrix_world
-            rot = mw.to_3x3()
-            cls = np.zeros(len(me.polygons), np.int32)
-            me.attributes["cls"].data.foreach_get("value", cls)
-            normals = me.corner_normals
+        for name in (a, b):  # a section and every piece cut from it (part_splits), as one skin
             pts = {}
-            for p in me.polygons:  # hull faces, buried ones too (under a fairing they are still the same skin)
-                if cls[p.index] not in (surface.HULL, surface.RADOME):
-                    continue
-                for li in p.loop_indices:
-                    vi = me.loops[li].vertex_index
-                    w = mw @ me.vertices[vi].co
-                    if abs(w.y - y) < 1e-4:
-                        pts.setdefault(vi, [w, Vector()])[1] += rot @ normals[li].vector
-            rings.append([(w, n.normalized()) for w, n in pts.values()])
+            for o in (objs[n] for n in objs if part_splits.root_source(n) == name):
+                me, mw = o.data, o.matrix_world
+                rot = mw.to_3x3()
+                cls = np.zeros(len(me.polygons), np.int32)
+                me.attributes["cls"].data.foreach_get("value", cls)
+                normals = me.corner_normals
+                for p in me.polygons:  # hull faces, buried ones too (under a fairing they are still the same skin)
+                    if cls[p.index] not in (surface.HULL, surface.RADOME):
+                        continue
+                    for li in p.loop_indices:
+                        vi = me.loops[li].vertex_index
+                        w = mw @ me.vertices[vi].co
+                        if abs(w.y - y) < 1e-4:
+                            pts.setdefault((o.name, vi), [w, Vector()])[1] += rot @ normals[li].vector
+            merged = {}
+            for w, n in pts.values():  # a vertex on a panel's seam is in both pieces
+                key = tuple(round(c, 5) for c in w)
+                merged.setdefault(key, [w, Vector()])[1] += n
+            rings.append([(w, n.normalized()) for w, n in merged.values()])
         gap = turn = 0.0
         for w, n in rings[0]:
             q, m = min(rings[1], key=lambda t: (t[0] - w).length)
@@ -447,8 +475,8 @@ def unwrap(bl, objs, mirrored, atlas, fill):
             bad[o.name] = copy_mirrored_uvs(o, list(pairs), o, list(pairs.values()))
         if o.name in MIRROR_PARTS:
             src = objs[MIRROR_PARTS[o.name]]
-            faces = bl.slot_faces(o, bl.SKIN)
-            bad[o.name] = copy_mirrored_uvs(o, faces, src, faces)
+            dst_faces, src_faces = mirror_face_pairs(bl, o, src)
+            bad[o.name] = copy_mirrored_uvs(o, dst_faces, src, src_faces)
     per_part = {}
     for o in meshes:
         faces = bl.slot_faces(o, bl.SKIN)
@@ -497,7 +525,7 @@ def hull_normals(objs, surf, coords):
 
 
 # ---------- checks ----------
-def shell_report(obj):
+def shell_report(bl, obj):
     """Triangles, shells, open edges, inward shells and world bounds. The damage structure (m4/airframe.py) is open
     where it sits against the lining: its edges count as open only where they meet a face of another slot (a break face
     on the skin's edge), and a shell of structure alone is not tested for its normals."""
@@ -506,6 +534,7 @@ def shell_report(obj):
     bm.transform(obj.matrix_world)
     bm.normal_update()  # transform moves the vertices only: a part on a turned hinge kept its local normals
     frame = {i for i, m in enumerate(obj.data.materials) if m and m.name == airframe.SLOT}
+    cls = bm.faces.layers.int.get("cls")
     open_edges = sum(1 for e in bm.edges if not e.is_manifold and any(f.material_index not in frame for f in e.link_faces))
     shells, seen = 0, set()
     inward = 0
@@ -525,20 +554,24 @@ def shell_report(obj):
                         stack.append(h)
         if all(g.material_index in frame for g in comp):
             continue
-        vol = sum(g.calc_center_median().dot(g.normal) * g.calc_area() for g in comp) / 3
-        inward += vol < 0
+        # as swap_mesh turned it: a shell of body skin by the skin's side of the axis (it may be open where a torn lip
+        # turns in), any other by its volume
+        facing = partition.hull_facing(bl, comp, cls) if cls is not None else 0.0
+        inward += facing < 0 if facing else signed_volume(comp) < 0
     tris = sum(len(f.verts) - 2 for f in bm.faces)
+    loose = sum(1 for v in bm.verts if not v.link_faces)
     structure = sum(len(f.verts) - 2 for f in bm.faces if f.material_index in frame)
     lo = [min(v.co[i] for v in bm.verts) for i in range(3)]
     hi = [max(v.co[i] for v in bm.verts) for i in range(3)]
     bm.free()
     return {"tris": tris, "structure_tris": structure, "shells": shells, "open_edges": open_edges, "inward_shells": inward,
+            "loose_verts": loose,
             "bounds": [[round(x, 3) for x in lo], [round(x, 3) for x in hi]]}
 
 
 def checks(bl, group, objs, uv, extension):
     ground = set(getattr(group, "GROUND_PARTS", ()))
-    parts = {n: shell_report(o) for n, o in objs.items()}
+    parts = {n: shell_report(bl, o) for n, o in objs.items()}
     tris = sum(p["tris"] for p in parts.values())
     lo = [min(p["bounds"][0][i] for p in parts.values()) for i in range(2)]
     lo.append(min((p["bounds"][0][2] for n, p in parts.items() if n not in ground), default=0.31))
@@ -557,6 +590,9 @@ def checks(bl, group, objs, uv, extension):
     res = {
         "tris": {"value": tris, "limit": group.BUDGET_TRIS, "pass": tris <= group.BUDGET_TRIS},
         "closed_shells": {"value": sum(p["open_edges"] for p in parts.values()), "pass": all(p["open_edges"] == 0 for p in parts.values())},
+        # a vertex no face uses: the export's bounds count it, Unity's import drops it, and the authoring's bounds check fails
+        "no_loose_vertices": {"value": {n: p["loose_verts"] for n, p in parts.items() if p["loose_verts"]},
+                              "pass": not any(p["loose_verts"] for p in parts.values())},
         "outward_normals": {"value": sum(p["inward_shells"] for p in parts.values()), "pass": all(p["inward_shells"] == 0 for p in parts.values())},
         "texel_density": {"value": skin, "limit": "60 px/m or more", "pass": all(v["px_per_m"] >= 60 for v in skin.values() if v["skin_m2"] > 1)},
         "envelope": {"value": envelope,
@@ -758,8 +794,10 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     t_start = time.time()
     bpy.context.preferences.filepaths.save_version = 0
-    bpy.ops.wm.open_mainfile(filepath=str(BLOCKOUT / f"centurion_s61_{opts['span']}.blend"))
+    blockout = Path(opts["blockout"]) if opts["blockout"] else BLOCKOUT
+    bpy.ops.wm.open_mainfile(filepath=str(blockout / f"centurion_s61_{opts['span']}.blend"))
     bl = load_blockout()
+    bl.BOAT_TAIL = bl.S61_BOAT_TAIL_VISUAL  # the art draws the slimmer tail; the blockout's shapes keep theirs
     device = "CPU" if render.game_running() else render.use_gpu(bpy.context.scene)
     extension = 1.0 if opts["span"] == "extended" else 0.0
     surf = surface.Fuselage(bl)
@@ -865,4 +903,5 @@ def main():
           f"timings={json.dumps(summary['timings_s'])} blend={blend}")
 
 
-main()
+if __name__ == "__main__":
+    main()

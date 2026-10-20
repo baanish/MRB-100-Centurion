@@ -38,7 +38,7 @@ from .struts_hull import conform_root_boundary, hull_triangles, land_root_column
 GROUP = "struts"
 PARTS = ("strut_inner_L", "strut_inner_R", "strut_outer_L", "strut_outer_R", "sponson_L", "sponson_R",
          "geardoor_LM_visible", "geardoor_RM_visible")
-BUDGET_TRIS = 13400  # Lead's round 2 budget call, 2026-10-14; 400 more from the gear group for the hinge bump (HINGE_BUMP).
+BUDGET_TRIS = 14700  # damage stage 2: reclaim and leaner damage structure (was 13400)
 MIRROR_PARTS = {n: n.replace("_R", "_L", 1) for n in PARTS if "_R" in n}
 # Close-ups (m4/render.py's view form); the first four make the contact sheet.
 # The review sun shines from ahead, right and above, so the close-ups look at the right-hand side (x < 0), whose parts
@@ -1127,14 +1127,20 @@ def check(bl, objs):
         tree.balance()
         worst[r] = round(max(tree.find(Vector((-a.x, a.y, a.z)))[2] for a in vr), 6)
     res["right_mirrors_left"] = {"value": worst, "limit": "1e-4 m", "pass": all(isinstance(v, float) and v < 1e-4 for v in worst.values())}
+    # every right face has a left face at its mirror image (the UV copy matches them by position, so a cut that
+    # reorders the faces of both sides alike still mirrors)
     face_misses = {}
     for right, left in MIRROR_PARTS.items():
-        rv, rf = bl.world_mesh(objs[right])
-        lv, lf = bl.world_mesh(objs[left])
-        face_misses[right] = sum(len(a) != len(b) or any(
-            min((Vector((-rv[i].x, rv[i].y, rv[i].z)) - lv[j]).length for j in b) > 1e-4 for i in a)
-            for a, b in zip(rf, lf)) + abs(len(rf) - len(lf))
-    res["mirror_faces_correspond"] = {"value": face_misses, "limit": "zero faces out of order",
+        lo = objs[left]
+        tree = KDTree(len(lo.data.polygons))
+        for p in lo.data.polygons:
+            tree.insert(lo.matrix_world @ p.center, p.index)
+        tree.balance()
+        ro = objs[right]
+        skin = {i for i, m in enumerate(ro.data.materials) if m and m.name == bl.SKIN}
+        face_misses[right] = sum(1 for p in ro.data.polygons if p.material_index in skin
+                                 and tree.find(Vector((-1, 1, 1)) * (ro.matrix_world @ p.center))[2] > 1e-4)
+    res["mirror_faces_correspond"] = {"value": face_misses, "limit": "every right skin face mirrors a left one",
                                       "pass": not any(face_misses.values())}
 
     door, wheel = objs["geardoor_LM_visible"], scene["wheel_LM"]

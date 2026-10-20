@@ -18,6 +18,9 @@ namespace Centurion.Editor
         private static readonly string[] CramOwnedParts = { "laser_barrel" };
         private const float CramMass = 300f;
         private const float CramConeAngle = 80f;
+        // The part the turret's dome, its hardpoint and its eye sit on: the tail's end (the part tree's cut at 38.3),
+        // whose blockout mass includes the removable hardware's.
+        private const string CramHost = "tail_end";
         private const string CramPrefabPath = ModFolder + "/Centurion_Cram.prefab";
 
         // The lens (the tail's back end, art/blender/m4/fuselage_aft_laser.py): the Medusa lens's amber metal, opaque, as
@@ -187,28 +190,28 @@ namespace Centurion.Editor
         private static void CheckFixedDome(Build b)
         {
             var dome = b.Visuals["laser_turret"];
-            if (dome.parent != b.Parts["fuselage_R"].transform || dome.GetComponentsInChildren<Collider>(true).Length != 0
+            if (dome.parent != b.Parts[CramHost].transform || dome.GetComponentsInChildren<Collider>(true).Length != 0
                 || dome.GetComponentsInChildren(GameType("AeroPart"), true).Length != 0
                 || dome.GetComponent<MeshRenderer>() == null || dome.Find("laser_turret_lod1") == null)
-                throw new InvalidDataException("Laser dome must have both render LODs under fuselage_R, without physics");
+                throw new InvalidDataException("Laser dome must have both render LODs under " + CramHost + ", without physics");
             var mount = Load<GameObject>(CramPrefabPath);
             if (mount.GetComponentsInChildren<MeshRenderer>(true).Any(r => r.name.StartsWith("laser_turret"))
                 || mount.GetComponentsInChildren<Collider>(true).Length != 0)
                 throw new InvalidDataException("Removable C-RAM must carry no dome renderers or colliders");
-            b.Report.Add($"Laser dome: fixed LOD0/LOD1 on fuselage_R; removable hardware {CramMass} kg, zero drag/colliders");
+            b.Report.Add($"Laser dome: fixed LOD0/LOD1 on {CramHost}; removable hardware {CramMass} kg, zero drag/colliders");
         }
 
         // The tail TargetDetector that feeds the C-RAM's track list.
         private static void BuildCramEye(Build b)
         {
-            var eye = CramChild("cram_eye", b.Parts["tailcone"].transform);
+            var eye = CramChild("cram_eye", b.Parts[CramHost].transform);
             eye.position = b.Root.transform.TransformPoint(b.Blockout.Local("laser_turret"));
             var scanner = CramChild("cram_eye_scan", eye);
             scanner.rotation = b.Root.transform.rotation * Quaternion.Euler(0, 180, 0);
             var detector = eye.gameObject.AddComponent(GameType("TargetDetector"));
             Set(detector, "attachedUnit", b.Aircraft);
             Set(detector, "scanner", scanner);
-            Set(detector, "part", b.Part("tailcone"));
+            Set(detector, "part", b.Part(CramHost));
             Set(detector, "checkInterval", 0.5f);
             Set(detector, "alertCheckInterval", 0f);
             Set(detector, "visualRange", 10000f);

@@ -24,6 +24,7 @@ import bpy
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import part_splits  # noqa: E402
 from m4 import render, texture  # noqa: E402
 from m4.blockout import load_blockout  # noqa: E402
 
@@ -39,8 +40,10 @@ STATUS_LINES = {"outline": (3, 1.0), "parts": (2, 0.8), "bays": (2, 0.55)}  # ra
 # The span gauge: 16 px a metre, as wide on the HUD as the stock gauge's art; lines about 4 px wide.
 SPAN, SPAN_PX_PER_M, SPAN_PAD_M = "centurion_span", 16, 0.4
 SPAN_LINES = {"outline": (9, 1.0), "parts": (6, 0.8)}
-STAGES = ("wing_tele1_R", "wing_tele2_R")  # outboard in order; each nests in the one before, the first in the root
-ROOT_WING = "wing_root_R"
+# Outboard in order, each with the pieces that ride it (the part tree, art/blender/part_splits.py: stage 2 carries the
+# wingtip); each nests in the one before, the first in the inner wing, whose outboard end is ROOT_WING's
+STAGES = (("wing_tele1_R",), ("wing_tele2_R", "wing_tip_R"))
+ROOT_WING = "wing_outer_R"
 DAMAGE = "centurion_damage"
 
 
@@ -159,9 +162,9 @@ def render_parts():
                    if o.type == "MESH" and o.users_collection[0].name not in ("Colliders", "LOD1")), key=lambda o: o.name)
 
 
-def outboard_end(bl, obj):
-    """A right-wing part's outboard end: its largest x and the mean station of the vertices within 1 cm of it."""
-    pts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+def outboard_end(bl, objs):
+    """Right-wing parts' outboard end: their largest x and the mean station of the vertices within 1 cm of it."""
+    pts = [o.matrix_world @ v.co for o in objs for v in o.data.vertices]
     x = max(-p.x for p in pts)
     tip = [p.y + bl.Y0 for p in pts if -p.x > x - 0.01]
     return [round(x, 4), round(sum(tip) / len(tip), 4)]
@@ -190,27 +193,31 @@ def status_top(view, parts, out):
 def span_gauge(view, bl, parts, extended_ends, out):
     """The root sprite: every part but the stages, cropped to the right half from the centreline; each stage alone."""
     by_name = {o.name: o for o in parts}
-    fixed = [o for o in parts if not o.name.startswith("wing_tele")]
+    riding = {n for names in STAGES for n in names} | {n[:-1] + "L" for names in STAGES for n in names}
+    fixed = [o for o in parts if o.name not in riding]
     x0, x1, s0, s1 = footprint(bl, fixed, SPAN_PAD_M)
     sprites = {}
     rect = view.frame((0.0, x1, s0, s1), SPAN_PX_PER_M)
     outline, inner = edges(view.ids(fixed))
     save(line_art([(inner, SPAN_LINES["parts"]), (outline, SPAN_LINES["outline"])]), out / f"{SPAN}_root.png")
-    sprites[f"{SPAN}_root"] = {"rect_m": [round(v, 4) for v in rect], "end_m": outboard_end(bl, by_name[ROOT_WING])}
-    for k, name in enumerate(STAGES, 1):
-        rect = view.frame(footprint(bl, [by_name[name]], SPAN_PAD_M), SPAN_PX_PER_M)
-        outline, _ = edges(view.ids([by_name[name]]))
+    sprites[f"{SPAN}_root"] = {"rect_m": [round(v, 4) for v in rect], "end_m": outboard_end(bl, [by_name[ROOT_WING]])}
+    for k, names in enumerate(STAGES, 1):
+        stage = [by_name[n] for n in names]
+        rect = view.frame(footprint(bl, stage, SPAN_PAD_M), SPAN_PX_PER_M)
+        outline, _ = edges(view.ids(stage))
         save(line_art([(outline, SPAN_LINES["outline"])]), out / f"{SPAN}_stage{k}.png")
-        sprites[f"{SPAN}_stage{k}"] = {"rect_m": [round(v, 4) for v in rect], "end_m": outboard_end(bl, by_name[name]),
-                                       "extended_end_m": extended_ends[name]}
+        sprites[f"{SPAN}_stage{k}"] = {"rect_m": [round(v, 4) for v in rect], "end_m": outboard_end(bl, stage),
+                                       "extended_end_m": extended_ends[names]}
     (out / f"{SPAN}.json").write_text(json.dumps({"px_per_m": SPAN_PX_PER_M, "sprites": sprites}, indent=1) + "\n")
 
 
 def damaged_parts(parts):
     """The parts the game damages, by the name its UnitPart carries: meshes with their own mass, and control surfaces'
-    meshes, whose mass is on the hinge empty they hang from."""
+    meshes, whose mass is on the hinge empty they hang from; not the part tree's visual pieces (part_splits)."""
     out = {}
     for o in parts:
+        if part_splits.BY_NAME.get(o.name, {}).get("visual"):
+            continue
         if "mass_kg" in o:
             out[o.name] = o
         elif o.name.endswith("_visible") and o.parent is not None and "mass_kg" in o.parent:
@@ -244,7 +251,7 @@ def main():
     extended = opts["blend"].with_name(opts["blend"].name.replace("_retracted", "_extended"))
     bpy.ops.wm.open_mainfile(filepath=str(extended))
     bl = load_blockout()
-    extended_ends = {name: outboard_end(bl, bpy.data.objects[name]) for name in STAGES}
+    extended_ends = {names: outboard_end(bl, [bpy.data.objects[n] for n in names]) for names in STAGES}
     bpy.ops.wm.open_mainfile(filepath=str(opts["blend"]))
     bl = load_blockout()
     parts = render_parts()

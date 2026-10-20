@@ -37,7 +37,7 @@ GROUP = "wing"
 PARTS = ("wing_root_L", "wing_root_R", "wing_tele1_L", "wing_tele1_R", "wing_tele2_L", "wing_tele2_R",
          "flap_L1_visible", "flap_L2_visible", "flap_R1_visible", "flap_R2_visible",
          "aileron_L_visible", "aileron_R_visible", "spoiler_L_visible", "spoiler_R_visible")
-BUDGET_TRIS = 20000  # inner wing 11,000, stages and tips 5,500, flaps, ailerons and spoilers 3,500 (docs/M4-ART-PLAN.md)
+BUDGET_TRIS = 21000  # damage stage 2: reclaim and leaner damage structure (was 20000)
 # Right-hand parts with islands of their own, for the NO STEP text outside the walkway (about 20 m2 more unique skin).
 TEXT_PARTS = ("flap_R1_visible",)
 MIRROR_PARTS = {n: n.replace("_R", "_L", 1) for n in PARTS if "_R" in n and n not in TEXT_PARTS}
@@ -173,7 +173,7 @@ def check(bl, objs):
     allv = [v for o in scene.values() if o.type == "MESH" for v in bl.world_mesh(o)[0]]
     span = max(v.x for v in allv) - min(v.x for v in allv)
     height = max(v.z for v in allv)
-    nested = {f"{c}{s}_outside_{p}{s}": bl.outside_count(scene[c + s], scene[p + s])
+    nested = {f"{c}{s}_outside_{p}{s}": bl.outside_count(scene[c + s], bl.fixed_wing(scene, s) if p == "wing_root" else scene[p + s])
               for s in ("_L", "_R") for c, p in (("wing_tele1", "wing_root"), ("wing_tele2", "wing_tele1"))}
     res = {
         "stages_nested_retracted": {"value": nested, "pass": not any(nested.values())},

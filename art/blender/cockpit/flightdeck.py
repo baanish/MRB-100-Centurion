@@ -21,17 +21,17 @@ its pivot and world axes:
   frames, tinted by vertex colour), Matte_black (shroud and glareshield) and hotas (grips).
 - labels (14): the legends, scales and placards (flightdeck_labels.py) on the label atlas: stencils cut out
   (Centurion_cockpit_labels), the powered legends transparent and glowing (Centurion_cockpit_legends).
-- band_bezel (14): the screen's housing; the panel atlas.
+- band_bezel (14): the screen's housing and the master warning lamps' housings on its hood; the panel atlas, the lamps'
+  lenses on Matte_black.
 - hatch_liner_L, hatch_liner_R (14): each escape hatch's liner and handle, which authoring parents to its hatch.
-- warning_lenses (3): the caution, warning and annunciator lamps' lenses on the stock CockpitWarningLight, flashed by
-  the stock CockpitWarningLights with the KR-67 strips.
+- warning_lenses (3): the caution, warning, annunciator and master warning lamps' lit faces on the stock
+  CockpitWarningLight, which the stock CockpitWarningLights shows only while it flashes.
 - band (3): the screen, a transparent sheet on the stock glass_int copy with the scanline tile (Centurion_band).
 - band_marker (3): the camera marker, on its own transparent copy (Centurion_band_marker).
 - tacScreen (3): five of the six displays, each one whole page of the 1024 x 512 tac screen canvas (tacScreenDisplay).
 - glass_int (3): the inner panes on the stock canopy_int, which cracks.
-- stick_L, stick_R, throttle_1, throttle_2, warning_strip_L, warning_strip_R: empties, the pivots of the stock meshes
-  authoring places by reference (stock_pivots): Cockpit.joysticks (local X pitch, Z roll in Unity), Cockpit.throttles
-  (local X) and the warning strips.
+- stick_L, stick_R, throttle_1, throttle_2: empties, the pivots of the stock meshes authoring places by reference
+  (stock_pivots): Cockpit.joysticks (local X pitch, Z roll in Unity) and Cockpit.throttles (local X).
 - wing_display: an empty, the wing display's page (canvas_w by canvas_h metres), where authoring stands the plugin's
   canvas."""
 
@@ -431,19 +431,25 @@ def aperture(phi_b):
 def screen_footprint(surf, phi_b):
     """Where the pilot's lines of sight through the screen's grown edge meet the lining's surface, unbroken (near its
     ends the screen looks out where the side panes are): (station, angle) points, by ray casts."""
+    return [sa for _, sa in sight_hits(surf, aperture(phi_b), -WALL)]
+
+
+def sight_hits(surf, through, off):
+    """Where the pilot's lines of sight through each point meet the fuselage's surface off metres out from the skin,
+    unbroken by any hole: (the hit on the lining's triangulation, its (station, angle)) per point, by ray casts."""
     pts, tris = lining_triangulation(surf, [])
-    co = [lining_point(surf, s, a) for s, a in pts]
+    co = [surf.point(s, a, off) for s, a in pts]
     tree = BVHTree.FromPolygons(co, tris)
     e = eye(1)
     out = []
-    for p in aperture(phi_b):
+    for p in through:
         d = (p - e).normalized()
         loc, _, i, _ = tree.ray_cast(p, d)
         if loc is None:
-            raise SystemExit(f"screen footprint: the line through {tuple(round(c, 3) for c in p)} misses the lining")
+            raise SystemExit(f"sight_hits: the line through {tuple(round(c, 3) for c in p)} misses the surface")
         a, b, c = (co[k] for k in tris[i])
         w = barycentric(loc, a, b, c)
-        out.append(tuple(sum(w[j] * pts[tris[i][j]][m] for j in range(3)) for m in (0, 1)))
+        out.append((loc, tuple(sum(w[j] * pts[tris[i][j]][m] for j in range(3)) for m in (0, 1))))
     return out
 
 
@@ -618,8 +624,60 @@ def build_band(phi_b, parts):
     mk.uv_done = True
 
 
+# The master warning lamps (owner: "bigger, and horizontal ... they should have a thing when they are off"), built as the
+# KR-67 builds its own: a housing in the cockpit mesh with the lamp's face laid over it on a renderer of its own, which the
+# stock CockpitWarningLights shows only while it flashes. One under the screen on each seat's line straight ahead (the
+# pilot's eye meets the screen at about 20 deg; owner: "the warning lights should be under the pano display"), filling
+# the height from the display bezels' top edge to the screen's lower edge, the frame's 18 mm bar and the gap under it:
+# the KR-67 strips loose on the coaming read as lamps floating in the windows, and on the glareshield's lip the owner
+# wanted them lower. Each housing (the screen housing's, band_bezel, in its paint) stands WARNING_LAMP_PROUD in front of
+# the frame's face and runs back to the display bezels' face, so it sits on the bar and on the bezels' tops, a bezel ring
+# round a recessed lens of dark glass (Matte_black) that the lamp's face covers when lit (warning_lenses): a horizontal
+# strip about twice the KR-67 lamp's 23 x 38 mm face.
+WARNING_LAMP_PHI = 20.0
+WARNING_LAMP_BODY = (0.096, 0.029)  # the housing: along the bar, and tall, up to BAND_Z[0]
+WARNING_LAMP_PROUD = 0.004  # any more and the housing's lower edge hides the pages' tops from a raised head
+WARNING_LAMP_LENS = (0.084, 0.026)  # the lens window in the bezel ring, which stands RING proud of the lens
+WARNING_LAMP_RING = 0.003
+WARNING_LAMP_FACE = (0.082, 0.024)  # the lit face, just over the lens
+
+
+def build_warning_lamps(part, lenses):
+    """The two master warning lamps under the screen (WARNING_LAMP_*): housings and lenses on part, lit faces on lenses."""
+    import flightdeck_detail as fdd
+    fd = sys.modules[__name__]
+    r_in = BAND_R - BEZEL_DEPTH
+    w, h = WARNING_LAMP_BODY
+    lw, lh = WARNING_LAMP_LENS
+    bottom = BAND_Z[0] - h  # a millimetre over the display bezels' top (DISPLAY_Z[1] + 0.02)
+    front = r_in - WARNING_LAMP_PROUD
+    d = PANEL_R - BEZEL_HOUSING - front  # back to the display bezels' face
+    for side in (1, -1):
+        a = math.radians(side * WARNING_LAMP_PHI)
+        along = Vector((math.cos(a), math.sin(a), 0.0))
+        toward = toward_point(cyl(side * WARNING_LAMP_PHI, bottom))
+        base = cyl(side * WARNING_LAMP_PHI, bottom, front)  # the face's bottom middle
+        centre = base - toward * (d / 2) + Vector((0, 0, h / 2))
+        # depth away from the crew: sf.box turns its end caps outward only on a left-handed (x, y, z)
+        fdd.cbox(part, fd, centre, (along, -toward, Vector((0, 0, 1))), (w, d, h), BEZEL, c=0.003)
+        face_mid = base + Vector((0, 0, h / 2))
+        for du, dv, sw, sh in ((0, (lh + h) / 4, w, (h - lh) / 2), (0, -(lh + h) / 4, w, (h - lh) / 2),
+                               ((lw + w) / 4, 0, (w - lw) / 2, lh), (-(lw + w) / 4, 0, (w - lw) / 2, lh)):
+            fdd.cbox(part, fd, face_mid + along * du + Vector((0, 0, dv)) + toward * (WARNING_LAMP_RING / 2),
+                     (along, -toward, Vector((0, 0, 1))), (sw, WARNING_LAMP_RING, sh), BEZEL, c=0.0008)
+        def quad(into, lift, rw, rh):
+            """A rectangle rw by rh on the face's middle, lift toward the crew, on into."""
+            pts = [face_mid + toward * lift + along * (sx * rw / 2) + Vector((0, 0, sy * rh / 2))
+                   for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            return facing([into.bm.faces.new([into.bm.verts.new(p) for p in pts])], toward)
+
+        part.tag(quad(part, 0.0003, lw, lh), fuv.MATTE_SLOT, BEZEL)  # the dark lens
+        lenses.tag(quad(lenses, 0.0008, *WARNING_LAMP_FACE), fdd.WARNING_SLOT, KNOB)  # the lit face
+
+
 BEZEL_COLS = 24  # columns along the screen frame's long edges: a chord of 2.4 deg sags 0.3 mm on its radius
 HOOD_REACH = 0.042  # how far the hood over the screen reaches toward the crew from the bezel's face
+HOOD_CREST = (0.028, 0.010)  # the hood's highest line: toward the crew from the bezel's face, above the frame's top
 
 
 def build_screen_housing(part, phi_b):
@@ -655,7 +713,7 @@ def build_screen_housing(part, phi_b):
     part.tag(frame, ATLAS_SLOT, BEZEL)
     # the hood: a strip over the top, its section from the rim forward and up, a rolled lip, back under to the face
     T = top + BEZEL_W
-    sec = [(r_in + 0.004, T), (r_in - 0.028, T + 0.010), (r_in - HOOD_REACH + 0.004, T + 0.008), (r_in - HOOD_REACH, T + 0.002),
+    sec = [(r_in + 0.004, T), (r_in - HOOD_CREST[0], T + HOOD_CREST[1]), (r_in - HOOD_REACH + 0.004, T + 0.008), (r_in - HOOD_REACH, T + 0.002),
            (r_in - HOOD_REACH + 0.006, T - 0.003), (r_in, T - 0.0025)]
     ph = phi_b + da
     cols = [ph - 2 * ph * k / BEZEL_COLS for k in range(BEZEL_COLS + 1)]
@@ -968,25 +1026,48 @@ def build_structure(part, surf, holes):
             part.tag(g.faces() + ends, ATLAS_SLOT, STRUCT)
 
 
-COAMING_LAP = 0.06  # how far up the lining past the screen view's edge the coaming meets it, burying the post's cut
+COAMING_UNDER = 0.003  # how far under the pilot's line of sight over the hood's crest the coaming meets the glass
 
 
 def build_coaming(part, surf, footprint):
-    """The glareshield's coaming over the screen: from the screen housing's top rim forward to the lining, just above
-    every line of sight through the screen, meeting the lining COAMING_LAP past where the screen's view reaches it, and on
-    out through the windscreen's reveal to just inside the inner glass: ending at the lining, a raised head saw over it
-    and out under the glass, which stops where the screen's view starts. The windscreen's centre post and the window
-    trims run down into it: their ends, cut where the screen's view starts (main), lie under it from every seat and from
-    above."""
+    """The glareshield's coaming over the screen: from the screen housing's top rim forward to the lining where the
+    shroud's top wall meets it, along the top edge of the screen's footprint, and on out through the windscreen's reveal
+    to just inside the inner glass, COAMING_UNDER under the pilot's line of sight over the hood's crest, so it seals the
+    reveal under the panes' lower edges. All of it lies under the crest from the pilot's eye, which sees the glass
+    straight over the hood: a coaming lapping the lining above that line read in game as a dark bar over the screen
+    (owner). The windscreen's centre post and the window trims run down into it: their ends, cut where the screen's view
+    starts (main), lie under it. Returns the coaming's faces."""
     r_in = BAND_R - BEZEL_DEPTH
     T = BAND_Z[1] + BEZEL_W
     ph = band_phi() + math.degrees(APERTURE_GROW / BAND_R)
-    top = footprint[:49]  # aperture()'s top edge, from +phi to -phi, as the screen's view meets the lining
-    near = [cyl(ph - 2 * ph * k / 48, T + 0.001, r_in + 0.004) for k in range(49)]
-    far = [lining_point(surf, s + COAMING_LAP, a, -0.003) for s, a in top]  # every point: chords left slivers of sky
-    glass = [surf.point(s + COAMING_LAP, a, -0.012) for s, a in top]  # build_glass's panes stand 1 cm under the skin
-    facing(faces(part, [near, far], ATLAS_SLOT, PANEL), Vector((0, 0, 1)))
-    facing(faces(part, [far, glass], ATLAS_SLOT, PANEL), lambda f: eye(1) - f.calc_center_median())
+    phis = [ph - 2 * ph * k / 48 for k in range(49)]
+    near = [cyl(a, T + 0.001, r_in + 0.004) for a in phis]
+    far = [lining_point(surf, s, a) for s, a in footprint[:49]]  # aperture()'s top edge, as build_shroud's
+    under = [cyl(a, T + HOOD_CREST[1] - COAMING_UNDER, r_in - HOOD_CREST[0]) for a in phis]
+    glass = [loc for loc, _ in sight_hits(surf, under, -0.012)]  # build_glass's panes stand 1 cm under the skin
+    # Continue the screen housing's finish over the seal. Its depth lies outside slot_for's panel radius.
+    return (facing(faces(part, [near, far], fuv.PANEL_SLOT, BEZEL), Vector((0, 0, 1)))
+            + facing(faces(part, [far, glass], fuv.PANEL_SLOT, BEZEL), lambda f: eye(1) - f.calc_center_median()))
+
+
+def coaming_seen(objs, coaming):
+    """Points on the coaming (each face's centre and toward its corners) that the pilot's eye reaches past the screen's
+    hood, against every mesh the cockpit view draws."""
+    verts, polys = [], []
+    for o in objs.values():
+        me = o.evaluated_get(bpy.context.evaluated_depsgraph_get()).to_mesh()
+        base = len(verts)
+        verts += [o.matrix_world @ v.co for v in me.vertices]
+        polys += [tuple(base + i for i in p.vertices) for p in me.polygons]
+    tree = BVHTree.FromPolygons(verts, polys)
+    e, out = eye(1), []
+    for c, n, corners in coaming:
+        for q in [c] + [c + (v - c) * 0.8 for v in corners]:
+            d = q + n * 1e-4 - e
+            hit = tree.ray_cast(e, d.normalized(), d.length + 0.002)
+            if d.dot(n) < 0 and (hit[0] is None or hit[3] >= d.length - 0.0015):
+                out.append([round(x, 3) for x in q])
+    return out
 
 
 def frame_strip(part, surf, loop, w_out, w_in, proud, reveal, cls):
@@ -1128,12 +1209,9 @@ def clip_glass(part, phi_b):
 # Pivots (empties) where authoring places stock meshes whole (CenturionAuthor.FlightDeck.cs), each with the stock mesh,
 # its stock material and whether it is mirrored for the hand that works it: the KR-67's sidesticks (Cockpit.joysticks;
 # the mesh's own pivot, 8 cm above its foot, so its foot rests on the console), its throttles (Cockpit.throttles; the
-# grip 0.293 to 0.397 m above the pivot rests on the quadrant) and a warning-light strip over the screen's frame ahead
-# of each seat (lit by the stock CockpitWarningLights on a missile warning). The pilot's stick and throttle are mirrored
-# copies of the KR-67's right-handed stick and left-handed throttle.
-STOCK_TRIS = {"Multirole1_joystick": 1890, "Multirole1_throttle": 880, "multirole1_warningLights": 40}
-WARNING_STRIP_PHI = 16.0  # deg either side of straight ahead: in front of each seat
-WARNING_STRIP_CENTRE = (0.0, 0.418, 0.586)  # the strip's middle from its mesh's origin, Unity axes (x right, y up, z forward)
+# grip 0.293 to 0.397 m above the pivot rests on the quadrant). The pilot's stick and throttle are mirrored copies of
+# the KR-67's right-handed stick and left-handed throttle.
+STOCK_TRIS = {"Multirole1_joystick": 1890, "Multirole1_throttle": 880}
 
 
 def stock_pivots():
@@ -1144,12 +1222,6 @@ def stock_pivots():
     for side, tag, n in ((1, "L", "1"), (-1, "R", "2")):
         out["stick_" + tag] = ("Multirole1_joystick", "hotas", side > 0, Vector((side * x, st(s), CONSOLE_TOP + 0.08)), 0.0)
         out["throttle_" + n] = ("Multirole1_throttle", "hotas", side > 0, Vector((side * tx, st(ts), tz)), 0.0)
-        phi = side * WARNING_STRIP_PHI
-        target = cyl(phi, BAND_Z[1] + BEZEL_W + 0.031, BAND_R - BEZEL_DEPTH + 0.016)
-        u = WARNING_STRIP_CENTRE
-        offset = Vector((-u[0], -u[2], u[1]))  # Unity to the composite's axes
-        out["warning_strip_" + tag] = ("multirole1_warningLights", "CockpitWarningLight", False,
-                                       target - Matrix.Rotation(math.radians(phi), 3, "Z") @ offset, math.radians(phi))
     return out
 
 
@@ -1293,6 +1365,19 @@ def unglazed_view(objs):
     return out
 
 
+def glass_texture_check(path):
+    """The repeating glass UVs require a uniform, translucent base map. Donor pane silhouettes paint false frames."""
+    image = bpy.data.images.load(str(path), check_existing=False)
+    try:
+        image.colorspace_settings.name = "Non-Color"
+        rgba = np.array(image.pixels[:]).reshape(-1, 4)
+        low, high = np.rint(rgba.min(axis=0) * 255).astype(int), np.rint(rgba.max(axis=0) * 255).astype(int)
+        return {"rgba_min": low.tolist(), "rgba_max": high.tolist(),
+                "pass": bool(np.array_equal(low, high) and 0 < low[3] < 128)}
+    finally:
+        bpy.data.images.remove(image)
+
+
 def hatch_clearance():
     """The hatch opening against the escape path (docs/COCKPIT-DESIGN.md "Escape"): the pilot capsule (radius 0.25 m,
     0.40 m below to 0.90 m above the Pilot root) and the seat's 0.99 m length swept along the rail, where they pass the
@@ -1378,6 +1463,7 @@ def main():
     build_aft_wall(deck, surf, labels)
     flightdeck_detail.build_details(deck, sys.modules[__name__], surf, edges, phi_b, labels)
     build_band(phi_b, parts)
+    build_warning_lamps(parts["band_bezel"], parts["warning_lenses"])
     build_displays(parts, labels)
     footprint = screen_footprint(surf, phi_b)
     build_lining(deck, surf, panes + hatches + [footprint])
@@ -1389,7 +1475,8 @@ def main():
             and cyl_coords(f.calc_center_median())[1] > BAND_R]  # window frames where the screen shows the world below them
     bmesh.ops.delete(deck.bm, geom=drop, context="FACES")
     clip_glass(parts["glass_int"], phi_b)
-    build_coaming(deck, surf, footprint)
+    coaming = [(f.calc_center_median(), f.normal.copy(), [v.co.copy() for v in f.verts])
+               for f in build_coaming(deck, surf, footprint)]
     flightdeck_detail.build_plates(deck, sys.modules[__name__], labels)
     label_density, label_rasters, label_pos = lb.build(labels, parts["labels"], LABEL_SLOT, LEGEND_SLOT)
     fd = sys.modules[__name__]
@@ -1445,6 +1532,7 @@ def main():
                "nothing_in_screen_view": {"faces": band_frustum_check([objs[n] for n in ("flightdeck_int", "band_bezel")], phi_b)},
                "hatch_margin_m": {"value": hatch_clearance(), "limit": ">= 0.01 inside the outline"},
                "outside_seen_unglazed": {"sightlines": unglazed_view(objs)},
+               "coaming_hidden": {"seen": coaming_seen(objs, coaming)},
                "atlas_px_per_m": uvr["density"],
                "atlas_live_m2": uvr["live_m2"],
                "atlas_uv_fill": uvr["uv_fill"],
@@ -1457,6 +1545,7 @@ def main():
     metrics["nothing_in_screen_view"]["pass"] = not metrics["nothing_in_screen_view"]["faces"]
     metrics["hatch_margin_m"]["pass"] = all(v >= 0.01 for v in metrics["hatch_margin_m"]["value"].values())
     metrics["outside_seen_unglazed"]["pass"] = not metrics["outside_seen_unglazed"]["sightlines"]
+    metrics["coaming_hidden"]["pass"] = not metrics["coaming_hidden"]["seen"]
     print("FLIGHTDECK tris", json.dumps(tris), "total", total)
 
     maps = {}
@@ -1466,8 +1555,12 @@ def main():
         maps[fk.KIT_SLOT] = kit.paint(out / "textures")
     maps.update(lb.paint(labels, label_rasters, label_pos, out / "textures"))
     maps.update(fp.small_maps(out / "textures"))
+    metrics["glass_tint"] = glass_texture_check(maps["glass"])
     metrics["maps"] = {k: (str(v) if isinstance(v, Path) else {kk: str(vv) for kk, vv in v.items()}) for k, v in maps.items()}
     (out / "metrics_flightdeck.json").write_text(json.dumps(metrics, indent=1))
+    for name in ("outside_seen_unglazed", "coaming_hidden", "glass_tint"):
+        if not metrics[name]["pass"]:
+            raise RuntimeError(f"FLIGHTDECK {name} FAIL: {metrics[name]}")
     renders = fp.review(objs, maps, a.views.split(","), a.samples, out, sys.modules[__name__], edges)
     metrics["renders"] = [str(r) for r in renders]
     (out / "metrics_flightdeck.json").write_text(json.dumps(metrics, indent=1))

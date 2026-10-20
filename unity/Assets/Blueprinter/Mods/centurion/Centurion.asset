@@ -32,7 +32,7 @@ MonoBehaviour:
   code: MRB-100
   visibleRange: 5000
   iconRange: 100000
-  radarSize: 1.5
+  radarSize: 13
   friendlyIcon: {fileID: 21300000, guid: 4f6ab362b0ed9ba4c92e493d590fb488, type: 2}
   hostileIcon: {fileID: 21300000, guid: 4f6ab362b0ed9ba4c92e493d590fb488, type: 2}
   mapIcon: {fileID: 21300000, guid: 28e578a8f9c36444eb891c21110ad5d6, type: 3}
@@ -54,7 +54,7 @@ MonoBehaviour:
   CanSlingLoad: 0
   unitPrefab: {fileID: 7719488840801222469, guid: 997ce56eb5a1ad04f84ebda4a1fd588c,
     type: 3}
-  spawnOffset: {x: 0, y: 3.852249, z: 1.475}
+  spawnOffset: {x: 0, y: 3.852238, z: 1.475}
   disabled: 0
   isEventContent: 0
   dontAutomaticallyAddToEncyclopedia: 0
@@ -67,4 +67,4 @@ MonoBehaviour:
     stallSpeed: 290
     maneuverability: 3
     maxWeight: 199000
-  restRotation: {x: 0.26664445, y: 0, z: 0}
+  restRotation: {x: 0.2669681, y: 0, z: 0}
