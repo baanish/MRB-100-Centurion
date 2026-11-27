@@ -22,15 +22,12 @@ static class AwacsOrbit
     }
 
     /// <summary>
-    /// The level distance from the anchor to the <see cref="Racetrack"/>'s farthest point: the far edge of an end cap, a
-    /// turn of <see cref="TurnRadiusM"/> round the spine's end, which lies <see cref="LegHalfM"/> to the side of the axis and
-    /// standoff + <see cref="TurnRadiusM"/> out. The map clamp only shortens it (a projection into the map, which holds the
-    /// anchor, moves the centre no farther from it).
+    /// The largest standoff whose whole track stays within <paramref name="reachM"/> of the anchor; 0 if none. The
+    /// <see cref="Racetrack"/>'s farthest point is the far edge of an end cap, a turn of <see cref="TurnRadiusM"/> round the
+    /// spine's end, which lies <see cref="LegHalfM"/> to the side of the axis and standoff + <see cref="TurnRadiusM"/> out:
+    /// sqrt((standoff + r)^2 + leg^2) + r from the anchor, solved here for the standoff. The map clamp only shortens it (a
+    /// projection into the map, which holds the anchor, moves the centre no farther from it).
     /// </summary>
-    internal static float FarthestM(float standoff) =>
-        Mathf.Sqrt((standoff + TurnRadiusM) * (standoff + TurnRadiusM) + LegHalfM * LegHalfM) + TurnRadiusM;
-
-    /// <summary>The largest standoff whose whole track stays within <paramref name="reachM"/> of the anchor (FarthestM inverted); 0 if none.</summary>
     internal static float CoverageStandoff(float reachM)
     {
         float inner = reachM - TurnRadiusM;

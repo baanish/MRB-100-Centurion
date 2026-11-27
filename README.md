@@ -2,200 +2,192 @@
 
 ![A black MRB-100 Centurion with its wings extended, dropping a salvo of PAB-250 bombs from both bays](docs/player/media/centurion_hero.jpg)
 
-A heavy bomber and AWACS for Nuclear Option 0.34.2, set in the 2080s as the B-52's successor. Its truss-braced wing telescopes from hangar width to twice that in flight, two late-UltraFan turbofans charge a capacitor for a laser C-RAM in the tail, and nose, tail and dorsal radars all run at once. It spawns from medium hangars for both factions.
+A 2080s heavy bomber and AWACS for Nuclear Option, built as a successor to the B-52. Its truss-braced wing doubles in span once clear of the hangar, two internal bays carry up to 50 tonnes of ordnance, and a tail laser defends the rear arc while nose, tail and dorsal radars run together. Both factions can spawn it from any base with a medium hangar.
 
-Every player in a lobby needs the mod: a new aircraft is never client-side.
+Every player in a multiplayer lobby needs the mod installed, as new aircraft are never client-side.
+
+[Pilot's guide](docs/player/FLYING.md) | [Known issues](docs/player/KNOWN-ISSUES.md) | [Changelog](CHANGELOG.md)
 
 ## Install
 
-Requires Nuclear Option 0.34.2, BepInEx 5 and [Blueprinter 2.0.1 or later](https://github.com/nikkorap/NOBlueprinter-Releases/releases). Keep Blueprinter enabled.
+Requires BepInEx 5 and [Blueprinter 2.0.1 or later](https://github.com/nikkorap/NOBlueprinter-Releases/releases). Version 0.2.0 was tested on Nuclear Option 0.34.6 with Blueprinter 2.1.1. Keep Blueprinter enabled.
 
 ### With NOMM
 
-Install [Nuclear Option Mod Manager](https://github.com/Combat787/NOMM/releases/latest), select your game folder, then search its catalog for **MRB-100 Centurion** and install it. The entry becomes available after its first [NOMNOM listing](https://github.com/KopterBuzz/NOMNOM) is accepted. Until then, use the manual installation below.
+Install [Nuclear Option Mod Manager](https://github.com/Combat787/NOMM/releases/latest), point it at your game folder, then search the catalog for **MRB-100 Centurion** and install it.
 
-NOMM installs BepInEx 5 if it is missing. Let that finish, then retry the mod installation if necessary. Catalog installation also downloads Blueprinter. NOMM reports missing or disabled dependencies and offers to resolve them. Confirm Blueprinter is enabled and at least version 2.0.1: NOMM's dependency checks do not enforce the minimum version.
+If BepInEx 5 is not installed yet, NOMM installs it first. Let that finish, then retry installing the mod if needed. Catalog installation also pulls in Blueprinter. Check that Blueprinter is enabled and at least version 2.0.1, because NOMM does not enforce minimum dependency versions.
 
 ### Manual installation
 
-1. Close Nuclear Option. Install [BepInEx 5 for Windows x64](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.4) in the game folder, beside `NuclearOption.exe`.
-2. Put `Blueprinter_2.0.1.dll` or a later compatible version from [Blueprinter releases](https://github.com/nikkorap/NOBlueprinter-Releases/releases) in `BepInEx/plugins/`.
-3. Download `Centurion-v<version>-plugin-only.zip` from [Centurion releases](https://github.com/baanish/MRB-100-Centurion/releases) and extract it beside `NuclearOption.exe`. It creates `BepInEx/plugins/baanish.centurion/` containing `Centurion.dll`, `centurion_<version>.nobp`, `meta.json`, this README and the licence. Keep the DLL and bundle together.
-4. Launch the game. `BepInEx/LogOutput.log` should contain `MRB-100 Centurion <version> (baanish.centurion)`. The aircraft appears at bases with a medium hangar.
+1. Close Nuclear Option. Install [BepInEx 5 for Windows x64](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.4) in your game folder beside `NuclearOption.exe`.
+2. Put `Blueprinter_2.0.1.dll` or a later compatible version from [Blueprinter releases](https://github.com/nikkorap/NOBlueprinter-Releases/releases) into `BepInEx/plugins/`.
+3. Download `Centurion-v<version>-plugin-only.zip` from [Centurion releases](https://github.com/baanish/MRB-100-Centurion/releases) and extract it beside `NuclearOption.exe`. This creates `BepInEx/plugins/baanish.centurion/` containing `Centurion.dll`, `centurion_<version>.nobp`, `meta.json`, this README and the licence. Keep the DLL and bundle in the same folder.
+4. Launch the game. `BepInEx/LogOutput.log` should include `MRB-100 Centurion <version> (baanish.centurion)`, and the Centurion will appear at bases with a medium hangar.
 
-To upgrade manually, close the game and replace `BepInEx/plugins/baanish.centurion/`, removing the old bundle. To uninstall, delete that folder. Keep only one copy installed. NOMM users can update, toggle or uninstall the whole mod in their library.
+To update manually, close the game and replace `BepInEx/plugins/baanish.centurion/`, deleting the old `.nobp` bundle. Keep only one copy installed. To uninstall, delete that folder. NOMM users can update, disable or remove the mod directly from their library.
 
 ## At a glance
 
 | | |
 |---|---|
-| Role | Heavy bomber, or AWACS with the dorsal beam fitted |
-| Cost, rank | $500M, rank 6 |
-| Length | 44.95 m (147 ft) |
-| Span | 43.56 m (143 ft) retracted, 87.14 m (286 ft) extended |
-| Height | 7.51 m (24.6 ft), under the medium hangar's 8 m door |
+| Role | Heavy bomber, or AWACS with the dorsal radar beam fitted |
+| Cost and rank | $500M, rank 6 |
+| Length | 147 ft (44.95 m) |
+| Wingspan | 143 ft (43.56 m) retracted, 286 ft (87.14 m) extended |
+| Height | 24.6 ft (7.51 m), clearing the medium hangar's 8 m door |
 | Mass | 125 t empty, 24 t internal fuel, 50 t payload, 199 t maximum takeoff |
 | Engines | Two geared turbofans, 330 kN each, no afterburner |
-| Radar cross-section | 13 retracted, 26 extended, on the game's radar scale (sized against the MC-260 Chimera's 9) |
-| Ceiling | 55,000 ft official; extended, 17.5 km (about 57,500 ft) at mid weight; retracted, about 14 km (46,000 ft) |
-| Speed | Retract for fast transit near Mach 0.85; extended, drag holds level flight near Mach 0.81 |
-| Endurance | About 3.3 hours of AWACS loiter to 20% fuel, extrapolated from four burns totalling 25 minutes at 15 km and 200 m/s; excludes climb and manoeuvring |
-| Crew | Two, pilot and mission commander, with separate ejection seats |
+| Radar cross-section | 13 retracted, 26 extended on the game's radar scale |
+| Ceiling | 55,000 ft official (about 57,500 ft extended at mid weight, about 46,000 ft retracted) |
+| Speed | Near Mach 0.85 retracted; drag holds level flight near Mach 0.81 extended |
+| Endurance | About 3.3 hours of AWACS loiter to 20% internal fuel, excluding climb and manoeuvring |
+| Crew | Two (pilot and mission commander) with separate ejection seats |
 | Liveries | BDF Matte Gray and Forest Green; PALA Matte Black and Desert Camo |
 
-No aerial refuelling: the game refuels only on the ground, so endurance is internal fuel.
-
-## Interim builds
-
-Builds on the [Releases page](https://github.com/baanish/MRB-100-Centurion/releases) marked **pre-release** are work in progress. The flight deck interior art and the damage model are still being finished. Check each release's notes before installing.
-
-Read the [pilot's guide](docs/player/FLYING.md), [known issues](docs/player/KNOWN-ISSUES.md) and [changelog](CHANGELOG.md). Report problems through [GitHub issues](https://github.com/baanish/MRB-100-Centurion/issues), with your game and mod versions, other mods, steps to reproduce and `BepInEx/LogOutput.log` attached.
+Nuclear Option has no aerial refuelling, so internal fuel is all you have.
 
 ## Flying the telescoping wing
 
 ![The Centurion's wing telescoping from retracted to fully extended in flight](docs/player/media/centurion_wing_extension.gif)
 
-The span is on **Custom Axis 1**, the axis the Alkyon's wing sweep uses: 0 is retracted, full is extended, and full travel takes 8 seconds. Bind it in the game's control settings.
+Bind wing span to **Custom Axis 1**, the same axis the Alkyon uses for wing sweep. Zero is retracted, full is extended, and full travel takes 8 seconds.
 
-- **Retracted** is for speed: transit and dashes near Mach 0.85.
-- **Extended** is for lift and endurance: more lift, far lower fuel burn, a higher ceiling, and a slower roll. Its drag climbs steeply above Mach 0.76, so above about Mach 0.75 retracting is the better choice.
-- **Heavy takeoffs work at either span.** The automatic takeoff flaps let a fully loaded Centurion lift off retracted too. Taxi with the wing in; extend on the runway for more lift in the climb. With the current engines, a measured extended takeoff at about 199 t lifted off at 154 kt after about 920 m (3,020 ft). Leave room for weight, runway and flying technique.
-- **The flaps set themselves**: 30 degrees for takeoff, 15 for landing. Slow on the ground, the next roll is a takeoff; once the flaps have stowed in flight, the next gear-down is a landing. After gear up they stow slowly, over 20 seconds, so the climb doesn't lose its lift at once. Raise the gear after takeoff: if you never do, the flaps stay at 30 degrees into the landing, which floats and can bounce.
-- **Near the hangar the wing stays in.** On the ground within about 100 m of a medium hangar the span is held retracted, so a wingtip can't reach the building.
-- **The wing can tear.** Extended past 25%, a load factor above +4 g or below -1 g held for half a second tears both outer stages off. The aircraft flies on at the reduced span, and the extension is locked for the rest of the sortie. At ordinary speeds a hard pull bleeds airspeed long before it gets there. Losing one outer panel to damage triggers an automatic symmetric emergency jettison of the healthy outer panel to prevent asymmetric lift. The damaged wing permanently adds drag; slow down and head home.
-- **Rotation and tail strike.** Rotate to 8 or 9 degrees; the tail strikes at 10.5.
-- **Pitch control.** With the stick centred, the stock fly-by-wire holds attitude, as on every aircraft.
-- **Airbrakes** open at exactly idle throttle, as on stock aircraft: the ailerons split and the spoilers rise.
+- **Retract to go fast.** With the wing in, you can cruise and dash near Mach 0.85. Extended drag climbs hard past Mach 0.76, so pull the wing in above Mach 0.75.
+- **Extend to climb and loiter.** Full span buys you lower fuel burn, a higher ceiling and slower, gentler turns.
+- **Taxi with the wing in.** On the ground within about 100 m of a medium hangar, the span locks retracted so it cannot clip the building. Wait for the hangar doors to open completely before rolling, because the retracted tips clear the doorway by only 3.6 ft a side.
+- **Heavy takeoffs work at either span.** Flaps set themselves to 30 degrees for takeoff and 15 degrees for landing, stowing slowly over 20 seconds after gear up so you do not sink during the climb. Rotate to 8 or 9 degrees. The tail strikes at 10.5.
+- **Mind the g-limit.** Past 25% extension, holding more than +4 g or less than -1 g for half a second tears both outer stages off and locks the mechanism for the rest of the sortie. Losing one outer panel to enemy fire automatically jettisons the healthy opposite outer panel to keep lift balanced. Losing a whole wing at its root does not. A torn wing adds permanent drag, so throttle back and head home.
+
+Full takeoff, landing, flap and damage procedures live in the [pilot's guide](docs/player/FLYING.md).
 
 ## Wing flex
 
 ![The extended wing flexing from 1 g up to 3.6 g, down to -0.5 g and back, seen head-on](docs/player/media/centurion_wing_flex.gif)
 
-A wing this long and slender bends a lot before it breaks, so the Centurion's does. The braced inner wing stays stiff; everything outboard of the strut node bends as one beam, root, stage 1 and stage 2 together, at every extension.
+A 286 ft wing bends noticeably under load, and the Centurion's does. The braced inner wing stays stiff while everything outboard of the strut bends together on a spring and damper, so the tips lag a sudden pull and sway after a gust or touchdown. Because flex scales with the cube of the outer span, the retracted wing barely moves while the extended wing bows sharply. Near the runway, the bend fades to ground droop so wingtip clearances match the solid airframe.
 
 ![Head-on stills of the extended wing: parked, 1 g, 3.6 g and -0.5 g](docs/player/media/centurion_wing_flex_stills.jpg)
 
-| State, fully extended | Tip offset |
+| Flight state (fully extended) | Tip offset |
 |---|---|
-| Parked, under its own weight | 0.75 m (2.5 ft) down |
-| Level flight, 1 g | 2.5 m (8 ft) up |
-| Hard pull, 3.6 g | 7.2 m (24 ft) up |
-| Near the 4 g tear limit | 7.5 m (25 ft) up |
-| Push, -0.5 g | 1.7 m (5.5 ft) down |
+| Parked, under its own weight | 2.5 ft (0.75 m) down |
+| Level flight, 1 g | 8 ft (2.5 m) up |
+| Hard pull, 3.6 g | 24 ft (7.2 m) up |
+| Near the 4 g tear limit | 25 ft (7.5 m) up |
+| Push, -0.5 g | 5.5 ft (1.7 m) down |
 
-- **It follows the load.** The bend comes from the aircraft's load factor through a spring and damper, so the tips lag a sudden pull, overshoot a little, and swing after a gust or a landing before they settle.
-- **It grows with the span.** The bend scales with the cube of the wing outboard of the node, so the retracted wing barely moves and the full 87 m (286 ft) span moves most.
-- **Near the ground it fades** to the weight droop, which the wing's lift takes away with speed: on the runway at flying speed the drawn wing matches the solid one, so wingtip strikes look right.
-- **It is cosmetic.** Only the drawn wing bends. Colliders, joints, lift and the tear rule use the rigid wing, so the flex changes nothing about how the aircraft flies, and every player sees the same bend.
-- **It is tunable** under `[WingFlex]` in `baanish.centurion.cfg` (see [Settings](#settings)): the three tip offsets, the natural frequency (0.6 Hz) and damping (0.15), or off entirely.
+Wing flex is purely visual and does not affect flight physics or colliders. You can tune or disable it under `[WingFlex]` in [Settings](#settings).
 
 ## Bomber
 
-Two internal bays, forward and aft, take up to 50 t between them, except the 412-round PAB-80LR pair at 51.5 t. With the laser fitted and full fuel that pair reaches 200.5 t; use 93% fuel or less to stay under 199 t. Releases open the doors for four seconds, lower layers first. Both bays pool each weapon into one selection under its stock name. With the same bomb in both bays, single releases alternate between them; holding the trigger, or with two or more targets selected, both bays release together at that bomb's normal interval.
+Two internal bays, forward and aft, carry up to 50 t of ground-attack ordnance between them. Identical munitions in both bays pool into a single weapon selection. Single bomb drops alternate bays. Holding the trigger, or designating two or more targets, releases from both bays at once at that bomb's normal interval. Bay doors stay open for four seconds and lower layers drop first.
 
-The Darkreach ground-attack inventory is the baseline for the bays, plus the stock bay racks. Paired totals across both bays:
+Standard totals across both bays (see the [pilot's guide](docs/player/FLYING.md) for per-bay counts, smaller racks, event-content LEGACY racks and optional weapon pack racks):
 
 | Munition | Rounds |
 |---|---|
-| PAB-250 | 198 |
-| PAB-250LR | 174 |
-| PAB-80LR | 412 |
-| GPO-500 | 93 |
-| GPO-N (1.5 kt), GPO-N (250 kt) | 110 each |
-| GBM-500LR | 68 |
-| Tusko-B (HE) | 48 |
+| PAB-250 | 120 |
+| PAB-250LR | 120 |
+| PAB-80LR | 264 |
+| GPO-500 | 66 |
+| GPO-N (1.5 kt), GPO-N (250 kt) | 28 each |
+| GBM-500LR | 54 |
+| Tusko-B (HE) | 42 |
 | AShM-300 | 36 |
-| AGM-99 | 110 |
+| AGM-99 | 56 |
 | ALM-C450 | 21 (12 forward, 9 aft) |
 | ALND-4 (20 kt) | 10 |
-| GPO-2P Auger | 36 |
+| GPO-2P Auger | 18 |
 | Piledriver TBM, Piledriver TBM (20 kt) | 12 each |
 | Demolition Bomb | 4 |
-| ARAD-116 | Forward bay only: x4, x8 or x16 |
+| ARAD-116 | Forward bay only (4, 8 or 16) |
 
-The Centurion carries no air-to-air missiles and no external pods; its built-in ECM is defensive self-protection. It does not jam enemy radars or replace the offensive Radar Jamming Pod. AI Centurions fly one of eight loadouts, picked evenly: Bombs 500 x93, Bombs 250 x198, Glide Bombs 250 x174, Glide Bombs 500 x68, Tusko-B x48, AShM-300 x36, Bombs 500 x16, and AWACS.
+In missions that allow event content, the older 0.1.3 rack sizes are still available under `LEGACY` labels. The 412-round LEGACY PAB-80LR pair weighs 51.5 t and reaches 200.5 t with full fuel and the laser fitted, so drop fuel to 93% or less to stay under 199 t.
+
+If you also have the Aryx Weaponry Pack or Meridian Works installed, the bays offer Centurion-sized racks for their weapons automatically. Nothing from either pack ships with this mod, and everyone in a multiplayer lobby needs the same packs.
+
+The Centurion carries no air-to-air missiles and no external pods. Its built-in ECM is strictly defensive and does not replace an offensive Radar Jamming Pod.
 
 ### Bay cook-off
 
-Each bay sits beside a fuselage fuel tank. If that tank burns for 20 seconds, the bay's conventional stores explode once, sized by what is still loaded (up to 5,000 kg), and that section of the aircraft breaks away. Nuclear weapons never cook off. Even the smallest load cooks off: here a single GPO-500 in the aft bay.
+Each weapon bay sits under a fuselage fuel tank. If that tank burns for 20 seconds while conventional ordnance is still aboard, the bay cooks off in a single blast scaled to the remaining stores (up to 5,000 kg of TNT) and blows that section of the aircraft apart. Nuclear weapons never cook off. If a tank catches fire, you have 20 seconds to dump the bay beneath it.
 
 ![The aft bay's tank burning for 20 seconds, then a single GPO-500 cooking off and the aircraft breaking up](docs/player/media/centurion_cookoff_min.gif)
 
 ## AWACS
 
-Fit the radar beam on the dorsal hardpoint (6 t). It's a Wedgetail-style beam in a well along the spine, stowed flat so the aircraft clears the hangar door.
+Fit the 6 t dorsal radar beam to turn the Centurion into an airborne radar platform. The Wedgetail-style beam stows flat in a spine well so the aircraft still fits inside medium hangars.
 
 ![The AWACS beam rising from the spine and stowing again at 60,000 ft, shown at 4x speed](docs/player/media/centurion_awacs_beam.gif)
 
-- Once clear of the hangar with the radar on, the beam rises on its blade and extends its end sections over 12 seconds. It reads no range until fully up.
-- Nominal range 150 km in every direction, alongside the nose and tail radars. Actual detection depends on the target and conditions. It draws 15 kW, and deployed it adds real drag.
-- The radar toggle switches all three radars and stows or raises the beam with them, shedding its drag when stowed.
-- The beam takes the aft bay's space, so the aft bay is empty on the AWACS. The forward bay keeps the ARAD-116 options (x16 on the preset).
-- It loiters at about 49,000 ft (15 km), extended, near 200 m/s.
-
-Radars on every Centurion: the nose radar sees 60 km ahead, the tail radar 40 km behind, both with 60-degree half-cones, and both follow the radar master switch.
+- Clear of the hangar with radar master on, the beam rises and extends its ends over 12 seconds. It does not detect targets until fully up.
+- Nominal range is 150 km in every direction, running alongside the 60 km nose radar and 40 km tail radar (both 60-degree half-cones). All three radars share the stock radar toggle, and switching radars off stows the beam to shed its drag.
+- The beam takes the aft bay's volume, so the aft bay stays empty. The forward bay keeps its options, including ARAD-116 racks (16 rounds on the AWACS preset).
+- Deployed, the beam draws 15 kW from the capacitor, adds real drag and lights you up to enemy RWRs and anti-radiation missiles. Typical AWACS loiter is around 49,000 ft at about 390 kt with the wing extended.
 
 ## Laser C-RAM
 
-The tail cone's back end is the laser's lens. The laser runs off a 2,000 kJ capacitor that the engines charge with RPM, and fires at 120 kW out to 8 km.
+The tail cone houses a 120 kW defensive laser with an 8 km range and an 80-degree aft cone. It draws from a 2,000 kJ capacitor charged by the engines, shared with the radars and built-in ECM.
 
-- It fires on its own at hostile missiles it can track: missiles aimed at you, at your escorts and other friendlies, and missiles with no target. It never picks aircraft or ground units on its own.
-- Select its station to aim it yourself: it follows your view, or a target you designate (aircraft and ground units included), within 80 degrees of straight back, and fires on the trigger. It burns the first thing on its beam line, friendlies included. While it's selected it doesn't defend on its own; select any other weapon to hand it back.
-- It kills single missiles, chiefly from the rear, while the capacitor holds charge. It's no shield against salvos, head-on shots or guns.
-- Built-in ECM draws on the same capacitor. Its effective intensity doubles against ARH and SARH missile seekers; search radars and RWR estimates see the stock intensity. Flares work as on the Darkreach.
-- Known limit: on a dedicated server, a player's aimed laser may damage along the server's own aim.
-- Leaving the laser station empty saves its 300 kg and drops the point defence; the tail dome stays, with the same drag.
+- **Automatic defence.** Whenever another weapon is selected, the laser automatically engages tracked hostile missiles aimed at you, aimed at friendlies, or flying untargeted. It never fires on aircraft or ground units on its own.
+- **Manual aim.** Select the laser station to aim it yourself with your view or on a designated target (aircraft and ground units included). It burns whatever sits first along the beam, friendlies included, and pauses automatic defence while selected. Switch back to another weapon to return it to automatic mode. If both bays are empty, the laser defends automatically until you hold the trigger to aim it, then resumes automatic defence when you let go.
+- **Limits.** It stops single missiles from behind while the capacitor has charge, not salvos, head-on shots or cannon fire. Built-in ECM doubles its effective jamming against active and semi-active radar missile seekers without changing search radar returns, and flares work as on the Darkreach.
+- **Removable.** Leaving the laser station empty saves 300 kg and removes the defence, though the tail dome stays.
 
 ## Controls and HUD
 
+The mod uses Nuclear Option's existing bindings and adds no new hotkeys.
+
 | Action | Input |
 |---|---|
-| Span | Custom Axis 1 |
-| Radars and the AWACS beam | The stock radar toggle |
-| Laser C-RAM | Automatic; select its station to aim and fire it yourself |
-| Flares and ECM | The stock countermeasure controls |
-| Airbrakes | Throttle at idle |
+| Wing span | Custom Axis 1 |
+| Radars and AWACS beam | Stock radar toggle |
+| Laser C-RAM | Automatic when another weapon is selected; select its station (or hold the trigger with empty bays) to aim manually |
+| Flares and ECM | Stock countermeasure controls |
+| Airbrakes | Throttle at idle (split ailerons and spoilers) |
 
-On the HUD and in the cockpit:
-
-- **Span gauge**, where the Alkyon shows its sweep: a half-wing plan whose stages slide out with the extension, a marker at the commanded span, and `SPAN 0%` to `SPAN 100%`.
-- **Throttle gauge** reads up to 100%; there is no afterburner.
-- **Tactical screen** with both engines, the top view and the four hardpoint sets (forward bay, aft bay, dorsal, laser).
-- **Damage diagram** of the Centurion's own top view.
+In the cockpit and on the HUD, you get a dedicated span gauge (`SPAN 0%` to `SPAN 100%`) with a commanded-span marker, a matching live wing display left of the flight display, a 100% throttle gauge with no afterburner range, a tactical screen covering both engines and all four hardpoint sets, and a top-down Centurion damage diagram.
 
 ## AI
 
-The AI flies both roles, on its own doctrine rather than the stock low strike.
+AI Centurions fly high-altitude bomber and AWACS profiles instead of the stock low-level strike pattern.
 
-- **Bomber:** it climbs out extended in a racetrack near its base until it's high enough to ingress, then cruises at its loaded ceiling (about 51,000 to 57,000 ft, by weight) in gentle 20 degree banks. Unguided bombs fall from that height; glide bombs release from range without it descending. Tusko-B and AShM-300 loads launch from that height and speed, and it stays up while its missiles are flying rather than landing with rounds aboard. It makes repeated passes until its targets are gone or it runs dry, keeps its pulls inside the wing's tear limits, and never picks the laser as a weapon. It holds its attack against missiles its laser can engage; against a radar missile the laser can't reach it dodges sideways but keeps its height.
-- **AWACS:** it climbs to 15 km and flies a racetrack toward the front, standing off as far as the beam can still spot a stealth fighter over the nearest enemy base (about 25 km). It keeps its radars on, uses countermeasures against missiles close to impact, and heads home to land at 20% fuel. Its 16 ARAD-116s go in pairs at emitting hostile SAM and AA radars, only from beyond the site's own reach plus 10 km, one pair in the air at a time; it never fires air-to-air missiles.
+- **Bombers** climb out extended near home before cruising at 51,000 to 57,000 ft by weight in gentle 20-degree banks, coming in lower against targets close to their base (from 15,000 ft at 10 nautical miles up to 50,000 ft at 30 nautical miles for bombs, and 20,000 ft within 22 nautical miles for missiles). They pick from eight loadouts, switching bomb loads to Tusko-B or AShM-300 missiles whenever an enemy long-range SAM is alive, and firing early during the climb if a long-range SAM covers their home base. They stay on an assigned target until it is destroyed, hold steady when the laser can intercept an incoming missile, and dodge radar missiles laterally without diving to the deck.
+- **AWACS** climbs to about 49,000 ft and flies a racetrack near the front, standing off roughly 25 km from the nearest enemy base so it can spot stealth fighters, and heads home at 20% fuel. It fires pairs of ARAD-116s at emitting hostile SAM and AA radars from outside their reach plus 10 km, one pair in flight at a time.
 
-AI Centurions take off only from runways of 1,907 m (6,257 ft) or longer; players can spawn at every base whose medium hangar fits it.
+AI Centurions require a runway of at least 6,257 ft (1,907 m) to take off. Players can spawn at any base with a medium hangar. In stock Domination, Escalation, Terminal Control and their co-op variants, one BDF factory alternates building Centurions and Darkreaches (BDF starts with none). Hosts can turn that off in the config below.
 
 ## Settings
 
-`BepInEx/config/baanish.centurion.cfg`, or in game through the Configuration Manager mod if you have it:
+Edit `BepInEx/config/baanish.centurion.cfg`, or adjust these in game with Configuration Manager:
 
 | Setting | Default | What it does |
 |---|---|---|
-| `WingFlex.Enabled` | true | Bend the wing with load (cosmetic) |
+| `WingFlex.Enabled` | true | Bend the drawn wing under load (cosmetic) |
 | `WingFlex.TipRise1gM` | 2.5 | Tip rise at 1 g, metres |
-| `WingFlex.TipRiseAtTearM` | 7.5 | Tip rise near the 4 g tear, metres |
+| `WingFlex.TipRiseAtTearM` | 7.5 | Tip rise near the 4 g tear limit, metres |
 | `WingFlex.GroundDroopM` | 0.75 | Tip droop parked, metres |
-| `Cram.CoverEscorts` | true | The laser also engages missiles aimed at friendlies. Set it the same on every peer in a lobby |
+| `Cram.CoverEscorts` | true | Engage missiles aimed at friendlies too; keep this identical across a multiplayer lobby |
+| `Missions.StockMissionSupply` | true | Have one BDF factory alternate Centurions and Darkreaches in stock Domination, Escalation, Terminal Control and co-op variants (host setting, applies on next mission load) |
 
-The `Diagnostics`, `Debug` and `Capture` sections are for testing; leave them at their defaults.
+In Configuration Manager, the seven `[WingFlex]` tuning parameters (including `FrequencyHz`, `DampingRatio`, `ReferenceSpanM` and `SpanExponent`) appear when **Advanced settings** is ticked. Upgrading to 0.2.0 automatically strips the old 0.1.x `Diagnostics`, `Debug` and `Capture` config sections while keeping your other settings.
+
+## Paint your own livery
+
+Download `centurion_livery_kit_<version>.zip` from the [Releases page](https://github.com/baanish/MRB-100-Centurion/releases). The [livery kit guide](docs/livery-kit/README.md) walks through painting the 3D model or flat templates, building the livery in Unity and installing it. Wing sections, nacelles and outboard flaps paint independently on left and right, and Steam Workshop liveries use the tag `MRB-100 Centurion`.
 
 ## Known limitations
 
-- **Art and sounds aren't final.** The Centurion has its own flight deck and engine audio. Interior art, displays and the damage model are still in progress, and the full sound set hasn't had its final listening pass.
-- **Multiplayer is tested on one PC only.** Loopback tests with a separate client pass for the span, wing loss, radars, the AWACS beam and the laser, also under simulated lag, including players who join late; the two-PC test hasn't run. On a dedicated server a client's laser is untested. A late joiner sees a beam that is moving at its end position for up to 12 seconds.
-- **Manual laser aim on dedicated servers can disagree with damage.** The server may apply damage along its own aim while the player aims manually.
-- **Don't fly it at 4x time.** At the camera tool's 4x time scale, manoeuvring flight can tear the wing off. Normal speed is fine.
-- **The AWACS radar gives you away.** Once deployed, it emits unless you switch the radars off; enemies can detect it, and anti-radiation missiles can home on it.
-- Expect Nuclear Option 0.35 to break the mod until it's updated.
+Pre-release builds on the [Releases page](https://github.com/baanish/MRB-100-Centurion/releases) are work in progress.
 
-See [known issues](docs/player/KNOWN-ISSUES.md) for reporting details and current validation limits.
+- **Battle damage art is not final.** Damage openings, internal structure and broken-up sections are still being finished.
+- **Multiplayer requirements.** Every player in a lobby needs the mod, Blueprinter enabled, and the same weapon packs if any are installed.
+- **Dedicated server manual laser aim.** Select a target before firing the laser manually on a dedicated server. Free aim with no target selected may not match where the server applies damage.
+- **Avoid 4x time acceleration while manoeuvring.** High time compression can cause load spikes that tear off the outer wing stages.
+- **Game version.** Built for Nuclear Option 0.34.6, and not tested on 0.35 or later.
+
+See [known issues](docs/player/KNOWN-ISSUES.md) for the full list and bug-reporting instructions, or open a report on [GitHub issues](https://github.com/baanish/MRB-100-Centurion/issues) with your game version, mod version, other mods, reproduction steps and `BepInEx/LogOutput.log`.
 
 ## Credits
 
@@ -212,4 +204,4 @@ MIT; see [LICENSE](LICENSE).
 
 ## Releasing
 
-Maintainers need the local Unity and game setup in [BUILD.md](BUILD.md). Run `pwsh -NoProfile -File tools/Package-Release.ps1` to build, verify and package a release with notes and its NOMNOM manifest. Follow [docs/RELEASE.md](docs/RELEASE.md) to publish it and register the first release in NOMM. GitHub Actions verifies uploaded assets after publication.
+Maintainers need the local Unity and game setup in [BUILD.md](BUILD.md). Run `pwsh -NoProfile -File tools/Package-Release.ps1` to build, verify and package a release with notes and its NOMNOM manifest, then follow [the release procedure](docs/RELEASE.md) to publish it. GitHub Actions verifies uploaded assets after publication.

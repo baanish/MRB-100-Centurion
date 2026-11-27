@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -27,7 +28,7 @@ static class PowerReadout
     internal static readonly PatchTarget[] PatchTargets =
     {
         new("cm-count", typeof(IRFlare), "LaunchFlare", new[] { typeof(Aircraft), typeof(Transform), typeof(Vector3) },
-            postfix: AccessTools.Method(typeof(PowerReadout), nameof(AfterLaunchFlare))),
+            postfix: AccessTools.Method(typeof(PowerReadout), nameof(AfterLaunchFlare)), diagnostic: true),
     };
 
     internal static void Install(ConfigFile config, CenturionLog log)
@@ -47,8 +48,7 @@ static class PowerReadout
 
     static void AfterLaunchFlare(Aircraft aircraft)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cm-count")) return;
-        if (aircraft != null && aircraft.definition.jsonKey == "baanish_centurion")
+        if (aircraft != null && aircraft.definition.jsonKey == CenturionPlugin.JsonKey)
         {
             FlareCounts.GetValue(aircraft, _ => new FlareCount()).Ejected++;
         }
@@ -118,3 +118,4 @@ static class PowerReadout
     {
     }
 }
+#endif

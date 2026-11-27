@@ -26,7 +26,7 @@
       "version": "@VERSION@",
       "category": "preRelease",
       "type": "plugin",
-      "gameVersion": "0.34.2",
+      "gameVersion": "0.34.6",
       "downloadUrl": "https://github.com/baanish/MRB-100-Centurion/releases/download/v@VERSION@/Centurion-v@VERSION@-nomm.zip",
       "hash": "sha256:@SHA256@",
       "dependencies": [

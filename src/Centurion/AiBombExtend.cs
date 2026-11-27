@@ -23,7 +23,6 @@ namespace Centurion;
 /// </summary>
 static class AiBombExtend
 {
-    const string CenturionKey = "baanish_centurion";
     // UseBombs' off-the-nose angle and BreakOffAttack's length (AIPilotCombatModes.cs:605-608).
     const float OffRunDeg = 20f, BreakOffSeconds = 15f;
 
@@ -32,8 +31,6 @@ static class AiBombExtend
 
     internal static readonly PatchTarget[] PatchTargets =
     {
-        new("ai-bomb-extend", typeof(AIPilotCombatModes), "UseBombs",
-            prefix: AccessTools.Method(typeof(AiBombExtend), nameof(BeforeUseBombs))),
         new("ai-bomb-extend", typeof(AIPilotCombatModes), "BreakOffAttack",
             prefix: AccessTools.Method(typeof(AiBombExtend), nameof(BeforeBreakOffAttack))),
     };
@@ -43,9 +40,6 @@ static class AiBombExtend
         Type? mode = AccessTools.Inner(typeof(AIPilotCombatModes), "AttackMode");
         return mode != null && Enum.IsDefined(mode, name) ? Enum.Parse(mode, name) : null;
     }
-
-    static bool IsCenturion(Aircraft aircraft) =>
-        aircraft != null && aircraft.definition != null && aircraft.definition.jsonKey == CenturionKey;
 
     /// <summary>
     /// Twice the authored turningRadius, the stock standoff for turning back onto a target (RetreatToStandoff,
@@ -61,47 +55,43 @@ static class AiBombExtend
         return Mathf.Max(2f * aircraft.GetAircraftParameters().turningRadius, releaseRange);
     }
 
-    static bool BeforeUseBombs(AIPilotCombatModes __instance, bool checkMode, Aircraft ___aircraft, Unit ___currentTarget,
-        WeaponInfo ___currentWeaponInfo, Vector3 ___targetVector, ref float ___breakOffTimer, ref bool ___allowTargetAssessment)
+    /// <summary>
+    /// From AiHighStrike's UseBombs prefix in the mode check: switches a Centurion's bomb run that has passed its target into
+    /// the break-off, and says whether it did (the stock check then doesn't run).
+    /// </summary>
+    internal static bool TryExtend(AIPilotCombatModes combat, Aircraft aircraft, Unit? target, WeaponInfo? weapon, Vector3 targetVector,
+        ref float breakOffTimer, ref bool allowTargetAssessment)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-bomb-extend")) return true;
-        if (!checkMode || SetCombatMode == null || BreakOffMode == null || !IsCenturion(___aircraft)
-            || ___currentTarget == null || ___currentTarget.disabled || ___currentWeaponInfo == null)
+        if (CenturionPlugin.FeaturesOff.Contains("ai-bomb-extend") || SetCombatMode == null || BreakOffMode == null
+            || target == null || target.disabled || weapon == null)
         {
-            return true;
+            return false;
         }
 
-        Vector3 toTarget = ___targetVector;
+        Vector3 toTarget = targetVector;
         toTarget.y = 0f;
-        Vector3 forward = ___aircraft.transform.forward;
+        Vector3 forward = aircraft.transform.forward;
         forward.y = 0f;
         float offRun = Vector3.Angle(forward, toTarget);
         float range = toTarget.magnitude;
-        float extendRange = ExtendRange(___aircraft, ___currentTarget, ___currentWeaponInfo);
+        float extendRange = ExtendRange(aircraft, target, weapon);
         if (offRun <= OffRunDeg || range >= extendRange)
         {
-            return true;
+            return false;
         }
 
-        ___breakOffTimer = BreakOffSeconds;
-        SetCombatMode.Invoke(__instance, new[] { BreakOffMode });
-        ___allowTargetAssessment = true;
-        if (CenturionPlugin.Log.StageDue("ai-bomb-extend"))
-        {
-            CenturionPlugin.Log.StageLine("ai-bomb-extend", Invariant(
-                $"{___aircraft.name} {___currentTarget.unitName} {range:F0} m out, {offRun:F0} deg off the nose, inside {extendRange:F0} m: extending"));
-        }
-
-        return false;
+        breakOffTimer = BreakOffSeconds;
+        SetCombatMode.Invoke(combat, new[] { BreakOffMode });
+        allowTargetAssessment = true;
+        return true;
     }
 
     static bool BeforeBreakOffAttack(bool checkMode, Aircraft ___aircraft, Unit ___currentTarget, WeaponInfo ___currentWeaponInfo,
         Vector3 ___targetVector, ControlInputs ___controlInputs, ref float ___breakOffTimer, ref GlobalPosition ___destination,
         ref bool ___aimVelocity, ref bool ___followTerrain)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-bomb-extend")) return true;
         // The last second runs stock, which ends the break-off into FlyingToTarget.
-        if (!checkMode || ___breakOffTimer < 1f || !IsCenturion(___aircraft) || ___currentWeaponInfo == null || !___currentWeaponInfo.bomb
+        if (!checkMode || ___breakOffTimer < 1f || CenturionSystems.Of(___aircraft) == null || ___currentWeaponInfo == null || !___currentWeaponInfo.bomb
             || ___currentTarget == null || ___currentTarget.disabled)
         {
             return true;

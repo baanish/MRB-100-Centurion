@@ -14,7 +14,8 @@ $repository = 'baanish/MRB-100-Centurion'
 $nommName = "Centurion-$Tag-nomm.zip"
 $manualName = "Centurion-$Tag-plugin-only.zip"
 $manifestName = "Centurion-$Tag-nomnom.json"
-$assetNames = @($nommName, $manualName, $manifestName, 'RELEASE-NOTES.md')
+$kitName = "centurion_livery_kit_$version.zip"
+$assetNames = @($nommName, $manualName, $manifestName, $kitName, 'RELEASE-NOTES.md')
 # GitHub returns assets in case-insensitive name order; NOMNOM imports the first asset.
 $releaseAssetNames = [string[]]($assetNames + 'SHA256SUMS.txt')
 [Array]::Sort($releaseAssetNames, [StringComparer]::OrdinalIgnoreCase)
@@ -42,7 +43,7 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $Directory 'SHA256SUMS.txt
     $sums[$name] = $Matches[1]
     if ((Get-Sha256 (Join-Path $Directory $name)) -cne $sums[$name]) { throw "Checksum mismatch: $name" }
 }
-if ($sums.Count -ne $assetNames.Count) { throw 'SHA256SUMS.txt must cover both archives, the manifest and release notes' }
+if ($sums.Count -ne $assetNames.Count) { throw 'SHA256SUMS.txt must cover both archives, the livery kit, the manifest and release notes' }
 
 $manifest = Get-Content -LiteralPath (Join-Path $Directory $manifestName) -Raw | ConvertFrom-Json
 if ($manifest.id -cne $modId -or $manifest.githubOwner -cne 'baanish' -or
@@ -55,7 +56,7 @@ if (@($manifest.urls | Where-Object { $_.name -ceq 'info' -and $_.url -ceq "http
 if (@($manifest.artifacts).Count -ne 1) { throw 'Expected one artifact in the release manifest' }
 $artifact = $manifest.artifacts[0]
 if ($artifact.fileName -cne $nommName -or $artifact.version -cne $version -or
-    $artifact.type -cne 'plugin' -or $artifact.gameVersion -cne '0.34.2' -or
+    $artifact.type -cne 'plugin' -or $artifact.gameVersion -cne '0.34.6' -or
     $artifact.category -cnotin @('preRelease', 'release') -or
     $artifact.downloadUrl -cne "https://github.com/$repository/releases/download/$Tag/$nommName" -or
     $artifact.hash -cne "sha256:$($sums[$nommName])") {
@@ -101,6 +102,62 @@ foreach ($name in @($nommName, $manualName)) {
     } finally { $archive.Dispose() }
 }
 
+# The livery kit must fit the packaged aircraft: atlas.json pins the export manifest the bundle was built from, and
+# the kit's examples and maps must be that export's textures. The kit's layout fingerprint was taken from that export.
+$exportManifestPath = Join-Path $PSScriptRoot '../art/export-manifest.json'
+$exportManifest = Get-Content -LiteralPath $exportManifestPath -Raw | ConvertFrom-Json -AsHashtable
+$kitPrefix = "centurion_livery_kit_$version/"
+$archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $Directory $kitName))
+try {
+    $atlasEntry = $archive.GetEntry("${kitPrefix}atlas.json")
+    if (-not $atlasEntry) { throw "$kitName is missing atlas.json" }
+    $reader = [IO.StreamReader]::new($atlasEntry.Open())
+    try { $atlas = $reader.ReadToEnd() | ConvertFrom-Json -AsHashtable } finally { $reader.Dispose() }
+    foreach ($field in 'examples', 'map_sha256', 'layer_sha256') {
+        if ($atlas[$field] -isnot [Collections.IDictionary] -or -not $atlas[$field].Count) { throw "$kitName's atlas.json has no $field" }
+    }
+    if ($atlas['version'] -cne $version -or $atlas['atlas_size'] -ne 4096 -or $atlas['skin_uv_sha256'] -cnotmatch '^[0-9a-f]{64}$' -or
+        $atlas['export_manifest_sha256'] -cne (Get-Sha256 $exportManifestPath)) {
+        throw "$kitName was not built from $Tag's exterior export"
+    }
+    # Relative path -> expected SHA-256, or $null for a file whose content atlas.json does not pin.
+    $kitFiles = @{}
+    foreach ($name in 'README.md', 'LICENSE.txt', 'atlas.json', 'install/CenturionLiveryBuilder.cs', 'install/meta.json',
+        'model/centurion_paint_model.blend', 'model/centurion_paint_model.fbx', 'template/uv_layout.png',
+        'template/uv_layout.svg', 'template/part_map.png', 'template/part_labels.png', 'template/parts.csv') {
+        $kitFiles[$name] = $null
+    }
+    $textures = @(@($atlas['examples'].Values | ForEach-Object { "examples/$_" }) +
+        @('centurion_n.png', 'centurion_m.png', 'centurion_ao.png' | ForEach-Object { "maps/$_" }))
+    foreach ($path in $textures) {
+        $name = Split-Path -Leaf $path
+        $hash = $atlas['map_sha256'][$name]
+        if (-not $hash -or $exportManifest["art/export/textures/$name"] -cne $hash) { throw "$kitName's $name is not the packaged aircraft's" }
+        $kitFiles[$path] = $hash
+    }
+    $layerNames = @($atlas['examples'].Keys | ForEach-Object { "${_}_01_base.png", "${_}_02_markings.png", "${_}_03_panel_lines.png" })
+    if ($atlas['layer_sha256'].Count -ne $layerNames.Count) { throw "$kitName's atlas.json lists other paint layers than base, markings and panel lines per livery" }
+    foreach ($name in $layerNames) {
+        if (-not $atlas['layer_sha256'][$name]) { throw "$kitName's atlas.json has no hash for $name" }
+        $kitFiles["template/layers/$name"] = $atlas['layer_sha256'][$name]
+    }
+    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($entry in $archive.Entries) {
+        if (-not $entry.FullName.StartsWith($kitPrefix, [StringComparison]::Ordinal)) { throw "Unexpected path in ${kitName}: $($entry.FullName)" }
+        $relative = $entry.FullName.Substring($kitPrefix.Length)
+        if (-not $kitFiles.ContainsKey($relative) -or -not $seen.Add($relative)) { throw "Unexpected or duplicate entry in ${kitName}: $relative" }
+        if ($kitFiles[$relative]) {
+            $stream = $entry.Open()
+            try { $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream)).ToLowerInvariant() }
+            finally { $stream.Dispose() }
+            if ($hash -cne $kitFiles[$relative]) { throw "$kitName's $relative differs from atlas.json" }
+        }
+    }
+    foreach ($name in $kitFiles.Keys) {
+        if (-not $seen.Contains($name)) { throw "$kitName is missing $name" }
+    }
+} finally { $archive.Dispose() }
+
 if ($ReleaseJson) {
     $release = Get-Content -LiteralPath $ReleaseJson -Raw | ConvertFrom-Json
     if ($release.tag_name -cne $Tag -or $release.draft -or $release.html_url -cne "https://github.com/$repository/releases/tag/$Tag") {
@@ -124,4 +181,4 @@ if ($ReleaseJson) {
         if ($asset.digest -and $asset.digest -cne "sha256:$(Get-Sha256 $path)") { throw "GitHub digest mismatch: $($asset.name)" }
     }
 }
-Write-Output "RELEASE VERIFY PASS: $Tag checksums, manifest, dependencies, paired archives and sorted asset names$(if ($ReleaseJson) { ', including published asset order and metadata' })"
+Write-Output "RELEASE VERIFY PASS: $Tag checksums, manifest, dependencies, paired archives, livery kit and sorted asset names$(if ($ReleaseJson) { ', including published asset order and metadata' })"

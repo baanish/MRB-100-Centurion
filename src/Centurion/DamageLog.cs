@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace Centurion;
 sealed class DamageLog
 {
     /// <summary>AircraftDefinition.jsonKey of the Centurion (CenturionAuthor.JsonKey).</summary>
-    const string CenturionKey = "baanish_centurion";
+    const string CenturionKey = CenturionPlugin.JsonKey;
 
     sealed class Watched
     {
@@ -101,3 +102,4 @@ sealed class DamageLog
         bound = null;
     }
 }
+#endif

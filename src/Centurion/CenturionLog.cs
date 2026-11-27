@@ -1,7 +1,10 @@
+using System.Diagnostics;
+#if CENTURION_DEV
 using System.Collections.Generic;
 using System.Text;
-using BepInEx.Logging;
 using UnityEngine;
+#endif
+using BepInEx.Logging;
 
 namespace Centurion;
 
@@ -9,10 +12,34 @@ namespace Centurion;
 /// Every line the mod writes starts with "[Centurion]", so it greps out of LogOutput.log and player.log alike.
 /// Info, Warning and Error are unbounded: for startup and one-shot lines only. Stage lines (systems-design section 8)
 /// are bounded to one line per key per second, with a 60 s summary of how often each key fired; stage lines carry ids
-/// and roles, never coordinates.
+/// and roles, never coordinates. Only a dev build (CENTURION_DEV) logs stages: in a release build the compiler drops every
+/// Stage, StageLine and Tick call with its arguments, and StageDue is always false.
 /// </summary>
 public sealed class CenturionLog
 {
+    readonly ManualLogSource source;
+
+    public CenturionLog(ManualLogSource source) => this.source = source;
+
+    public void Info(string message) => source.LogInfo("[Centurion] " + message);
+
+    public void Warning(string message) => source.LogWarning("[Centurion] " + message);
+
+    public void Error(string message) => source.LogError("[Centurion] " + message);
+
+    [Conditional("CENTURION_DEV")]
+    public void Stage(string key, string message)
+    {
+        if (StageDue(key))
+        {
+            StageLine(key, message);
+        }
+    }
+
+    [Conditional("CENTURION_DEV")]
+    public void StageLine(string key, string message) => source.LogInfo("[Centurion] " + key + ": " + message);
+
+#if CENTURION_DEV
     const float KeyIntervalS = 1f;
     const float SummaryIntervalS = 60f;
 
@@ -23,28 +50,11 @@ public sealed class CenturionLog
         public int Suppressed;
     }
 
-    readonly ManualLogSource source;
     readonly Dictionary<string, StageKey> stages = new();
     float nextSummaryAt = SummaryIntervalS;
 
-    public CenturionLog(ManualLogSource source) => this.source = source;
-
     /// <summary>Off drops stage lines and their summaries; Info, Warning and Error still print.</summary>
-    public bool StageEnabled { get; set; } = true;
-
-    public void Info(string message) => source.LogInfo("[Centurion] " + message);
-
-    public void Warning(string message) => source.LogWarning("[Centurion] " + message);
-
-    public void Error(string message) => source.LogError("[Centurion] " + message);
-
-    public void Stage(string key, string message)
-    {
-        if (StageDue(key))
-        {
-            StageLine(key, message);
-        }
-    }
+    public bool StageEnabled { get; set; }
 
     /// <summary>
     /// Counts a stage line under the key and says whether it prints now, for a caller on the physics step that builds its
@@ -74,8 +84,6 @@ public sealed class CenturionLog
         stage.LastLoggedAt = now;
         return true;
     }
-
-    public void StageLine(string key, string message) => source.LogInfo("[Centurion] " + key + ": " + message);
 
     /// <summary>Called every frame; prints and resets the per-key counters once every 60 s when any key fired.</summary>
     public void Tick()
@@ -112,4 +120,8 @@ public sealed class CenturionLog
             source.LogInfo(line.ToString());
         }
     }
+#else
+    /// <summary>A release build logs no stage lines.</summary>
+    public bool StageDue(string key) => false;
+#endif
 }

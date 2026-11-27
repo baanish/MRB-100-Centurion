@@ -1,8 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using NuclearOption.Networking;
 using UnityEngine;
 using static System.FormattableString;
 
@@ -10,67 +10,56 @@ namespace Centurion;
 
 /// <summary>
 /// Weapon bay cook-off (owner, 2026-10-19; docs/SPEC.md "Damage"; numbers in <see cref="BayCookoffRule"/>). The server
-/// watches each bay's host part, fuselage_F forward and fuselage_R aft (the part the bay hardpoint sits on, which also holds
-/// a fuel tank): once that tank has burned 5 s with a conventional store aboard, the bay goes off in one blast. Stock never
+/// watches each bay, its own part (bay_F forward, bay_A aft, which carries its hardpoint and doors), and the fuel tank in
+/// the section above it (fuselage_F, fuselage_R): once that tank has burned BayCookoffRule.BurnS with a conventional store
+/// aboard, the bay goes off in one blast. Stock never
 /// detonates a carried store from damage (MountedMissile is not IDamageable, Hardpoint.cs:46), so the bay is this mod's.
 /// The server tells every peer through the SubmunitionDispenser pattern (SubmunitionDispenser.cs:46, 176): a damage marker
 /// registered on the aircraft, hit with Unit.Damage, which reaches every observer as the reliable Unit.RpcDamage
-/// (Unit.cs:1352-1392) and lands in <see cref="Marker.ApplyDamage"/>. Every peer then empties the bay without firing and
-/// plays the blast; the server then detaches the bay host through the stock break path (Unit.DetachPart, RpcBreakPart,
-/// Unit.cs:1437-1447), which follows the marker on the same reliable channel. BayCookoffRule.EffectName picks a stock
+/// (Unit.cs:1352-1392) and lands in <see cref="Marker.ApplyDamage"/>. Every peer plays the blast. BayCookoffRule.EffectName picks a stock
 /// blast by yield, with its Shockwave set to that yield, whose overpressure damages every part nearby on the server
 /// (Shockwave.cs:37), neighbours and the Centurion itself included; at or under 200 kg it is stock
-/// fragmentation instead, as a stock warhead's is. Stock RPCs never reach a peer that joins later, so the server sends each
-/// spent bay again as a state-only marker 5 s and 30 s after a new player appears: that peer empties the bay and detaches
-/// its host with no blast, and every other peer already has it.
+/// fragmentation instead, as a stock warhead's is.
 /// The marker's index must match on every peer: it registers here, from CenturionSystems' SetLocalSim postfix, after every
 /// stock part has registered in its Awake and before the loadout spawns, the same point on every peer (the Centurion carries
 /// no cargo, whose mounts register later). Each peer logs the index it got.
 /// </summary>
 sealed class BayCookoff : MonoBehaviour
 {
-    static readonly string[] HostNames = { "fuselage_F", "fuselage_R" };
+    static readonly (string Bay, string TankSection)[] Hosts = { ("bay_F", "fuselage_F"), ("bay_A", "fuselage_R") };
     const float KgToKilotons = 1e-6f;
-    /// <summary>DamageInfo.impactDamage carries the event: this plus the bay index for a blast, <see cref="StateCode"/> plus it
-    /// for a state-only resend. Small whole numbers, so a stray hit on a wrong index would be a scratch.</summary>
-    const int BlastCode = 1, StateCode = 3;
-    static readonly float[] ResendDelaysS = { 5f, 30f };
+    /// <summary>DamageInfo.impactDamage carries this plus the bay index. Small whole numbers, so a stray hit
+    /// on a wrong index would be a scratch.</summary>
+    const int BlastCode = 1;
 
-    static readonly FieldInfo? OnFire = AccessTools.Field(typeof(FuelTank), "onFire");
+    // Read every frame on the server, so by reference: FieldInfo.GetValue would box the bool each time.
+    static readonly AccessTools.FieldRef<FuelTank, bool>? OnFire =
+        AccessTools.Field(typeof(FuelTank), "onFire") == null ? null : AccessTools.FieldRefAccess<FuelTank, bool>("onFire");
     static readonly FieldInfo? TankPart = AccessTools.Field(typeof(FuelTank), "part");
     static readonly FieldInfo? Fired = AccessTools.Field(typeof(MountedMissile), "fired");
-    static readonly MethodInfo? RemoveFromHardpoint = AccessTools.Method(typeof(MountedMissile), "RemoveFromHardpoint");
     static readonly FieldInfo? HardpointField = AccessTools.Field(typeof(Weapon), "hardpoint");
-    static readonly FieldInfo? WeaponIndex = AccessTools.Field(typeof(WeaponStation), "weaponIndex");
     static readonly FieldInfo? Submunitions = AccessTools.Field(typeof(SubmunitionDispenser), "submunitions");
     static readonly FieldInfo? SubmunitionType = AccessTools.Field(typeof(SubmunitionDispenser), "submunitionType");
     static readonly Dictionary<WeaponInfo, float> Warheads = new();
 
+#if CENTURION_DEV
     /// <summary>Blasts this peer has played, and the last one, for AgenticState().</summary>
     static int blasts;
     static float lastBlastKg = -1f;
     static string lastBlastBay = AircraftReadout.NoText;
+#endif
 
     sealed class Bay
     {
-        public readonly int Index;
-        public readonly string Name;
-        public readonly UnitPart Host;
-        public readonly FuelTank? Tank;
-        public readonly Transform BlastPoint;
+        public int Index;
+        public UnitPart Host = null!;
+        public FuelTank? Tank;
+        public Transform BlastPoint = null!;
         public readonly BayCookoffTimer Timer = new();
-        /// <summary>This peer has emptied the bay (from a marker; on the server also once it sent the blast).</summary>
+        /// <summary>This peer has played the blast for the bay.</summary>
         public bool Spent;
-        public bool BurnLogged, InertLogged;
-
-        public Bay(int index, string name, UnitPart host, FuelTank? tank, Transform blastPoint)
-        {
-            Index = index;
-            Name = name;
-            Host = host;
-            Tank = tank;
-            BlastPoint = blastPoint;
-        }
+        public bool InertLogged;
+        public string Name => Host.name;
     }
 
     /// <summary>The damage marker: only <see cref="ApplyDamage"/>, the RPC's landing on each peer, does anything.</summary>
@@ -96,9 +85,6 @@ sealed class BayCookoff : MonoBehaviour
     UnitPart root = null!;
     Bay[] bays = new Bay[0];
     byte markerId;
-    readonly HashSet<PlayerRef> players = new();
-    readonly List<float> resendAt = new();
-    float nextRosterAt;
 
     static CenturionLog Log => CenturionPlugin.Log;
 
@@ -108,31 +94,31 @@ sealed class BayCookoff : MonoBehaviour
         root = GetComponent<UnitPart>();
         markerId = aircraft.RegisterDamageable(new Marker(this));
         Log.Info($"cook-off on {aircraft.name}: damage marker at index {markerId} of {aircraft.damageables.Count} ({Role})");
-        if (OnFire == null || TankPart == null || Fired == null || RemoveFromHardpoint == null || HardpointField == null || WeaponIndex == null)
+        if (OnFire == null || TankPart == null || Fired == null || HardpointField == null)
         {
-            Log.Error("cook-off: a stock field it reads is gone (FuelTank.onFire/part, MountedMissile.fired/RemoveFromHardpoint, Weapon.hardpoint, WeaponStation.weaponIndex); bays will not cook off");
+            Log.Error("cook-off: a stock field it reads is gone (FuelTank.onFire/part, MountedMissile.fired, Weapon.hardpoint); bays will not cook off");
             enabled = false;
             return;
         }
 
         var found = new List<Bay>();
-        for (int i = 0; i < HostNames.Length; i++)
+        for (int i = 0; i < Hosts.Length; i++)
         {
-            UnitPart? host = aircraft.partLookup.FirstOrDefault(p => p != null && p.name == HostNames[i]);
+            UnitPart? host = aircraft.partLookup.FirstOrDefault(p => p != null && p.name == Hosts[i].Bay);
+            UnitPart? section = aircraft.partLookup.FirstOrDefault(p => p != null && p.name == Hosts[i].TankSection);
             if (host == null)
             {
-                Log.Warning($"cook-off on {aircraft.name}: no {HostNames[i]} part, that bay is off");
+                Log.Warning($"cook-off on {aircraft.name}: no {Hosts[i].Bay} part, that bay is off");
                 continue;
             }
 
-            FuelTank? tank = aircraft.GetFuelTanks().FirstOrDefault(t => t != null && TankPart.GetValue(t) == (object)host);
+            FuelTank? tank = aircraft.GetFuelTanks().FirstOrDefault(t => t != null && section != null && TankPart.GetValue(t) == (object)section);
             Hardpoint? hardpoint = aircraft.weaponManager.hardpointSets.SelectMany(s => s.hardpoints).FirstOrDefault(h => h.part == host);
-            var bay = new Bay(i, host.name, host, tank, hardpoint != null && hardpoint.transform != null ? hardpoint.transform : host.transform);
-            host.onPartDetached += _ => Log.Info($"cook-off on {aircraft.name}: {bay.Name} detached on this peer ({Role})");
+            var bay = new Bay { Index = i, Host = host, Tank = tank, BlastPoint = hardpoint != null && hardpoint.transform != null ? hardpoint.transform : host.transform };
             found.Add(bay);
             if (tank == null)
             {
-                Log.Warning($"cook-off on {aircraft.name}: {host.name} holds no fuel tank, that bay never cooks off");
+                Log.Warning($"cook-off on {aircraft.name}: no fuel tank in {Hosts[i].TankSection} over {host.name}, that bay never cooks off");
             }
         }
 
@@ -150,20 +136,12 @@ sealed class BayCookoff : MonoBehaviour
 
         foreach (Bay bay in bays)
         {
-            bool burning = bay.Tank != null && !bay.Host.IsDetached() && (bool)OnFire!.GetValue(bay.Tank);
-            if (burning && !bay.BurnLogged)
-            {
-                bay.BurnLogged = true;
-                Log.Info(Invariant($"cook-off on {aircraft.name}: {bay.Name} tank on fire, timer started ({BayCookoffRule.BurnS:0} s)"));
-            }
-
+            bool burning = bay.Tank != null && !bay.Host.IsDetached() && OnFire!(bay.Tank);
             if (bay.Timer.Step(burning, Time.deltaTime))
             {
                 Due(bay);
             }
         }
-
-        ResendForLateJoiners();
     }
 
     /// <summary>The server's check once a bay's tank has burned long enough: an inventory, then the blast if anything conventional is left.</summary>
@@ -195,18 +173,12 @@ sealed class BayCookoff : MonoBehaviour
         {
             Receive(marker.pierceDamage.Decompress(), marker.impactDamage.Decompress());
         }
-
-        // After the marker, on the same reliable channel: each peer empties the bay while its host is still attached.
-        aircraft.DetachPart(bay.Host.id, aircraft.rb.velocity, bay.Host.transform.position - aircraft.transform.position);
-        Log.Info($"cook-off on {aircraft.name}: {bay.Name} detach sent through the stock break path");
     }
 
-    /// <summary>Every peer: the marker arrived. A blast plays once per bay; a state-only resend empties and detaches quietly.</summary>
+    /// <summary>A blast plays once per bay.</summary>
     void Receive(float pierce, float impact)
     {
-        int code = Mathf.RoundToInt(impact);
-        bool blast = code < StateCode;
-        int index = code - (blast ? BlastCode : StateCode);
+        int index = Mathf.RoundToInt(impact) - BlastCode;
         Bay? bay = bays.FirstOrDefault(b => b.Index == index);
         if (bay == null)
         {
@@ -217,31 +189,32 @@ sealed class BayCookoff : MonoBehaviour
         // Each peer blows what its copy of the bay holds, the server's own inventory unless a launch is still on its way. The
         // server's figure rides along as a half float (about 2 kg coarse at 5,000), only to show a disagreement in the log.
         float blastKg = BayCookoffRule.BlastKg(Unspent(bay).Select(s => (WarheadKg(s.info), s.info.nuclear)));
-        Log.Info(Invariant($"cook-off on {aircraft.name}: {bay.Name} event received ({(blast ? "blast" : "state only")}, {blastKg:0.#} kg here, {pierce / KgToKilotons:0} kg sent, {Role}{(bay.Spent ? ", bay already spent here" : "")})"));
-        if (blast && bay.Spent)
+        Log.Info(Invariant($"cook-off on {aircraft.name}: {bay.Name} event received (blast, {blastKg:0.#} kg here, {pierce / KgToKilotons:0} kg sent, {Role}{(bay.Spent ? ", bay already spent here" : "")})"));
+        if (bay.Spent)
         {
             return;
         }
 
-        bool first = !bay.Spent;
         bay.Spent = true;
         bay.Timer.MarkSpent();
-        Vector3 at = bay.BlastPoint.position;
-        int lost = Empty(bay);
-        Log.Info($"cook-off on {aircraft.name}: {bay.Name} emptied, {lost} stores lost without firing ({Role})");
-        if (blast)
-        {
-            Blast(at, blastKg);
-            blasts++;
-            lastBlastKg = blastKg;
-            lastBlastBay = bay.Name;
-        }
-        else if (!bay.Host.IsDetached())
-        {
-            // A late joiner missed the RpcBreakPart; UnitPart.Detach is what that RPC would have run here (Unit.cs:2193-2203).
-            bay.Host.Detach(aircraft.rb.velocity, bay.Host.transform.position - aircraft.transform.position);
-            Log.Info($"cook-off on {aircraft.name}: {bay.Name} detached from the server's spent state, no blast ({(first ? "first word" : "repeat")})");
-        }
+        StartCoroutine(BlastOnPhysicsFrame(bay.BlastPoint, blastKg));
+#if CENTURION_DEV
+        blasts++;
+        lastBlastKg = blastKg;
+        lastBlastBay = bay.Name;
+#endif
+    }
+
+    /// <summary>
+    /// The blast point is read on the next physics frame, as a stock warhead reads its own (Missile.ExplosionForceOnPhysicsFrame):
+    /// stock fragmentation traces against the colliders where physics last put them, while between physics frames an
+    /// interpolated aircraft is drawn up to one step behind them, about 4 m at cruise. Read then, the point lands in a
+    /// different place against the hull above the bay from one cook-off to the next, inside it or under it.
+    /// </summary>
+    IEnumerator BlastOnPhysicsFrame(Transform point, float blastKg)
+    {
+        yield return new WaitForFixedUpdate();
+        Blast(point.position, blastKg);
     }
 
     void Blast(Vector3 at, float blastKg)
@@ -292,55 +265,8 @@ sealed class BayCookoff : MonoBehaviour
             DamageEffects.BlastFrag(blastKg, at, PersistentID.None, PersistentID.None);
         }
 
-        Log.Info(Invariant($"cook-off on {aircraft.name}: blast {blastKg:0.#} kg TNT ({(fragOnly ? "fragmentation" : "shockwave")}, {Role}), effect {effectName}"));
-    }
-
-    /// <summary>
-    /// Every unspent store in the bay goes as if fired (MountedMissile.Fire's own bookkeeping: fired, no ammo, its mass, drag
-    /// and RCS off the hardpoint once) but launches nothing. Each station's spent stores then sit just before its next index,
-    /// so the next trigger pull takes a live store (WeaponStation.LaunchMount fires Weapons[weaponIndex]) and the order every
-    /// peer replays launches in stays the same.
-    /// </summary>
-    int Empty(Bay bay)
-    {
-        int lost = 0;
-        foreach (WeaponStation station in aircraft.weaponStations)
-        {
-            var spent = station.Weapons.OfType<MountedMissile>().Where(w => IsUnspentIn(w, bay)).Cast<Weapon>().ToList();
-            if (spent.Count == 0)
-            {
-                continue;
-            }
-
-            foreach (MountedMissile store in spent.Cast<MountedMissile>())
-            {
-                Fired!.SetValue(store, true);
-                store.ammo = 0;
-                RemoveFromHardpoint!.Invoke(store, null);
-                store.gameObject.SetActive(false);
-            }
-
-            int index = (int)WeaponIndex!.GetValue(station);
-            int before = station.Weapons.Take(index).Count(w => !spent.Contains(w));
-            var order = station.Weapons.Where(w => !spent.Contains(w)).ToList();
-            order.InsertRange(before, spent);
-            station.Weapons.Clear();
-            station.Weapons.AddRange(order);
-            WeaponIndex.SetValue(station, before + spent.Count);
-            if (NetworkManagerNuclearOption.i.Server.Active)
-            {
-                station.AccountAmmo();
-            }
-            else
-            {
-                station.Ammo -= spent.Count; // as WeaponStation.UpdateLastFired counts a client's launches
-            }
-
-            station.Updated();
-            lost += spent.Count;
-        }
-
-        return lost;
+        Vector3 local = aircraft.transform.InverseTransformPoint(at);
+        Log.Info(Invariant($"cook-off on {aircraft.name}: blast {blastKg:0.#} kg TNT ({(fragOnly ? "fragmentation" : "shockwave")}, {Role}), effect {effectName}, at ({local.x:0.00}, {local.y:0.00}, {local.z:0.00}) m in the aircraft"));
     }
 
     List<MountedMissile> Unspent(Bay bay) => aircraft.weaponStations.SelectMany(s => s.Weapons.OfType<MountedMissile>())
@@ -382,38 +308,7 @@ sealed class BayCookoff : MonoBehaviour
         return kg;
     }
 
-    /// <summary>The server, once a second: a player it hasn't seen means a peer that missed every blast; each spent bay goes again.</summary>
-    void ResendForLateJoiners()
-    {
-        float now = Time.unscaledTime;
-        if (now >= nextRosterAt)
-        {
-            nextRosterAt = now + 1f;
-            bool joined = false;
-            foreach (PlayerRef player in UnitRegistry.playerLookup.Keys)
-            {
-                joined |= players.Add(player);
-            }
-
-            if (joined && bays.Any(b => b.Spent))
-            {
-                resendAt.AddRange(ResendDelaysS.Select(d => now + d));
-                Log.Info($"cook-off on {aircraft.name}: a player joined, spent bays go again in {string.Join(" and ", ResendDelaysS)} s");
-            }
-        }
-
-        if (resendAt.RemoveAll(t => now >= t) == 0)
-        {
-            return;
-        }
-
-        foreach (Bay bay in bays.Where(b => b.Spent))
-        {
-            aircraft.Damage(markerId, new DamageInfo(0f, 0f, 0f, StateCode + bay.Index));
-            Log.Info($"cook-off on {aircraft.name}: {bay.Name} spent state resent for a late joiner");
-        }
-    }
-
+#if CENTURION_DEV
     internal static void AddDefaults(Dictionary<string, object> state)
     {
         state["cookoff_blasts"] = AircraftReadout.NotRead;
@@ -428,4 +323,5 @@ sealed class BayCookoff : MonoBehaviour
         state["cookoff_last_kg"] = AircraftReadout.Round(lastBlastKg);
         state["cookoff_last_bay"] = lastBlastBay;
     }
+#endif
 }

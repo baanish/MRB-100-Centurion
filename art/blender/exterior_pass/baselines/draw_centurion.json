@@ -1,0 +1,2616 @@
+[
+ {
+  "kind": "MeshRenderer",
+  "name": "hatch_liner_R",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "0618a5a74c4d4014d9da699aed515995"
+  ],
+  "lod": 0,
+  "tris": 186,
+  "verts": 116,
+  "tris_by_material": {
+   "0618a5a74c4d4014d9da699aed515995": 186
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "labels",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "5fb3146080896dc49954df304806c0b8",
+   "edf5961234ac27040ad58549c176aa48"
+  ],
+  "lod": 0,
+  "tris": 320,
+  "verts": 484,
+  "tris_by_material": {
+   "5fb3146080896dc49954df304806c0b8": 192,
+   "edf5961234ac27040ad58549c176aa48": 128
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_outer_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 22,
+  "verts": 16,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 22
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "band_marker",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "e122c24ac6b0550409417aaeeb81eb99"
+  ],
+  "lod": null,
+  "tris": 2,
+  "verts": 4,
+  "tris_by_material": {
+   "e122c24ac6b0550409417aaeeb81eb99": 2
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "navlight_R_effects",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "c2db4e2c16c3cad489986eb064524ce2"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "c2db4e2c16c3cad489986eb064524ce2": null
+  }
+ },
+ {
+  "kind": "SkinnedMeshRenderer",
+  "name": "pilot",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7ad3599283e6e5b418b40c53ac56e584"
+  ],
+  "lod": 0,
+  "tris": 5879,
+  "verts": 3814,
+  "tris_by_material": {
+   "7ad3599283e6e5b418b40c53ac56e584": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "stick_R",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "984f5888cf8269e479beaff1259333c7"
+  ],
+  "lod": null,
+  "tris": 1890,
+  "verts": 1348,
+  "tris_by_material": {
+   "984f5888cf8269e479beaff1259333c7": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "chocks",
+  "drawn": false,
+  "shadows": 1,
+  "materials": [
+   "8e6d887e2eca2a347a367a4b27f0de42"
+  ],
+  "lod": 0,
+  "tris": 128,
+  "verts": 208,
+  "tris_by_material": {
+   "8e6d887e2eca2a347a367a4b27f0de42": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "waterRipples",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "36dd33510e42b9a469f9d4d9a22798d3"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "36dd33510e42b9a469f9d4d9a22798d3": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "wingtipvortex_L",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "0",
+   "1bf6f72f8cb28994c9c3762006a37220"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "0": null,
+   "1bf6f72f8cb28994c9c3762006a37220": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_outer_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1592,
+  "verts": 879,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1391,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 40,
+   "4d5eedec1461f9d439be05cefe68cb8e": 161
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "pylon_2",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 565,
+  "verts": 394,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 459,
+   "4d5eedec1461f9d439be05cefe68cb8e": 106
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele1_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 14,
+  "verts": 9,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 14
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bayDoor_RL",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1316,
+  "verts": 694,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 436,
+   "4d5eedec1461f9d439be05cefe68cb8e": 880
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nose_hatch_R_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 148,
+  "verts": 76,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 50,
+   "4d5eedec1461f9d439be05cefe68cb8e": 98
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "heat_haze_2",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "4cce2eb89ae76114b9bc6dd7a174bf32"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "4cce2eb89ae76114b9bc6dd7a174bf32": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nozzle_1_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 2,
+  "verts": 4,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 2
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "EjectionSeat",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "0d6fa67ed4a33a540a2c57789126ed5e"
+  ],
+  "lod": 0,
+  "tris": 3884,
+  "verts": 3806,
+  "tris_by_material": {
+   "0d6fa67ed4a33a540a2c57789126ed5e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fuselage_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3364,
+  "verts": 2262,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1186,
+   "3f6e81bc8030fe647ad683ba2dfab454": 586,
+   "4d5eedec1461f9d439be05cefe68cb8e": 1590,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "aileron_R_visible_lower",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 310,
+  "verts": 165,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 158,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 152
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "vaporCone",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "6fb2f743248235245b873fd08771cc17"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "6fb2f743248235245b873fd08771cc17": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "flap_R2_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1130,
+  "verts": 571,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1028,
+   "4d5eedec1461f9d439be05cefe68cb8e": 102
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "sponson_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 1153,
+  "verts": 679,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1011,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "406fb6739984f2b4987be74f6fc2295d": 90
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "ruddervator_R1_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 234,
+  "verts": 121,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 196,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 38
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_outer_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 897,
+  "verts": 566,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "warning_lenses",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "9b435de6ceaaedc46855a819ed75e0a5"
+  ],
+  "lod": null,
+  "tris": 40,
+  "verts": 80,
+  "tris_by_material": {
+   "9b435de6ceaaedc46855a819ed75e0a5": 40
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454"
+  ],
+  "lod": 0,
+  "tris": 758,
+  "verts": 468,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 588,
+   "4d5eedec1461f9d439be05cefe68cb8e": 131,
+   "3f6e81bc8030fe647ad683ba2dfab454": 39
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_LM_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 1472,
+  "verts": 786,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 194,
+   "4d5eedec1461f9d439be05cefe68cb8e": 318,
+   "67dd394d302c1244092f9e1cb9169be9": 960
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "navlight_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 80,
+  "verts": 92,
+  "tris_by_material": {
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_outer_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 11,
+  "verts": 9,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 11
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_tip_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "97664c63b4771994091e383c2cca50db",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 1418,
+  "verts": 1165,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "97664c63b4771994091e383c2cca50db": null,
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_LM_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 30,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 30
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_inner_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 536,
+  "verts": 308,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 435,
+   "4d5eedec1461f9d439be05cefe68cb8e": 101
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "radome",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 2046,
+  "verts": 1025,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1984,
+   "4d5eedec1461f9d439be05cefe68cb8e": 62
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nacelle_2_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 54,
+  "verts": 41,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 54
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "radome_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 20,
+  "verts": 12,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 20
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bayDoor_FL",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1104,
+  "verts": 586,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 260,
+   "4d5eedec1461f9d439be05cefe68cb8e": 844
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nozzle_2_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 2,
+  "verts": 4,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 2
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "navlight_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "c5dc6575102be10428dbbf9b6c69235a"
+  ],
+  "lod": 0,
+  "tris": 80,
+  "verts": 92,
+  "tris_by_material": {
+   "c5dc6575102be10428dbbf9b6c69235a": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele2_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "0888ea8e681aa644f85e82dd47129dad",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "97664c63b4771994091e383c2cca50db",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 2998,
+  "verts": 2314,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "0888ea8e681aa644f85e82dd47129dad": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null,
+   "97664c63b4771994091e383c2cca50db": null,
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "spine_cover_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454"
+  ],
+  "lod": 0,
+  "tris": 568,
+  "verts": 296,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 376,
+   "4d5eedec1461f9d439be05cefe68cb8e": 164,
+   "3f6e81bc8030fe647ad683ba2dfab454": 28
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_F_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 20,
+  "verts": 12,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 20
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "downwash",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "82f3621f086e08d43831983ebeb2cc4a"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "82f3621f086e08d43831983ebeb2cc4a": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele1_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1256,
+  "verts": 896,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "glass_int",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "5f61dececfb814549afdf202d7c980c3"
+  ],
+  "lod": null,
+  "tris": 614,
+  "verts": 388,
+  "tris_by_material": {
+   "5f61dececfb814549afdf202d7c980c3": 614
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "Centurion_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 57,
+  "verts": 69,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 57
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nacelle_1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 8457,
+  "verts": 7174,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_5",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 556,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fuselage_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 15,
+  "verts": 23,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 15
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "flap_L2_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1130,
+  "verts": 571,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1028,
+   "4d5eedec1461f9d439be05cefe68cb8e": 102
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_3",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 577,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 832,
+  "verts": 1903,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bay_F_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 32,
+  "verts": 32,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 32
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_4",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 584,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "cockpit_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 34,
+  "verts": 23,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 34
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_5",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 573,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "chocks",
+  "drawn": false,
+  "shadows": 1,
+  "materials": [
+   "8e6d887e2eca2a347a367a4b27f0de42"
+  ],
+  "lod": 0,
+  "tris": 128,
+  "verts": 208,
+  "tris_by_material": {
+   "8e6d887e2eca2a347a367a4b27f0de42": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_root_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "97664c63b4771994091e383c2cca50db",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3970,
+  "verts": 2125,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 2920,
+   "97664c63b4771994091e383c2cca50db": 748,
+   "3f6e81bc8030fe647ad683ba2dfab454": 188,
+   "4d5eedec1461f9d439be05cefe68cb8e": 86,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 28
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bayDoor_FR",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1104,
+  "verts": 586,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 260,
+   "4d5eedec1461f9d439be05cefe68cb8e": 844
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "wheel_LF",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "71d2fefb3d5822945b9f68ae5d26975c"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "71d2fefb3d5822945b9f68ae5d26975c": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_tip_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 20,
+  "verts": 12,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 20
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "geardoor_FR_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 392,
+  "verts": 208,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 100,
+   "4d5eedec1461f9d439be05cefe68cb8e": 292
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "tailcone_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 53,
+  "verts": 47,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 53
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_2",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 555,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fuselage_F_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 28,
+  "verts": 36,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 28
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele2_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 30,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 30
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "wheel_RF",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "71d2fefb3d5822945b9f68ae5d26975c"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "71d2fefb3d5822945b9f68ae5d26975c": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "spoiler_R_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 248,
+  "verts": 126,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 240,
+   "4d5eedec1461f9d439be05cefe68cb8e": 8
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "sponson_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 19,
+  "verts": 19,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 19
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "pylon_2_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 3,
+  "verts": 7,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 3
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nose_door_visible_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 196,
+  "verts": 100,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 68,
+   "4d5eedec1461f9d439be05cefe68cb8e": 128
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nozzle_2",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 1296,
+  "verts": 707,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 428,
+   "4d5eedec1461f9d439be05cefe68cb8e": 52,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 816
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "tail_end",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "406fb6739984f2b4987be74f6fc2295d",
+   "97664c63b4771994091e383c2cca50db",
+   "13fdbd3782311c144b16e4476a313337",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 6930,
+  "verts": 6604,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "406fb6739984f2b4987be74f6fc2295d": null,
+   "97664c63b4771994091e383c2cca50db": null,
+   "13fdbd3782311c144b16e4476a313337": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 14,
+  "verts": 14,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 14
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_outer_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 23,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 23
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "spoiler_L_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 248,
+  "verts": 126,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 240,
+   "4d5eedec1461f9d439be05cefe68cb8e": 8
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "cockpit",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "13fdbd3782311c144b16e4476a313337",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "0888ea8e681aa644f85e82dd47129dad"
+  ],
+  "lod": 0,
+  "tris": 6869,
+  "verts": 3688,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 4328,
+   "4d5eedec1461f9d439be05cefe68cb8e": 492,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 338,
+   "13fdbd3782311c144b16e4476a313337": 1002,
+   "3f6e81bc8030fe647ad683ba2dfab454": 158,
+   "0888ea8e681aa644f85e82dd47129dad": 551
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bay_A",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3704,
+  "verts": 4843,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_inner_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 9,
+  "verts": 10,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 9
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454"
+  ],
+  "lod": 0,
+  "tris": 755,
+  "verts": 466,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 585,
+   "4d5eedec1461f9d439be05cefe68cb8e": 131,
+   "3f6e81bc8030fe647ad683ba2dfab454": 39
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_outer_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1592,
+  "verts": 879,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1391,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 40,
+   "4d5eedec1461f9d439be05cefe68cb8e": 161
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "ruddervator_L1_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 234,
+  "verts": 121,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 196,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 38
+  }
+ },
+ {
+  "kind": "SkinnedMeshRenderer",
+  "name": "pilot",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7ad3599283e6e5b418b40c53ac56e584"
+  ],
+  "lod": 0,
+  "tris": 5879,
+  "verts": 3814,
+  "tris_by_material": {
+   "7ad3599283e6e5b418b40c53ac56e584": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_4",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 555,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fuselage_F",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "97664c63b4771994091e383c2cca50db",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "0888ea8e681aa644f85e82dd47129dad"
+  ],
+  "lod": 0,
+  "tris": 5885,
+  "verts": 3359,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 3424,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 98,
+   "3f6e81bc8030fe647ad683ba2dfab454": 635,
+   "97664c63b4771994091e383c2cca50db": 198,
+   "4d5eedec1461f9d439be05cefe68cb8e": 1056,
+   "0888ea8e681aa644f85e82dd47129dad": 474
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "throttle_1",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "984f5888cf8269e479beaff1259333c7"
+  ],
+  "lod": null,
+  "tris": 880,
+  "verts": 643,
+  "tris_by_material": {
+   "984f5888cf8269e479beaff1259333c7": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bayDoor_RR",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1316,
+  "verts": 694,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 436,
+   "4d5eedec1461f9d439be05cefe68cb8e": 880
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "geardoor_FL_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 392,
+  "verts": 208,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 100,
+   "4d5eedec1461f9d439be05cefe68cb8e": 292
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "ruddervator_L2_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 422,
+  "verts": 217,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 346,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 76
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 14,
+  "verts": 14,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 14
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "tacScreen",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "2deff68261b7b374c881668b3d165451"
+  ],
+  "lod": null,
+  "tris": 40,
+  "verts": 50,
+  "tris_by_material": {
+   "2deff68261b7b374c881668b3d165451": 40
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "aileron_L_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 310,
+  "verts": 165,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 158,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 152
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "tailcone",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "0888ea8e681aa644f85e82dd47129dad"
+  ],
+  "lod": 0,
+  "tris": 4991,
+  "verts": 3209,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1827,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": 711,
+   "0888ea8e681aa644f85e82dd47129dad": 2255
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "aileron_L_visible_lower",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 310,
+  "verts": 165,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 158,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 152
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "throttle_2",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "984f5888cf8269e479beaff1259333c7"
+  ],
+  "lod": null,
+  "tris": 880,
+  "verts": 643,
+  "tris_by_material": {
+   "984f5888cf8269e479beaff1259333c7": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele2_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "631f98313e485ac479d0ec5c0330572a",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "97664c63b4771994091e383c2cca50db",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 2998,
+  "verts": 2315,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "631f98313e485ac479d0ec5c0330572a": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null,
+   "97664c63b4771994091e383c2cca50db": null,
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_root_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 39,
+  "verts": 35,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 39
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "gearlight_F",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "867f851aea554e04e9ee6d4463b11a7a"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "867f851aea554e04e9ee6d4463b11a7a": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "wingtipvortex_R",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "0",
+   "1bf6f72f8cb28994c9c3762006a37220"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "0": null,
+   "1bf6f72f8cb28994c9c3762006a37220": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_tip_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 20,
+  "verts": 12,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 20
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "vtail_tip_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "97664c63b4771994091e383c2cca50db",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 1418,
+  "verts": 1162,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "97664c63b4771994091e383c2cca50db": null,
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_F_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 1184,
+  "verts": 596,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": 1184
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "stick_L",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "984f5888cf8269e479beaff1259333c7"
+  ],
+  "lod": null,
+  "tris": 1890,
+  "verts": 1348,
+  "tris_by_material": {
+   "984f5888cf8269e479beaff1259333c7": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nacelle_2",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 8457,
+  "verts": 7174,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "ac45fb2b9c482424aa61ace13f0e4b43": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "ruddervator_R2_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 422,
+  "verts": 217,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 346,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 76
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_RM_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 30,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 30
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "flightdeck_int",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "0618a5a74c4d4014d9da699aed515995",
+   "9eb01ebd73517014fac228bfed656b62",
+   "52c8af12bc5fca945af8b16c86c14fe5",
+   "6319c026bcb11214f84729b410876872",
+   "984f5888cf8269e479beaff1259333c7",
+   "9f5415d8b15138041bb7145aab0a26f4",
+   "4f12a375451455a4a89a1ca53ac65703"
+  ],
+  "lod": 0,
+  "tris": 26587,
+  "verts": 18961,
+  "tris_by_material": {
+   "0618a5a74c4d4014d9da699aed515995": 13885,
+   "9eb01ebd73517014fac228bfed656b62": 408,
+   "52c8af12bc5fca945af8b16c86c14fe5": 2446,
+   "6319c026bcb11214f84729b410876872": 3524,
+   "984f5888cf8269e479beaff1259333c7": 1670,
+   "9f5415d8b15138041bb7145aab0a26f4": 342,
+   "4f12a375451455a4a89a1ca53ac65703": 4312
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fan_2_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3164,
+  "verts": 1628,
+  "tris_by_material": {
+   "ac45fb2b9c482424aa61ace13f0e4b43": 3164
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_6",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 555,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "heat_haze_1",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "4cce2eb89ae76114b9bc6dd7a174bf32"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "4cce2eb89ae76114b9bc6dd7a174bf32": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "geardoor_RM_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 600,
+  "verts": 326,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 136,
+   "4d5eedec1461f9d439be05cefe68cb8e": 96,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 368
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_RM_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 1472,
+  "verts": 786,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 194,
+   "4d5eedec1461f9d439be05cefe68cb8e": 318,
+   "67dd394d302c1244092f9e1cb9169be9": 960
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 832,
+  "verts": 1903,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "contactSparks",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "9ff35f3aa6bfac441942ed34f117fc51"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "9ff35f3aa6bfac441942ed34f117fc51": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_2",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 572,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "sponson_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 19,
+  "verts": 19,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 19
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_root_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "97664c63b4771994091e383c2cca50db",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3970,
+  "verts": 2125,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 2920,
+   "97664c63b4771994091e383c2cca50db": 748,
+   "3f6e81bc8030fe647ad683ba2dfab454": 188,
+   "4d5eedec1461f9d439be05cefe68cb8e": 86,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 28
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "navlight_L_effects",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "d56425c5aaab6b24486ec871054662c1"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "d56425c5aaab6b24486ec871054662c1": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 556,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "tail_end_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 45,
+  "verts": 36,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 45
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_outer_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 11,
+  "verts": 9,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 11
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bay_A_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 46,
+  "verts": 49,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 46
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "flap_R1_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 620,
+  "verts": 314,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 564,
+   "4d5eedec1461f9d439be05cefe68cb8e": 56
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele2_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 30,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 30
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "bay_F",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 3604,
+  "verts": 2314,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 2064,
+   "4d5eedec1461f9d439be05cefe68cb8e": 240,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 172,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "406fb6739984f2b4987be74f6fc2295d": 1024
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "band_bezel",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "52c8af12bc5fca945af8b16c86c14fe5",
+   "9eb01ebd73517014fac228bfed656b62"
+  ],
+  "lod": 0,
+  "tris": 1534,
+  "verts": 1037,
+  "tris_by_material": {
+   "52c8af12bc5fca945af8b16c86c14fe5": 4,
+   "9eb01ebd73517014fac228bfed656b62": 1530
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_inner_R_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 9,
+  "verts": 10,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 9
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "flap_L1_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 620,
+  "verts": 314,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 564,
+   "4d5eedec1461f9d439be05cefe68cb8e": 56
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "Centurion",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 6780,
+  "verts": 6769,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "406fb6739984f2b4987be74f6fc2295d": null
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "wheel_F",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "71d2fefb3d5822945b9f68ae5d26975c"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "71d2fefb3d5822945b9f68ae5d26975c": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "spine_cover_A_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "3f6e81bc8030fe647ad683ba2dfab454"
+  ],
+  "lod": 0,
+  "tris": 568,
+  "verts": 296,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 376,
+   "4d5eedec1461f9d439be05cefe68cb8e": 164,
+   "3f6e81bc8030fe647ad683ba2dfab454": 28
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_root_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 40,
+  "verts": 35,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 40
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele1_L_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 30,
+  "verts": 17,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 30
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nacelle_1_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 54,
+  "verts": 41,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 54
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_outer_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 897,
+  "verts": 566,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nozzle_1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 1296,
+  "verts": 707,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 428,
+   "4d5eedec1461f9d439be05cefe68cb8e": 52,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 816
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "laser_turret_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "818e3c088c859a040b7a69d36a15ec35",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1150,
+  "verts": 577,
+  "tris_by_material": {
+   "818e3c088c859a040b7a69d36a15ec35": 62,
+   "4d5eedec1461f9d439be05cefe68cb8e": 1088
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "aileron_R_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 310,
+  "verts": 165,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 158,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 152
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_LM_3",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 556,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_6",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 574,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "pylon_1_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 3,
+  "verts": 7,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 3
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "chocks",
+  "drawn": false,
+  "shadows": 1,
+  "materials": [
+   "8e6d887e2eca2a347a367a4b27f0de42"
+  ],
+  "lod": 0,
+  "tris": 128,
+  "verts": 208,
+  "tris_by_material": {
+   "8e6d887e2eca2a347a367a4b27f0de42": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "sponson_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "3f6e81bc8030fe647ad683ba2dfab454",
+   "406fb6739984f2b4987be74f6fc2295d"
+  ],
+  "lod": 0,
+  "tris": 1153,
+  "verts": 679,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 1011,
+   "3f6e81bc8030fe647ad683ba2dfab454": null,
+   "406fb6739984f2b4987be74f6fc2295d": 90
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "strut_inner_R",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 536,
+  "verts": 308,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 435,
+   "4d5eedec1461f9d439be05cefe68cb8e": 101
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "hatch_liner_L",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "0618a5a74c4d4014d9da699aed515995"
+  ],
+  "lod": 0,
+  "tris": 192,
+  "verts": 119,
+  "tris_by_material": {
+   "0618a5a74c4d4014d9da699aed515995": 192
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "gear_F_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9",
+   "ac45fb2b9c482424aa61ace13f0e4b43",
+   "13fdbd3782311c144b16e4476a313337"
+  ],
+  "lod": 0,
+  "tris": 2684,
+  "verts": 1430,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": 84,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 576,
+   "13fdbd3782311c144b16e4476a313337": 2024
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "pylon_1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 565,
+  "verts": 394,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 459,
+   "4d5eedec1461f9d439be05cefe68cb8e": 106
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "nose_hatch_L_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 148,
+  "verts": 76,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 50,
+   "4d5eedec1461f9d439be05cefe68cb8e": 98
+  }
+ },
+ {
+  "kind": "ParticleSystemRenderer",
+  "name": "water_spray",
+  "drawn": true,
+  "shadows": 0,
+  "materials": [
+   "407d50af0ed858c4380c70ced72710b8"
+  ],
+  "lod": null,
+  "tris": null,
+  "verts": null,
+  "tris_by_material": {
+   "407d50af0ed858c4380c70ced72710b8": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "fan_1_mesh",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 3164,
+  "verts": 1628,
+  "tris_by_material": {
+   "ac45fb2b9c482424aa61ace13f0e4b43": 3164
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "EjectionSeat",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "0d6fa67ed4a33a540a2c57789126ed5e"
+  ],
+  "lod": 0,
+  "tris": 3884,
+  "verts": 3806,
+  "tris_by_material": {
+   "0d6fa67ed4a33a540a2c57789126ed5e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "geardoor_LM_visible",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e",
+   "ac45fb2b9c482424aa61ace13f0e4b43"
+  ],
+  "lod": 0,
+  "tris": 600,
+  "verts": 326,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": 136,
+   "4d5eedec1461f9d439be05cefe68cb8e": 96,
+   "ac45fb2b9c482424aa61ace13f0e4b43": 368
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "band",
+  "drawn": false,
+  "shadows": 0,
+  "materials": [
+   "5ddd06b888816004fa96e3849e08daaa"
+  ],
+  "lod": null,
+  "tris": 96,
+  "verts": 98,
+  "tris_by_material": {
+   "5ddd06b888816004fa96e3849e08daaa": 96
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "laser_turret_lod1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "7d6ad621856f7a14695bf6cfe2bb81ba"
+  ],
+  "lod": 1,
+  "tris": 14,
+  "verts": 9,
+  "tris_by_material": {
+   "7d6ad621856f7a14695bf6cfe2bb81ba": 14
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wing_tele1_L",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "d3308ebbb6ee91b43b3dcb9bcac943d2",
+   "4d5eedec1461f9d439be05cefe68cb8e"
+  ],
+  "lod": 0,
+  "tris": 1256,
+  "verts": 896,
+  "tris_by_material": {
+   "d3308ebbb6ee91b43b3dcb9bcac943d2": null,
+   "4d5eedec1461f9d439be05cefe68cb8e": null
+  }
+ },
+ {
+  "kind": "MeshRenderer",
+  "name": "wheel_RM_1",
+  "drawn": true,
+  "shadows": 1,
+  "materials": [
+   "67dd394d302c1244092f9e1cb9169be9"
+  ],
+  "lod": 0,
+  "tris": 464,
+  "verts": 571,
+  "tris_by_material": {
+   "67dd394d302c1244092f9e1cb9169be9": null
+  }
+ }
+]

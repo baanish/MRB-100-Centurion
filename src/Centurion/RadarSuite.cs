@@ -13,7 +13,7 @@ namespace Centurion;
 /// </summary>
 sealed class RadarSuite : MonoBehaviour
 {
-    const string FrontName = "radar_F_fairing";
+    const string FrontName = "radome";
     const string RearName = "radar_R";
     const string RearPart = "tail_end"; // CenturionAuthor's RearRadarPart
 
@@ -23,19 +23,24 @@ sealed class RadarSuite : MonoBehaviour
             postfix: AccessTools.Method(typeof(RadarSuite), nameof(AfterToggle))),
     };
 
-    /// <summary>Every live Centurion's suite, local and remote.</summary>
+#if CENTURION_DEV
+    /// <summary>Every live Centurion's suite, local and remote, for the readout.</summary>
     internal static readonly List<RadarSuite> All = new();
-
     internal static ConfigEntry<string> DebugRadar = null!;
     static ConfigEntry<bool> diagnostics = null!;
+#endif
     static CenturionLog log = null!;
 
     Aircraft aircraft = null!;
-    AwacsBeam? beam;
+    CenturionSystems? systems;
+    /// <summary>The toggle's patch is missing: each radar keeps its own switch.</summary>
+    bool masterOff;
     readonly RadarSlot front = new();
     readonly RadarSlot rear = new();
     readonly RadarSlot awacs = new();
+#if CENTURION_DEV
     float nextToggleAt;
+#endif
     /// <summary>The master in the owner's last state word this copy acted on; null before the first.</summary>
     bool? ownerMaster;
 
@@ -47,12 +52,15 @@ sealed class RadarSuite : MonoBehaviour
     /// </summary>
     public bool Master { get; private set; } = true;
 
+#if CENTURION_DEV
     public bool IsLocalPlayer => GameManager.GetLocalAircraft(out Aircraft local) && local == aircraft;
     public bool Simulated => aircraft.LocalSim;
+#endif
 
     internal static void Install(ConfigFile config, CenturionLog log)
     {
         RadarSuite.log = log;
+#if CENTURION_DEV
         if (!config.TryGetEntry("Diagnostics", "Enabled", out diagnostics))
         {
             throw new InvalidOperationException("RadarSuite requires Diagnostics.Enabled to be bound before Install");
@@ -61,8 +69,10 @@ sealed class RadarSuite : MonoBehaviour
             "on or off drives the local player aircraft's radar master through the Radar key's call, at most once a second while it differs; pilot leaves it to the pilot",
             new AcceptableValueList<string>("pilot", "on", "off")));
         DebugRadar.SettingChanged += (_, _) => log.Info($"config Debug.Radar = {DebugRadar.Value}");
+#endif
     }
 
+#if CENTURION_DEV
     internal static void AddDefaults(Dictionary<string, object> state)
     {
         state["radar_primary"] = AircraftReadout.NoText;
@@ -110,6 +120,7 @@ sealed class RadarSuite : MonoBehaviour
             }
         }
     }
+#endif
 
     void Awake()
     {
@@ -129,25 +140,32 @@ sealed class RadarSuite : MonoBehaviour
         if (rear.Radar == null) log.Warning($"radar: missing {RearName}");
         aircraft.radar = front.Radar;
         aircraft.weaponManager.OnWeaponsLoaded += BindAwacs;
+        masterOff = CenturionPlugin.FeaturesOff.Contains("radar-master");
+#if CENTURION_DEV
         All.Add(this);
+#endif
     }
 
-    void BindAwacs()
-    {
-        beam = GetComponent<AwacsBeam>();
-        awacs.Bind(beam != null ? beam.BeamRadar : null);
-    }
+    /// <summary>The record, found once first sight has finished (this is added during it).</summary>
+    CenturionSystems? Systems => systems ??= CenturionSystems.Of(aircraft);
+
+    void BindAwacs() => awacs.Bind(Systems?.Beam.BeamRadar);
 
     void Update()
     {
-        if (beam == null) beam = GetComponent<AwacsBeam>();
-        awacs.Bind(beam != null ? beam.BeamRadar : null);
-        RadarSlot? primary = awacs.Alive && beam != null && beam.Deployed ? awacs
+        if (Systems is not { } record)
+        {
+            return;
+        }
+
+        AwacsBeam beam = record.Beam;
+        awacs.Bind(beam.BeamRadar);
+        RadarSlot? primary = awacs.Alive && beam.Deployed ? awacs
             : front.Alive ? front : rear.Alive ? rear : null;
         if (primary != null) aircraft.radar = primary.Radar;
 
-        if (CenturionPlugin.FeaturesOff.Contains("radar-master")) return;
-        if (!aircraft.LocalSim && aircraft.TryGetComponent(out OwnerState owner) && owner.Received && owner.RadarMaster != ownerMaster)
+        if (masterOff) return;
+        if (!aircraft.LocalSim && record.Owner is { Received: true } owner && owner.RadarMaster != ownerMaster)
         {
             ownerMaster = owner.RadarMaster;
             SetMaster(owner.RadarMaster, "owner state");
@@ -156,6 +174,7 @@ sealed class RadarSuite : MonoBehaviour
         if (rear.Alive && rear.Radar!.activated != Master) rear.Radar.activated = Master;
         if (awacs.Alive && awacs.Radar!.activated != Master) awacs.Radar.activated = Master;
 
+#if CENTURION_DEV
         if (diagnostics.Value && IsLocalPlayer && aircraft.radar != null && DebugRadar.Value != "pilot"
             && (DebugRadar.Value == "on") != Master && Time.unscaledTime >= nextToggleAt)
         {
@@ -163,15 +182,12 @@ sealed class RadarSuite : MonoBehaviour
             aircraft.CmdToggleRadar();
             log.Stage("debug-radar", $"request {DebugRadar.Value}");
         }
+#endif
     }
 
     static void AfterToggle(Aircraft __instance, bool activated)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("radar-master")) return;
-        if (__instance.TryGetComponent(out RadarSuite suite))
-        {
-            suite.SetMaster(activated, "toggle");
-        }
+        CenturionSystems.Of(__instance)?.Radar.SetMaster(activated, "toggle");
     }
 
     void SetMaster(bool activated, string source)
@@ -194,46 +210,60 @@ sealed class RadarSuite : MonoBehaviour
         front.Bind(null);
         rear.Bind(null);
         awacs.Bind(null);
+#if CENTURION_DEV
         All.Remove(this);
+#endif
     }
 
     sealed class RadarSlot
     {
         internal Radar? Radar { get; private set; }
         internal bool Alive => Radar != null && Radar.IsOperational();
+#if CENTURION_DEV
         internal int Tracks { get; private set; }
         internal float TrackMaxM { get; private set; }
         readonly HashSet<PersistentID> pending = new();
         float pendingMaxM;
         float lastScanTime;
         float lastDetectTime;
+#endif
 
         internal void Bind(Radar? radar)
         {
             if (ReferenceEquals(Radar, radar)) return;
+#if CENTURION_DEV
             // Unity's destroyed-object null comparison must not skip managed event unsubscription.
             if (!ReferenceEquals(Radar, null))
             {
                 Radar!.onScan -= OnScan;
                 Radar.onDetectTarget -= OnDetectTarget;
             }
+#endif
             Radar = radar;
             ClearLatch();
+#if CENTURION_DEV
             lastScanTime = lastDetectTime = Time.time;
+#endif
             if (Radar != null)
             {
+#if CENTURION_DEV
                 Radar.onScan += OnScan;
                 Radar.onDetectTarget += OnDetectTarget;
+#endif
                 log.Info($"radar bound: {Radar.name}");
             }
         }
 
         internal void ClearLatch()
         {
+#if CENTURION_DEV
             Tracks = 0;
             TrackMaxM = pendingMaxM = (float)NotRead;
             pending.Clear();
+#endif
         }
+
+#if CENTURION_DEV
 
         void OnDetectTarget(Unit target)
         {
@@ -260,5 +290,6 @@ sealed class RadarSuite : MonoBehaviour
             state[$"radar_{slot}_scan_age_s"] = Round(Time.time - lastScanTime);
             state[$"radar_{slot}_detect_age_s"] = Round(Time.time - lastDetectTime);
         }
+#endif
     }
 }

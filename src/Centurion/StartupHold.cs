@@ -13,12 +13,13 @@ namespace Centurion;
 /// 'baanish_centurion' not found in Encyclopedia", runs 20261015-021324 and -022014) and a client started that way registered
 /// no Centurion prefab with Mirage (NetworkManagerNuclearOption.RegisterPrefabs), so every Centurion spawn failed there ("No
 /// prefab for 1E4D7863", runs 20261012-134304 and -134631). The state reads Loading until the Centurion is in
-/// Encyclopedia.Lookup and Blueprinter's ops after it have had <see cref="SettleS"/>, for at most <see cref="MaxHoldS"/>, and
+/// Encyclopedia.Lookup and Blueprinter's ops after it have had <see cref="SettleS"/>, and the pack racks are published
+/// (<see cref="PackBayMounts.Done"/>) so a mission's saved pack rack resolves, for at most <see cref="MaxHoldS"/>, and
 /// only while Blueprinter is loaded. A start from the menu does not wait on it.
 /// </summary>
 static class StartupHold
 {
-    const string CenturionKey = "baanish_centurion";
+
     const string BlueprinterGuid = "com.nikkorap.blueprinter";
     const float SettleS = 1f, MaxHoldS = 30f;
 
@@ -32,7 +33,6 @@ static class StartupHold
 
     static void AfterState(ref MainMenu.LoadingState __result)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("startup-hold")) return;
         if (__result == MainMenu.LoadingState.Loaded && !released && Holding())
         {
             __result = MainMenu.LoadingState.Loading;
@@ -53,12 +53,12 @@ static class StartupHold
             heldSince = now;
         }
 
-        if (float.IsNaN(registeredAt) && Encyclopedia.Lookup != null && Encyclopedia.Lookup.ContainsKey(CenturionKey))
+        if (float.IsNaN(registeredAt) && Encyclopedia.Lookup != null && Encyclopedia.Lookup.ContainsKey(CenturionPlugin.JsonKey))
         {
             registeredAt = now;
         }
 
-        bool settled = !float.IsNaN(registeredAt) && now - registeredAt >= SettleS;
+        bool settled = !float.IsNaN(registeredAt) && now - registeredAt >= SettleS && PackBayMounts.Done;
         if (!settled && now - heldSince < MaxHoldS)
         {
             return true;

@@ -10,6 +10,20 @@ namespace Centurion.Editor
 {
     public static partial class CenturionAuthor
     {
+        // Balanced racks (owner, 2026-11-22), columns x layers x tandem for each bay: the Darkreach's rounds per cubic metre
+        // of bay, each grid inside the pinned one so it clears as that did. Racks not listed keep their pinned grid.
+        private static readonly Dictionary<string, ((int Columns, int Layers, int Tandem) Forward, (int Columns, int Layers, int Tandem) Aft)> BalancedRacks =
+            new()
+            {
+                ["tusko"] = ((3, 3, 2), (4, 3, 2)),
+                ["auger"] = ((3, 3, 1), (3, 3, 1)),
+                ["gbm500lr"] = ((4, 3, 2), (5, 3, 2)),
+                ["gpon15"] = ((3, 2, 2), (4, 2, 2)),
+                ["gpon250"] = ((3, 2, 2), (4, 2, 2)),
+                ["agm99"] = ((4, 3, 2), (4, 4, 2)),
+                ["pab80lr"] = ((5, 6, 4), (6, 6, 4)),
+            };
+
         private static void AuthorDarkreachMounts(GameObject aircraft, Dictionary<string, Object> weapons,
             List<(string Key, int Set)> modMounts)
         {
@@ -66,7 +80,9 @@ namespace Centurion.Editor
                     AssetDatabase.DeleteAsset(ModFolder + "/OpAddWeaponToHardpoint_" + key + ".asset");
             }
             // forward_bin and aft_bin: the most rounds each bay takes before the payload and balance limits.
-            var report = new List<string> { "munition,forward_key,aft_key,forward_grid,aft_grid,count,payload_kg,moment_tm,fuel_ratio,forward_bin,aft_bin" };
+            CheckBombRackClearance(triangles);
+            // forward_key and aft_key hold the balanced racks (or the only rack); legacy_*_key the 0.1.3 grid where it differs.
+            var report = new List<string> { "munition,forward_key,aft_key,forward_grid,aft_grid,count,payload_kg,moment_tm,fuel_ratio,forward_bin,aft_bin,legacy_forward_key,legacy_aft_key" };
             foreach (var (slug, stockKey, stockCount, mass, darkreachCount, forwardCount, aftCount) in racks)
             {
                 var stock = new SerializedObject(weapons[stockKey]);
@@ -107,25 +123,54 @@ namespace Centurion.Editor
                     throw new InvalidDataException($"{slug}: the bays now take {best.Forward.Count} " +
                         $"({best.Forward.Columns}x{best.Forward.Layers}x{best.Forward.Tandem}) forward and {best.Aft.Count} " +
                         $"({best.Aft.Columns}x{best.Aft.Layers}x{best.Aft.Tandem}) aft, not the pinned {forwardCount} and {aftCount}; remeasure before shipping");
+                // The pinned grids are the 0.1.3 racks. Where a balanced grid differs, the 0.1.3 key carries the balanced
+                // rack and the pinned grid moves to a LEGACY key.
                 var keys = new string[2];
+                var legacyKeys = new string[2];
+                var grids = new (int Columns, int Layers, int Tandem, int Count)[2];
                 for (var set = 0; set < 2; set++)
                 {
                     if (slug == "arad" && set == 1) continue;
-                    var grid = set == 0 ? best.Forward : best.Aft;
-                    var key = keys[set] = $"baanish_centurion_{slug}_{grid.Count}";
-                    if (!weapons.ContainsKey(key)) weapons[key] = AuthorBombMount(weapons[stockKey], key, stockCount,
-                        grid.Columns, grid.Layers, mass, size, grid.Tandem, true, tandemGap);
-                    modMounts.Add((key, set));
+                    var pinned = set == 0 ? best.Forward : best.Aft;
+                    grids[set] = pinned;
+                    keys[set] = $"baanish_centurion_{slug}_{pinned.Count}";
+                    if (!BalancedRacks.TryGetValue(slug, out var balanced)) continue;
+                    var want = set == 0 ? balanced.Forward : balanced.Aft;
+                    grids[set] = candidates[set].FirstOrDefault(c => c.Columns == want.Columns && c.Layers == want.Layers && c.Tandem == want.Tandem);
+                    if (grids[set].Count == 0)
+                        throw new InvalidDataException($"{slug}: balanced {want.Columns}x{want.Layers}x{want.Tandem} doesn't clear bay {set}");
+                    if (grids[set].Count != pinned.Count) legacyKeys[set] = $"baanish_centurion_{slug}legacy_{pinned.Count}";
                 }
-                // A rack whose pinned count changed leaves its old mount behind; nothing would offer it, but the bundle would carry it.
-                foreach (var path in Directory.GetFiles(ModFolder, $"baanish_centurion_{slug}_*").Where(p => !p.EndsWith(".meta", StringComparison.Ordinal)))
-                    if (!keys.Contains(Path.GetFileNameWithoutExtension(path)) && !AssetDatabase.DeleteAsset(path.Replace('\\', '/')))
+                // A 0.1.3 key both bays shared stays with the bay whose count it still names; the other bay's balanced rack
+                // takes a key of its own (Tusko-B: tusko_24 aft, tusko_18 forward).
+                if (keys[0] == keys[1] && grids[0].Count != grids[1].Count)
+                {
+                    var moved = grids[0].Count != best.Forward.Count ? 0 : 1;
+                    keys[moved] = $"baanish_centurion_{slug}_{grids[moved].Count}";
+                }
+                for (var set = 0; set < 2; set++)
+                {
+                    if (keys[set] == null) continue;
+                    if (!weapons.ContainsKey(keys[set])) weapons[keys[set]] = AuthorBombMount(weapons[stockKey], keys[set], stockCount,
+                        grids[set].Columns, grids[set].Layers, mass, size, grids[set].Tandem, true, tandemGap);
+                    modMounts.Add((keys[set], set));
+                    if (legacyKeys[set] == null) continue;
+                    var pinned = set == 0 ? best.Forward : best.Aft;
+                    if (!weapons.ContainsKey(legacyKeys[set])) weapons[legacyKeys[set]] = AuthorBombMount(weapons[stockKey], legacyKeys[set],
+                        stockCount, pinned.Columns, pinned.Layers, mass, size, pinned.Tandem, true, tandemGap, legacy: true);
+                    modMounts.Add((legacyKeys[set], set));
+                }
+                // A rack whose count or key changed leaves its old mount behind; nothing would offer it, but the bundle would carry it.
+                var current = keys.Concat(legacyKeys).Where(k => k != null).SelectMany(k => new[] { k, k + "_Info" }).ToArray();
+                foreach (var path in Directory.GetFiles(ModFolder, $"baanish_centurion_{slug}_*").Concat(Directory.GetFiles(ModFolder, $"baanish_centurion_{slug}legacy_*"))
+                    .Where(p => !p.EndsWith(".meta", StringComparison.Ordinal)))
+                    if (!current.Contains(Path.GetFileNameWithoutExtension(path)) && !AssetDatabase.DeleteAsset(path.Replace('\\', '/')))
                         throw new IOException("Could not remove retired rack " + path);
                 var fuel = keys[1] == null ? 1f : BombLoadoutFuel(weapons[keys[0]], weapons[keys[1]], null, payloadCap, momentCap);
                 string Grid((int Columns, int Layers, int Tandem, int Count) g) => $"{g.Columns}x{g.Layers}x{g.Tandem}";
-                var count = best.Forward.Count + (keys[1] == null ? 0 : best.Aft.Count);
-                var rackMoment = mass * (best.Forward.Count * (12f - BombEmptyCgStation) + (keys[1] == null ? 0 : best.Aft.Count) * (28.1f - BombEmptyCgStation)) / 1000f;
-                var line = FormattableString.Invariant($"{slug},{keys[0]},{keys[1]},{Grid(best.Forward)},{(keys[1] == null ? "" : Grid(best.Aft))},{count},{count * mass},{rackMoment},{fuel},{candidates[0].Max(c => c.Count)},{candidates[1].Max(c => c.Count)}");
+                var count = grids[0].Count + (keys[1] == null ? 0 : grids[1].Count);
+                var rackMoment = mass * (grids[0].Count * (12f - BombEmptyCgStation) + (keys[1] == null ? 0 : grids[1].Count) * (28.1f - BombEmptyCgStation)) / 1000f;
+                var line = FormattableString.Invariant($"{slug},{keys[0]},{keys[1]},{Grid(grids[0])},{(keys[1] == null ? "" : Grid(grids[1]))},{count},{count * mass},{rackMoment},{fuel},{candidates[0].Max(c => c.Count)},{candidates[1].Max(c => c.Count)},{legacyKeys[0]},{legacyKeys[1]}");
                 report.Add(line);
                 Debug.Log("[Centurion] Rack " + line);
             }

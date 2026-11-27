@@ -22,6 +22,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Centurion_trim_cut
+    second: {fileID: 2100000, guid: 2f39b761a790bde41949ec823a1d99ff, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: LOD
     second: {fileID: 2100000, guid: 7d6ad621856f7a14695bf6cfe2bb81ba, type: 2}
   - first:
@@ -34,6 +39,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: glass
     second: {fileID: 2100000, guid: 13fdbd3782311c144b16e4476a313337, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: honeycomb
+    second: {fileID: 2100000, guid: 90b92a181e15615469c3e16741c1933b, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

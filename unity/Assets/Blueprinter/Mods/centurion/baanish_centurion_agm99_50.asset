@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 4796604728805843959, guid: d243800744f7ab7408ed0c71c0fa173b, type: 3}
   jsonKey: baanish_centurion_agm99_50
   info: {fileID: 11400000, guid: 4284466d03ccc504a8dc5d82fae51a4d, type: 2}
-  mountName: AGM-99 x50
-  ammo: 50
+  mountName: AGM-99 x24
+  ammo: 24
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 22500
+  mass: 10800
   drag: 0
   emptyDrag: 0
   RCS: 0

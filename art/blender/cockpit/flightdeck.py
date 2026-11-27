@@ -21,10 +21,10 @@ its pivot and world axes:
   frames, tinted by vertex colour), Matte_black (shroud and glareshield) and hotas (grips).
 - labels (14): the legends, scales and placards (flightdeck_labels.py) on the label atlas: stencils cut out
   (Centurion_cockpit_labels), the powered legends transparent and glowing (Centurion_cockpit_legends).
-- band_bezel (14): the screen's housing and the master warning lamps' housings on its hood; the panel atlas, the lamps'
+- band_bezel (14): the screen's housing and the missile warning lamps' housings on its hood; the panel atlas, the lamps'
   lenses on Matte_black.
 - hatch_liner_L, hatch_liner_R (14): each escape hatch's liner and handle, which authoring parents to its hatch.
-- warning_lenses (3): the caution, warning, annunciator and master warning lamps' lit faces on the stock
+- warning_lenses (3): the caution, warning, annunciator and missile warning lamps' lit faces on the stock
   CockpitWarningLight, which the stock CockpitWarningLights shows only while it flashes.
 - band (3): the screen, a transparent sheet on the stock glass_int copy with the scanline tile (Centurion_band).
 - band_marker (3): the camera marker, on its own transparent copy (Centurion_band_marker).
@@ -624,7 +624,9 @@ def build_band(phi_b, parts):
     mk.uv_done = True
 
 
-# The master warning lamps (owner: "bigger, and horizontal ... they should have a thing when they are off"), built as the
+# The missile warning lamps: they flash while the aircraft's missile warning tracks a missile and are dark otherwise, so
+# a dark lens is the lamp at rest, not an unfinished display (owner: "bigger, and horizontal ... they should have a thing
+# when they are off"). Built as the
 # KR-67 builds its own: a housing in the cockpit mesh with the lamp's face laid over it on a renderer of its own, which the
 # stock CockpitWarningLights shows only while it flashes. One under the screen on each seat's line straight ahead (the
 # pilot's eye meets the screen at about 20 deg; owner: "the warning lights should be under the pano display"), filling
@@ -643,7 +645,7 @@ WARNING_LAMP_FACE = (0.082, 0.024)  # the lit face, just over the lens
 
 
 def build_warning_lamps(part, lenses):
-    """The two master warning lamps under the screen (WARNING_LAMP_*): housings and lenses on part, lit faces on lenses."""
+    """The two missile warning lamps under the screen (WARNING_LAMP_*): housings and lenses on part, lit faces on lenses."""
     import flightdeck_detail as fdd
     fd = sys.modules[__name__]
     r_in = BAND_R - BEZEL_DEPTH

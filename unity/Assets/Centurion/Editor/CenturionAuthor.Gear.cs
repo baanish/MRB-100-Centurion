@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Centurion.Editor
 {
@@ -27,6 +28,148 @@ namespace Centurion.Editor
             FoldNoseLegAsArt(b);
             SpinMainWheels(b, "gear_L", "wheel_LM");
             SpinMainWheels(b, "gear_R", "wheel_RM");
+            ShrinkMainStrutAsArt(b, "gear_L", "gear_LM", "wheel_LM");
+            ShrinkMainStrutAsArt(b, "gear_R", "gear_RM", "wheel_RM");
+        }
+
+        // The art closes each main shock strut MainShrinkM along its axis before it swings the leg up (art/blender/m4/
+        // gear.py retract_main, main_fit), which stows the bogie outboard of the aft bay. LandingGear has no slide: its
+        // movingParts each turn from identity to their foldAngles as the leg folds. So the bump stop and the unsprung leg
+        // hang under a transform turned about a pivot ShrinkLeverM off by the small angle whose chord is the closure: the
+        // bogie's centre lands where the art's does and every other point of it within StrutShrinkTolerance. With the gear
+        // down it is at identity, so the leg, its suspension and its wheels stand as before.
+        private const float MainShrinkM = 0.5f; // art/blender/m4/gear.py MAIN_SHRINK
+        private const float MainFootOut = 0.03f, MainFootUp = 0.27f; // gear.py strut_axis: the strut's foot from the bogie's centre
+        private const float ShrinkLeverM = 50f, StrutShrinkTolerance = 0.012f;
+        private static void ShrinkMainStrutAsArt(Build b, string gearName, string blockoutGear, string blockoutWheel)
+        {
+            var gear = FindDeep(b.Root.transform, gearName);
+            var bump = gear.Find("bumpstop");
+            var unsprung = gear.Cast<Transform>().First(t => t.name.StartsWith("gear_unsprung", StringComparison.Ordinal));
+            var hingePoint = b.Blockout.Local(blockoutGear);
+            var centre = b.Blockout.Local(blockoutWheel);
+            var root = b.Root.transform;
+            var side = Mathf.Sign(root.InverseTransformPoint(centre).x);
+            var lift = (hingePoint - (centre + root.rotation * new Vector3(side * MainFootOut, MainFootUp, 0))).normalized * MainShrinkM;
+
+            // Fore and aft, the bogie's long way, so its tilt moves its wheels least; the pivot outboard, so the two sides mirror.
+            var axis = Vector3.ProjectOnPlane(root.forward, lift).normalized;
+            var away = Vector3.Cross(axis, lift).normalized;
+            if (Vector3.Dot(away, root.right) * side < 0)
+                away = -away;
+            var half = 0.5f * MainShrinkM;
+            var pivot = centre + 0.5f * lift + away * Mathf.Sqrt(ShrinkLeverM * ShrinkLeverM - half * half);
+            var degrees = 2 * Mathf.Asin(half / ShrinkLeverM) * Mathf.Rad2Deg;
+            if ((pivot + Quaternion.AngleAxis(degrees, axis) * (centre - pivot) - centre - lift).magnitude > 1e-3f)
+                degrees = -degrees;
+
+            var shrink = new GameObject(gearName + "_strut_shrink") { layer = b.Root.layer }.transform;
+            shrink.SetParent(gear, false);
+            shrink.position = pivot;
+            var moved = new[] { bump, unsprung };
+            var held = moved.SelectMany(t => t.GetComponentsInChildren<Transform>(true)).Select(t => (t, t.position, t.rotation)).ToArray();
+            foreach (var t in moved)
+                t.SetParent(shrink, true);
+            var drift = held.Max(h => Mathf.Max((h.t.position - h.position).magnitude, Quaternion.Angle(h.t.rotation, h.rotation) * Mathf.Deg2Rad));
+            if (drift > 1e-5f)
+                throw new InvalidDataException($"{gearName}: hanging the bump stop and the bogie under the strut's closure moved them by {drift} with the gear down.");
+
+            var bogie = b.Visuals[blockoutWheel];
+            Vector3[] BogiePoints() => bogie.GetComponentsInChildren<MeshFilter>(true)
+                .SelectMany(f => f.sharedMesh.vertices.Select(v => f.transform.TransformPoint(v))).ToArray();
+            var fold = Quaternion.Inverse(gear.rotation) * Quaternion.AngleAxis(degrees, axis) * gear.rotation;
+            float Signed(float a) => a > 180f ? a - 360f : a;
+            var angles = new Vector3(Signed(fold.eulerAngles.x), Signed(fold.eulerAngles.y), Signed(fold.eulerAngles.z));
+            var down = BogiePoints();
+            shrink.localEulerAngles = angles;
+            var bogieMiss = (bogie.position - centre - lift).magnitude;
+            var worst = BogiePoints().Zip(down, (up, was) => (up - was - lift).magnitude).Max();
+            shrink.localRotation = Quaternion.identity;
+            if (bogieMiss > 1e-3f || worst > StrutShrinkTolerance)
+                throw new InvalidDataException($"{gearName}: closed, the bogie's centre is {bogieMiss:F4} m and its farthest point {worst:F4} m off the art's closure of {MainShrinkM} m.");
+
+            var so = new SerializedObject(gear.GetComponent(GameType("LandingGear")));
+            var parts = Prop(so, "movingParts");
+            parts.arraySize++;
+            var entry = parts.GetArrayElementAtIndex(parts.arraySize - 1);
+            entry.FindPropertyRelative("transform").objectReferenceValue = shrink;
+            entry.FindPropertyRelative("target").objectReferenceValue = null;
+            entry.FindPropertyRelative("foldAngles").vector3Value = angles;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            b.Report.Add($"gear {gearName}: strut closes {lift.ToString("F3")} as it folds, {degrees:F3} deg about {pivot.ToString("F2")}; " +
+                $"bogie centre within {bogieMiss * 1000:F2} mm, its farthest point {worst * 1000:F1} mm");
+        }
+
+        // With the gear up the main bogies lie beside the aft bay: every point of them stays outside the bay's rack
+        // envelope (RackFits' limits) and clear of every store of every rack the aft bay offers. Folded without the strut's
+        // closure the wheels sat 0.30 m inside the envelope and 0.11 m into the legacy six-column GBM-500 rack's stores.
+        // The gear is posed on a copy as LandingGear's locked retracted state poses it.
+        private static void CheckStowedMainWheels(GameObject aircraft, Dictionary<string, Object> weapons, IEnumerable<string> aftKeys)
+        {
+            var copy = Object.Instantiate(aircraft);
+            try
+            {
+                var bay = FindDeep(copy.transform, "hardpoint_bay_aft");
+                var wheels = new List<Vector3>();
+                foreach (var (gearName, blockoutWheel) in new[] { ("gear_L", "wheel_LM"), ("gear_R", "wheel_RM") })
+                {
+                    var gear = FindDeep(copy.transform, gearName);
+                    var so = new SerializedObject(gear.GetComponent(GameType("LandingGear")));
+                    var hinge = (Transform)Prop(so, "gearHinge").objectReferenceValue;
+                    hinge.localEulerAngles += new Vector3(Prop(so, "foldDegrees").floatValue, 0, 0);
+                    hinge.localPosition += Prop(so, "hingeFoldMotion").vector3Value;
+                    var parts = Prop(so, "movingParts");
+                    for (var i = 0; i < parts.arraySize; i++)
+                    {
+                        var part = parts.GetArrayElementAtIndex(i);
+                        var moving = (Transform)part.FindPropertyRelative("transform").objectReferenceValue;
+                        if (moving == null)
+                            break;
+                        var target = (Transform)part.FindPropertyRelative("target").objectReferenceValue;
+                        if (target != null)
+                            moving.LookAt(target);
+                        var angles = part.FindPropertyRelative("foldAngles").vector3Value;
+                        if (angles != Vector3.zero)
+                            moving.localEulerAngles = angles;
+                    }
+                    wheels.AddRange(FindDeep(gear, blockoutWheel + "_mesh").GetComponentsInChildren<MeshFilter>(true)
+                        .SelectMany(f => f.sharedMesh.vertices.Select(v => bay.InverseTransformPoint(f.transform.TransformPoint(v)))));
+                }
+
+                // How far a point lies outside a box along its farthest axis (negative inside).
+                float Outside(Bounds box, Vector3 p)
+                {
+                    var d = Vector3.Max(box.min - p, p - box.max);
+                    return Mathf.Max(d.x, Mathf.Max(d.y, d.z));
+                }
+                var envelope = new Bounds();
+                envelope.SetMinMax(new Vector3(-1.63f, 1.3f - BombHardpointHeight, -4.4f), new Vector3(1.63f, BombGridTop - BombHardpointHeight, 4.4f));
+                var bayClear = wheels.Min(p => Outside(envelope, p));
+                var reach = new Bounds(wheels[0], Vector3.zero);
+                foreach (var p in wheels)
+                    reach.Encapsulate(p);
+
+                var storeClear = float.MaxValue;
+                var closest = "";
+                foreach (var key in aftKeys.Distinct())
+                {
+                    var mount = (GameObject)Prop(new SerializedObject(weapons[key]), "prefab").objectReferenceValue;
+                    foreach (var store in mount.GetComponentsInChildren<MeshFilter>(true).Where(f => f.sharedMesh != null))
+                    {
+                        var box = BombStoreBounds(store.transform, mount.transform);
+                        box.center += mount.transform.localPosition;
+                        if (Outside(box, reach.center) - reach.extents.magnitude > storeClear)
+                            continue;
+                        var clear = wheels.Min(p => Outside(box, p));
+                        if (clear < storeClear)
+                            (storeClear, closest) = (clear, key);
+                    }
+                }
+                if (bayClear <= 0 || storeClear <= 0)
+                    throw new InvalidDataException($"Stowed, the main bogies reach {-bayClear:F3} m into the aft bay's rack envelope and {-storeClear:F3} m into {closest}'s stores; the strut's closure (ShrinkMainStrutAsArt) keeps them out.");
+                Debug.Log($"[Centurion] Stowed main bogies: {bayClear:F3} m outside the aft bay's rack envelope, {storeClear:F3} m from the nearest aft store ({closest})");
+            }
+            finally { Object.DestroyImmediate(copy); }
         }
 
         // The nose leg folds as the art retracts it (art/blender/m4/gear.py nose_fit: NoseRetractDeg forward and up about

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: -65840929, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
   m_Name: centurion_pala_desert_camo
   m_EditorClassIdentifier: 
-  Texture: {fileID: 2800000, guid: a4e50c660bc4fd444a6a9395ed403a1a, type: 3}
+  Texture: {fileID: 2800000, guid: 9aa7b2373d2a4134db79daab90f27904, type: 3}
   Glossiness: 0
   Colors:
   - Color:

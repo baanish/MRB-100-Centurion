@@ -1,0 +1,7 @@
+MRB-100 Centurion livery kit: licence
+
+Everything in this kit is part of the MRB-100 Centurion mod and is under the MIT licence below.
+
+The kit holds none of Nuclear Option's own art. Its example liveries and markings layers carry no faction roundels.
+The builder runs inside the game developer's livery project for Unity, which is under that project's own terms.
+

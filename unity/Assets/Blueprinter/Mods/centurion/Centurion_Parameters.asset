@@ -2420,7 +2420,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}
   StandardLoadouts:
   - disabled: 0
-    Name: Bombs 500 x93
+    Name: Bombs 500 x66
     loadout:
       weapons:
       - {fileID: 11400000, guid: 573d1c43f60d33a4f8d189d712300dca, type: 2}
@@ -2429,7 +2429,7 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}
     FuelRatio: 1
   - disabled: 0
-    Name: Bombs 250 x198
+    Name: Bombs 250 x120
     loadout:
       weapons:
       - {fileID: 11400000, guid: f4f049b37a8238249a55cb5236dc4ddd, type: 2}
@@ -2438,7 +2438,7 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}
     FuelRatio: 1
   - disabled: 0
-    Name: Glide Bombs 250 x174
+    Name: Glide Bombs 250 x120
     loadout:
       weapons:
       - {fileID: 11400000, guid: dec1a90205abb604b8ce29c148db70b8, type: 2}
@@ -2447,7 +2447,7 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}
     FuelRatio: 1
   - disabled: 0
-    Name: Glide Bombs 500 x68
+    Name: Glide Bombs 500 x54
     loadout:
       weapons:
       - {fileID: 11400000, guid: 67525187d1dba3847968913ae603cfa5, type: 2}
@@ -2456,10 +2456,10 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}
     FuelRatio: 1
   - disabled: 0
-    Name: Tusko-B x48
+    Name: Tusko-B x42
     loadout:
       weapons:
-      - {fileID: 11400000, guid: fbfefb5efd125794e8793b03bea95615, type: 2}
+      - {fileID: 11400000, guid: 16873a6930db136479b0da7123051257, type: 2}
       - {fileID: 11400000, guid: fbfefb5efd125794e8793b03bea95615, type: 2}
       - {fileID: 0}
       - {fileID: 11400000, guid: 68320d3ea536b9c47bd9abd883367729, type: 2}

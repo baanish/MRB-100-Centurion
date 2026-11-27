@@ -15,4 +15,4 @@ MonoBehaviour:
   weaponJsonKey: baanish_centurion_tusko_24
   aircraft:
   - aircraftJsonKey: baanish_centurion
-    hardpointIndices: 0000000001000000
+    hardpointIndices: 01000000

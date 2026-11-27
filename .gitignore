@@ -25,3 +25,6 @@ unity/Assets/Plugins/BepInEx.meta
 unity/Assets/Plugins/Centurion.dll
 unity/Assets/TextMesh Pro/
 unity/Assets/TextMesh Pro.meta
+tools/local-paths.json
+# The liveries painted with the game's faction roundels (art/textures/faction_marks.py) stay local; their .meta files are tracked.
+unity/Assets/Blueprinter/Mods/centurion/Liveries/centurion_livery_*.png

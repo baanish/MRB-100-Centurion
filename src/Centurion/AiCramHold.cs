@@ -17,7 +17,6 @@ namespace Centurion;
 /// </summary>
 static class AiCramHold
 {
-    const string CenturionKey = "baanish_centurion";
 
     internal static readonly PatchTarget[] PatchTargets =
     {
@@ -53,9 +52,8 @@ static class AiCramHold
     /// </summary>
     internal static int Covered(Aircraft aircraft, List<Missile> missileAlerts)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-cram-hold")) return -1;
-        if (aircraft == null || aircraft.definition == null || aircraft.definition.jsonKey != CenturionKey
-            || !aircraft.TryGetComponent(out CramGuard guard))
+        // Also asked by AiHighStrike's AutoAim steering, so the feature's own patch may be the one that failed.
+        if (CenturionPlugin.FeaturesOff.Contains("ai-cram-hold") || CenturionSystems.Of(aircraft)?.Cram is not { } guard)
         {
             return -1;
         }
@@ -68,13 +66,8 @@ static class AiCramHold
                 continue;
             }
 
-            if (!guard.CanEngage(missile, out string why))
+            if (!guard.CanEngage(missile))
             {
-                if (CenturionPlugin.Log.StageDue("ai-cram-evade"))
-                {
-                    CenturionPlugin.Log.StageLine("ai-cram-evade", $"{aircraft.persistentID}: evading missile {missile.persistentID}: {why}");
-                }
-
                 return -1;
             }
 
@@ -88,7 +81,6 @@ static class AiCramHold
         float ___targetHeight, float ___aimEffort, bool ___followTerrain, bool ___aimVelocity, out Course? __state)
     {
         __state = null;
-        if (CenturionPlugin.FeaturesOff.Contains("ai-cram-hold")) return;
         int covered = Covered(___aircraft, ___missileAlerts);
         if (covered <= 0)
         {
@@ -96,16 +88,11 @@ static class AiCramHold
         }
 
         __state = new Course(___destination, ___targetHeight, ___aimEffort, ___controlInputs.throttle, ___followTerrain, ___aimVelocity);
-        if (CenturionPlugin.Log.StageDue("ai-cram-hold"))
-        {
-            CenturionPlugin.Log.StageLine("ai-cram-hold", $"{___aircraft.persistentID}: holding course, the C-RAM covers {covered} missile(s)");
-        }
     }
 
     static void AfterRunEvadeMode(Course? __state, ref GlobalPosition evadeDestination, ControlInputs ___controlInputs, ref GlobalPosition ___destination,
         ref float ___targetHeight, ref float ___aimEffort, ref bool ___followTerrain, ref bool ___aimVelocity)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-cram-hold")) return;
         if (__state is not { } held)
         {
             return;

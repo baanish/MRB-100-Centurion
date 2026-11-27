@@ -39,6 +39,7 @@ from . import fuselage_aft_laser as laser
 from . import nose_bay, render
 from . import surface as sf
 from .fuselage_aft_well import cut_well
+from .paint import check_seams
 from .surface import CHINE_K, DOOR, FITTING, HULL, KEEL, N, RADOME
 
 GROUP = "fuselage_aft"
@@ -124,8 +125,8 @@ TAIL_LIGHT = (43.42, 0.0)  # white tail position light at the lens's edge, looki
 # is the shared size (docs/M4-ART-PLAN.md rule 5): 0.6 m along the girth, 0.08 m wide.
 FORMATION_STRIPS = ((22.18, 82.0, 22.38, "fuselage_M"), (40.14, 66.0, 40.3, "tailcone"))
 FORMATION_SIZE = (0.6, 0.08)
-MAWS = ((42.55, 50.0), (42.55, 112.0))  # missile warning sensors looking aft, both sides
-COOLANT_VENT = (41.95, 92.0)  # the laser's coolant exhaust, both sides
+# No missile warning sensor domes (once station 42.55 at 50 and 112 degrees) and no laser coolant vent (41.95 at 92
+# degrees) on the tail cone: the owner, 2026-11-25 (docs/DECISIONS.md), "Remove them". Its flank is clean skin there.
 # On the fairing, as (station, x): the IFF blade on the crest behind the hump, the upper anti-collision beacon on the
 # crest where it leaves the crown, the wing ice inspection lights on the forward shoulders looking outboard.
 FAIRING_BLADE = (20.9, 0.0, 0.30, 0.38, 0.15, 0.2)
@@ -1006,25 +1007,6 @@ def tail_details(bl, surf, p, slots):
     s, a = TAIL_LIGHT
     n = (surf.normal(s, a) + Vector((0, 1.4, 0))).normalized()  # looking aft and a little up
     light(p, surf.point(s, a, -0.02), n, SKIN, WHITE, r=0.07)
-    aft = Vector((0, 1, 0))
-    for side in (1, -1):
-        for s, a in MAWS:
-            n = surf.normal(s, side * a)
-            axis = (n + aft * 0.7).normalized()
-            c = surf.point(s, side * a)
-            buried(p, sf.revolve_axis(p, ((0.075, -0.07), (0.075, 0.014), (0.06, 0.03), (0.0, 0.03)), c, axis, 14, SKIN,
-                                      FITTING), c, n, STRUCT)
-            sf.revolve_axis(p, ((0.046, 0.02), (0.045, 0.04), (0.026, 0.056), (0.0, 0.06)), c, axis, 14, GLASS)
-        # the coolant exhaust: a half-buried cowl along the skin with a dark pipe mouth looking aft
-        s, a = COOLANT_VENT
-        a *= side
-        n = surf.normal(s, a)
-        t = (surf.point(s + 0.05, a) - surf.point(s - 0.05, a)).normalized()
-        c = surf.point(s, a) - n * 0.04
-        sf.revolve_axis(p, ((0.0, -0.36), (0.055, -0.28), (0.095, -0.13), (0.11, 0.02), (0.11, 0.16)), c, t, 16,
-                        SKIN, FITTING, ref=n)
-        sf.revolve_axis(p, ((0.084, 0.06), (0.084, 0.192), (0.068, 0.192), (0.068, 0.17), (0.0, 0.17)), c, t, 16, MECH,
-                        ref=n)
 
 
 def trim(bl, objs, folder):
@@ -1109,38 +1091,26 @@ def crown_profile(bl, step=0.05):
 
 # ---------- paint layout ----------
 # (station, angle) like the geometry; angles become girth with coords.arc_at, the fairing's with FairingCoords.
-# Skin joints laid on structure (docs/M4-ART-PLAN.md rule 1), one continuous skin over the part joints (17, 25 and 33
-# carry no line: the parts are partitions of one form, as in nose.py's layout): per band a fastened splice every six
-# or seven frames (SPLICES) and panels lapping at frames (LAPS), no station shared by neighbouring bands, so no joint
-# runs right round; and along stringer lines (STRINGERS), where each band's joints end. The tail cone's skin
-# ends at the laser lens along LENS_JOINT, the one full-girth line.
+# Skin seams from the structure (docs/M4-ART-PLAN.md rule 1; the F-240's panels.py method, in few large sheets as the
+# stock Darkreach's), carrying nose.py's on: a butt joint right round at the body's section joints (17, which nose.py
+# draws too on its side of the part joint, 25 and 33), between them where the text bands leave room, and at the laser
+# lens (LENS_JOINT), with a rivet row either side; the crown's stop at the AWACS well's doubler. Lap joints along the
+# upper and chine longerons (LAPS) between them. Every seam ends on another seam or a physical edge and every access
+# panel, fitting and stencil sits inside one sheet: paint.check_seams holds both whenever the module loads.
 LENS_JOINT = TAIL_ST[-1]
-BANDS = ((0.0, 48.0), (48.0, 112.5), (112.5, 180.0))  # crown, upper flank, lower flank and belly: angles
-SPLICES = ((21.0, 29.0, 37.4, 40.9),  # per band: stations
-           (20.6, 27.8, 36.8, 40.4),
-           (21.6, 29.5, 38.0, 41.4))
-FASTENED_TO = 33.0  # splices aft of this (on the tail cone) are laps
-LAPS = ((18.8, 23.0, 27.0, 31.2, 35.2, 39.2, 42.2),
-        (19.6, 22.6, 24.7, 31.6, 34.6, 39.0, 42.9),
-        (18.4, 23.6, 26.6, 30.4, 35.6, 39.6))
-assert not any(set(LAPS[i] + SPLICES[i]) & set(LAPS[i + 1] + SPLICES[i + 1]) for i in range(len(BANDS) - 1)),     "neighbouring bands share a joint station: it would run on as one line"
-STRINGERS = ((48.0, 17.0, 43.5), (112.5, 17.0, 43.5), (82.0, 17.0, 29.0), (82.0, 33.0, 40.9), (135.0, 17.0, 25.0),
-             (135.0, 33.0, 40.9), (160.0, 33.0, 40.9), (22.0, 34.9, 40.9))  # angle, stations
-PANELS = (  # station from, to, angle from, to, corner radius, sides (+1, -1 or 0 for both)
-    (17.6, 18.5, 60.0, 78.0, 0.05, 0),
-    (20.9, 21.8, 62.0, 80.0, 0.05, 0),
-    (23.4, 24.4, 56.0, 72.0, 0.05, 0),
-    (18.7, 19.9, 158.0, 174.0, 0.04, 0),  # keel access between the sponsons
-    (21.4, 22.6, 150.0, 166.0, 0.04, 0),
-    (25.7, 26.7, 58.0, 80.0, 0.06, 0),  # aft avionics bay doors
-    (27.9, 28.7, 64.0, 82.0, 0.04, 0),
+# 21.2 meets the wing fairing's frame there. None between 33 and the lens: from about 37 the tail cone's upper skin is
+# the tail group's (the V-tail roots' fillets, painted by tail.py), so a ring there would stop at the fillet.
+BUTT_JOINTS = (17.0, 21.2, 25.0, 28.25, 33.0, LENS_JOINT)
+LAPS = ((48.0, BUTT_JOINTS[0], LENS_JOINT), (112.5, BUTT_JOINTS[0], LENS_JOINT))  # angle, stations
+BANDS = ((0.0, 48.0), (48.0, 112.5), (112.5, 180.0))  # the bands between the laps, for the panels' tones
+PANELS = (  # station from, to, angle from, to, corner radius, sides (+1, -1 or 0 for both): each inside one sheet
+    (18.4, 19.6, 156.0, 172.0, 0.04, 0),  # keel access between the sponsons
+    (22.8, 23.8, 58.0, 76.0, 0.05, 0),  # aft of the formation strip (check_seams fittings)
+    (25.4, 26.6, 56.0, 76.0, 0.06, 0),  # aft avionics bay doors
     (31.25, 31.85, 98.0, 110.0, 0.04, 1),  # single-point refuel, left side
-    (33.6, 34.6, 52.0, 72.0, 0.05, 0),
-    (35.0, 35.9, 92.0, 108.0, 0.04, 0),
-    (38.0, 39.0, 58.0, 78.0, 0.04, 0),
-    (39.4, 40.2, 26.0, 42.0, 0.03, 0),  # laser power access
+    (36.9, 37.8, 152.0, 172.0, 0.04, 0),  # belly ramp, between the V-tail roots
+    (39.2, 40.2, 24.0, 40.0, 0.03, 0),  # laser power access
     (42.0, 42.9, 120.0, 136.0, 0.04, 0),  # turret access, lower flank
-    (36.8, 38.0, 152.0, 172.0, 0.04, 0),  # belly ramp, between the V-tail roots
 )
 # flare dispensers above the sponsons' tapering tails, one plate a side (CenturionAuthor.FlarePlates; the other pair is
 # nose.py's FLARES, owner: "not side by side, in different locations"): station from, to, angle from, to
@@ -1148,7 +1118,9 @@ FLARES = ((32.0, 32.9, 80.0, 94.0),)
 WALKWAY = (24.9, 37.2, 0.66)  # stations, girth from the centreline: either side of the spine cover
 NOSTEP = ((26.7, 0.98), (36.4, 0.98))  # station, girth (inside TEXT_BANDS)
 SERIAL = ("1043", 29.6, 74.0, 0.56)  # text, station, angle, font size: ahead of the V-tail, so it shows from the side
-INSIGNIA = (31.95, 70.0, 0.34)  # star and bar: station, angle, circle radius (inside a text band)
+# No national marking on the body: stock aircraft carry the faction roundels on the wings and tails only
+# (docs/DECISIONS.md, 2026-11-22). INSIGNIA's station is where livery.body_frames centres the old invented insignia.
+INSIGNIA = (31.95, 70.0, 0.34)  # station, angle, radius (inside a text band)
 LASER_SIGN = (41.0, 62.0)  # the laser hazard triangle on both cone flanks (inside a text band)
 SPR_STENCIL = (31.55, 92.0)
 RADALT = ((19.95, 20.35), (20.5, 20.9))  # radar altimeter antennas, flush on the keel: stations (0.32 m wide)
@@ -1164,18 +1136,20 @@ WELL_DOUBLER = (0.10, 0.08)
 
 # The fairing's layout, girths from its crest. It shows ahead of the wing root (from its front lap edge at about 12.2,
 # where the crest leaves the crown) and, over the root, as a swell about 1.5 m a side before it tucks under the root's
-# upper skin; its aft lap edge is at about 23.1.
-FAIRING_FRAMES = (12.6, 13.9, 15.2, 16.7, 18.2, 19.7, 21.2)
-FAIRING_SPLICES = (13.9, 16.7, 19.7)  # the frames whose joints carry fasteners
-FAIRING_LONG = ((0.6, 12.4, 22.6),)  # girth, stations
-FAIRING_PANELS = ((13.05, 13.75, 0.8, 1.2, 0.05), (19.6, 20.4, -0.38, 0.38, 0.08), (21.6, 22.2, 0.2, 0.45, 0.04))
+# upper skin; its aft lap edge is at about 23.1. Its seams carry the body's on, in the same few large sheets: butt
+# joints on the body's rings at 17.0 and 21.2 from the crest out to the lap edge, and one lap along it from edge to
+# edge; check_seams holds them on load (girths in metres, the lap edge standing for an edge at any girth).
+FAIRING_LAP_S = (12.2, 23.1)  # the lap edge's stations on the crest
+FAIRING_FRAMES = (17.0, 21.2)
+FAIRING_LONG = ((0.6, *FAIRING_LAP_S),)  # girth, stations
+FAIRING_PANELS = ((13.05, 13.75, 0.8, 1.2, 0.05), (19.6, 20.4, -0.38, 0.38, 0.08))
 FAIRING_NACA = (14.0, 14.6, 1.05)  # ram-air inlets for the environmental control system: stations, girth
-FAIRING_LOUVRES = (20.8, 21.3, 0.45, 4)
+FAIRING_LOUVRES = (21.5, 22.0, 0.35, 4)
 FAIRING_WALK = (12.6, 20.6, 0.4)
-NOSTEP_FAIRING = ((13.2, 0.75),)  # inside FAIRING_TEXT_BANDS
+NOSTEP_FAIRING = ((13.2, 0.7),)  # inside FAIRING_TEXT_BANDS, between the lap at 0.6 and the panel at 0.8
 
 DARK = (0.10, 0.105, 0.11)
-MARKING = (0.17, 0.175, 0.185)  # low-visibility insignia and serial grey
+MARKING = (0.17, 0.175, 0.185)  # low-visibility serial grey
 STENCIL = (0.80, 0.80, 0.78)
 WALK = (0.58, 0.59, 0.59)
 RED = (0.55, 0.10, 0.08)
@@ -1184,6 +1158,52 @@ DIVERTER = (0.47, 0.47, 0.47)
 # Bare metal (docs/M4-ART-PLAN.md rule 2): the wing's SATIN, the one satin finish for lips and bare fittings
 BARE, BARE_SMOOTH, BARE_METAL = (0.46, 0.47, 0.48), 0.54, 0.2
 SEAL = (0.22, 0.225, 0.23)
+
+
+def seam_layout():
+    """The hull's seams on the left side as (name, station from, to, angle from, to): rings at one station, laps at one
+    angle. The butt joints over the aft bay stop at its doors' hinge line."""
+    rings = [(f"butt joint {b}", b, b, 0.0, BAY_DOOR[2] if BAY_DOOR[0] <= b <= BAY_DOOR[1] else 180.0)
+             for b in BUTT_JOINTS]
+    return rings + [(f"lap {a}", s0, s1, a, a) for a, s0, s1 in LAPS]
+
+
+def _box(name, s, a, ds, da):
+    return (name, s - ds, s + ds, abs(a) - da, min(abs(a) + da, 180.0))
+
+
+HULL_OUTLINES = (
+    [(f"panel {p[:4]}", *p[:4]) for p in PANELS] + [("flare plate", *f) for f in FLARES]
+    + [(f"service panel {p[:2]}", p[0], p[1], 140.0, 180.0) for p in SERVICE_PANELS]
+    + [(f"blade {b[:2]}", b[0] - b[3] * 0.5 - 0.12, b[0] + b[3] * 0.6 + 0.12, min(abs(b[1]), 177.0) - 3.0,
+        min(abs(b[1]) + 3.0, 180.0)) for b in BLADES]
+    + [(f"radar altimeter {r}", *r, 176.0, 180.0) for r in RADALT]
+    + [_box(f"jacking point {j}", *j, 0.07, 2.0) for j in JACK_POINTS]
+    + [("serial", SERIAL[1] - 0.7, SERIAL[1] + 0.7, SERIAL[2] - 6.0, SERIAL[2] + 6.0),
+       ("laser sign", LASER_SIGN[0] - 0.36, LASER_SIGN[0] + 0.36, LASER_SIGN[1] - 8.5, LASER_SIGN[1] + 17.0),
+       _box("belly stencil", *BELLY_STENCIL[1:], 0.15, 5.0),
+       _box("refuel stencil", *SPR_STENCIL, 0.1, 2.0), _box("GPS dome", *GPS_DOME, 0.15, 3.0)])
+HULL_EDGES = [("aft bay", BAY_DOOR[0], BAY_DOOR[1], BAY_DOOR[2], 180.0), ("tail radar", RADAR[0], RADAR[1], RADAR[2], 180.0)]
+check_seams(seam_layout(), HULL_OUTLINES, HULL_EDGES)
+
+
+def formation_footprints(bl):
+    """Each formation light strip's box on the left side (name, station from, to, angle from, to), as hull_details lays
+    it, for check_seams' fittings."""
+    length, width = FORMATION_SIZE
+    out = []
+    for s0, a0, s1, _ in FORMATION_STRIPS:
+        a1 = a0 - math.degrees(length / bl.fus_profile((s0 + s1) / 2)[0])
+        out.append((f"formation strip {s0}", min(s0, s1) - width / 2, max(s0, s1) + width / 2, a1, a0))
+    return out
+FAIRING_EDGE = 9.0  # stands for the lap edge in girth: the drawing stops every line 0.1 m short of the real edge
+check_seams(
+    [(f"fairing butt joint {f}", f, f, 0.0, FAIRING_EDGE) for f in FAIRING_FRAMES]
+    + [(f"fairing lap {g}", s0, s1, g, g) for g, s0, s1 in FAIRING_LONG],
+    [(f"fairing panel {p[:2]}", p[0], p[1], max(p[2], 0.0), p[3]) for p in FAIRING_PANELS]
+    + [("fairing NACA inlets", FAIRING_NACA[0], FAIRING_NACA[1], FAIRING_NACA[2] - 0.1, FAIRING_NACA[2] + 0.1),
+       ("fairing louvres", FAIRING_LOUVRES[0], FAIRING_LOUVRES[1], FAIRING_LOUVRES[2] - 0.13, FAIRING_LOUVRES[2] + 0.13)],
+    [(f"lap edge {s}", s, s, 0.0, FAIRING_EDGE) for s in FAIRING_LAP_S], ends=(0.0, FAIRING_EDGE), across=0.05)
 
 
 def paint(cv, text_mask):
@@ -1219,11 +1239,13 @@ def paint(cv, text_mask):
 
 
 def tone_cells(cv, mask, breaks, girths):
-    """Panels differ a little in tone, Darkreach-like: a cell between the station breaks and the girth lines."""
+    """Panels differ a little in tone, Darkreach-like: a cell between the station breaks and the girth lines. Both sides
+    take the left's tone: the right side shows the left's texels outside the text bands, so a tone of its own showed only
+    in a band's unique islands, as a patch on no panel line."""
     np = cv.xp
     ua = np.abs(cv.arc)
     cell = np.searchsorted(np.array(sorted(breaks)), cv.s) * 16 + sum((ua > g).astype(int) for g in girths)
-    cell = cell * 2 + (cv.arc > 0)
+    cell = cell * 2 + 1
     tone = ((cell * 2654435761) % 1000) / 1000.0 - 0.5
     cv.albedo *= (1 + 0.05 * tone * mask)[:, None]
 
@@ -1234,65 +1256,81 @@ def panel(cv, s0, s1, v0, v1, r, mask, arc=None):
     a = cv.arc if arc is None else arc
     sdf = rrect_sdf(cv.s, a, s0, s1, v0, v1, r)
     cv.groove(np.abs(sdf), mask=mask)
-    cv.fasteners(np.abs(sdf), cv.s + a, 0.03, mask=mask * (np.abs(sdf) < 0.06))
+    cv.fasteners(np.abs(sdf + 0.03), cv.s + a, 0.0, mask=mask * (np.abs(sdf) < 0.06))
     return sdf
 
 
-def star_sdf(s, v, cs, cv_, R, up):
-    """A five-point star of outer radius R centred at (cs, cv_), one point toward up (+1 or -1 in girth)."""
-    from .paint import poly_sdf
-    pts = []
-    for i in range(10):
-        r = R if i % 2 == 0 else R * 0.382
-        t = math.pi * i / 5
-        pts.append((cs + r * math.sin(t), cv_ + up * r * math.cos(t)))
-    return poly_sdf(s, v, pts)
+def service_angles(c, s0, s1, k0, k1):
+    """A belly panel's angles from the crown, from its girths from the keel at its mid-station."""
+    sm = (s0 + s1) / 2
+    full = abs(float(c.arc_at(sm, 180.0)))  # arc_at signs 180 as -180
+    return c.deg_at(sm, full - k1), c.deg_at(sm, full - k0)
+
+
+def square_outlines(c):
+    """The hull's panels and fittings drawn through Canvas.square, for paint.check_square."""
+    return ([(f"panel {p[:4]}", *p[:4]) for p in PANELS] + [("flare plate", *f) for f in FLARES]
+            + [(f"service panel {p[:2]}", p[0], p[1], *service_angles(c, *p)) for p in SERVICE_PANELS]
+            + [(f"blade doubler {b[:2]}", b[0] - b[3] * 0.5 - 0.12, b[0] + b[3] * 0.6 + 0.12,
+                max(abs(b[1]) - 3.0, 0.0), min(abs(b[1]) + 3.0, 180.0)) for b in BLADES]
+            + [("laser sign", LASER_SIGN[0] - 0.2, LASER_SIGN[0] + 0.2, LASER_SIGN[1] - 8.0, LASER_SIGN[1] + 8.0),
+               ("serial", SERIAL[1] - 0.7, SERIAL[1] + 0.7, SERIAL[2] - 4.0, SERIAL[2] + 4.0),
+               ("LASER", LASER_SIGN[0] - 0.36, LASER_SIGN[0] + 0.36, LASER_SIGN[1] + 9.0, LASER_SIGN[1] + 17.0),
+               ("HYD SVC", BELLY_STENCIL[1] - 0.15, BELLY_STENCIL[1] + 0.15, BELLY_STENCIL[2] - 2.0, BELLY_STENCIL[2] + 2.0),
+               ("SPR", SPR_STENCIL[0] - 0.1, SPR_STENCIL[0] + 0.1, SPR_STENCIL[1] - 1.5, SPR_STENCIL[1] + 1.5)])
+
+
+def lettering(c):
+    """Every lettered stencil the hull and fairing paint, for exterior_pass/check_lettering.py: (text, station,
+    ("deg", angle from the crown, + the left), half length along the station)."""
+    k = float(c.arc_at(LASER_SIGN[0], LASER_SIGN[1] + 0.5) - c.arc_at(LASER_SIGN[0], LASER_SIGN[1] - 0.5))
+    out = [("SPR", SPR_STENCIL[0], ("deg", SPR_STENCIL[1]), 0.08)]
+    for side in (1, -1):
+        out += [(SERIAL[0], SERIAL[1], ("deg", side * SERIAL[2]), 0.6),
+                (BELLY_STENCIL[0][0], BELLY_STENCIL[1], ("deg", side * BELLY_STENCIL[2]), 0.12),
+                ("LASER", LASER_SIGN[0], ("deg", side * (LASER_SIGN[1] + 0.45 / k)), 0.36)]
+        out += [("NO STEP", st, ("deg", side * c.deg_at(st, g)), 0.27) for st, g in NOSTEP + NOSTEP_FAIRING]
+    return out
 
 
 def paint_hull(cv, text_mask):
     np = cv.xp
-    from .paint import panel_joint_mask, poly_sdf, rrect_sdf, seg_dist, smoothstep
+    from .paint import check_square, poly_sdf, rrect_sdf, seg_dist
     c = cv.coords
+    check_square(c, square_outlines(c))
+    check_seams(seam_layout(), HULL_OUTLINES, HULL_EDGES, fittings=formation_footprints(c.bl))
     s, arc = cv.s, cv.arc
     H = cv.on(HULL).astype(float)
     ua = np.abs(arc)
     ad = np.abs(cv.deg)
 
-    # panel tones: a panel is a cell between its band's laps and splices and the stringer lines
+    # panel tones: a panel is a cell between the butt joints and the laps, the left's tone on both sides (tone_cells)
     band = np.digitize(ad, [b for _, b in BANDS[:-1]])
-    cell = np.zeros(cv.n, int)
-    for i, (laps, splices) in enumerate(zip(LAPS, SPLICES)):
-        cell = np.where(band == i, np.searchsorted(np.array(sorted(set(laps) | set(splices) | {LENS_JOINT})), s), cell)
-    for a, s0, s1 in STRINGERS:
-        cell = cell * 2 + ((ad > a) & (s > s0) & (s < s1))
-    cell = (cell * 4 + band) * 2 + (arc > 0)
+    cell = (np.searchsorted(np.array(BUTT_JOINTS), s) * 4 + band) * 2 + 1
     tone = ((cell * 2654435761) % 1000) / 1000.0 - 0.5
     cv.albedo *= (1 + 0.05 * tone * H)[:, None]
 
-    # splices (fastened), laps and stringer lines (not), each band's ending on its stringer lines and the crown's at
-    # the well's doubler; the lens joint right round
-    joints = panel_joint_mask(cv, PANELS)
-    off = (well_doubler(cv) > 0).astype(float) * joints
-    cv.groove(np.abs(s - LENS_JOINT), 0.02, mask=H * off)
-    for (a0, a1), laps, splices in zip(BANDS, LAPS, SPLICES):
-        m = H * off * smoothstep(a0 - 0.6, a0, ad) * smoothstep(a1 + 0.6, a1, ad)
-        for j in splices:
-            d = np.abs(s - j)
-            cv.groove(d, 0.016, mask=m)
-            if j <= FASTENED_TO:
-                cv.fasteners(d, ua, 0.035, mask=m)
-        for st_ in laps:
-            cv.groove(np.abs(s - st_), mask=m)
-    for a, s0, s1 in STRINGERS:
-        d = np.abs(ua - np.abs(c.arc_at(s, a)))
-        cv.groove(d, mask=H * joints * smoothstep(s0 - 0.01, s0, s) * smoothstep(s1 + 0.01, s1, s))
+    # seams (check_seams holds their ends): the butt joints fastened but the lens's, the crown's stopping at the well's
+    # doubler
+    off = (well_doubler(cv) > 0).astype(float)
+    for b in BUTT_JOINTS:
+        d = np.abs(s - b)
+        cv.groove(d, 0.02 if b == LENS_JOINT else 0.016, mask=H * off)
+        if b != LENS_JOINT:
+            cv.fasteners(d, ua, 0.035, mask=H * off)
+    for a, s0, s1 in LAPS:
+        cv.groove(np.abs(ua - np.abs(c.arc_at(s, a))), mask=H * (s >= s0) * (s <= s1))
+    # the sponsons' sealant line where their skin leaves the hull, drawn on the hull's texels too (struts.py)
+    from . import struts
+    left = cv.pos.copy()
+    left[:, 0] = np.abs(left[:, 0])
+    cv.paint(cv.coverage(struts.sponson_junction_distance(c.bl, left), struts.SEAL_WIDTH) * H, rgb=struts.SEALANT, smooth=0.3)
 
-    # access panels
+    # access panels: one fastener row on the panel, inside its outline (a row either side of the line read as stitching)
     for s0, s1, a0, a1, r, sides in PANELS:
-        for side in ((1, -1) if sides == 0 else (sides,)):
-            sm = (s0 + s1) / 2
-            v0, v1 = sorted((float(c.arc_at(sm, side * a0)), float(c.arc_at(sm, side * a1))))
-            panel(cv, s0, s1, v0, v1, r, H)
+        sdf = cv.box(s0, s1, a0, a1, r, sides)
+        cv.groove(np.abs(sdf), mask=H)
+        cv.fasteners(np.abs(sdf + 0.03), s + arc, 0.0, mask=H * (np.abs(sdf) < 0.06))
 
     # the bay opening's frame: a fastener row round the doors, and the acoustic spoiler's lip ahead of them
     e = np.abs(c.arc_at(s, BAY_FRAME))
@@ -1309,8 +1347,10 @@ def paint_hull(cv, text_mask):
 
     # antenna doublers: a fastener ring round each blade's footprint
     for bs, ba, _, c0, *_ in BLADES:
-        v = float(c.arc_at(bs, ba))
-        sdf = rrect_sdf(s, arc, bs - c0 * 0.5 - 0.12, bs + c0 * 0.6 + 0.12, v - 0.13, v + 0.13, 0.06)
+        bu, bv, _ = cv.square(bs, abs(ba))
+        sdf = rrect_sdf(bu, bv, -c0 * 0.5 - 0.12, c0 * 0.6 + 0.12, -0.13, 0.13, 0.06)
+        if ba % 180:  # a blade off the centreline: its own side only
+            sdf = np.where(np.sign(arc) == np.sign(ba), sdf, 9.0)
         cv.groove(np.abs(sdf), 0.012, mask=H)
         cv.fasteners(np.abs(sdf + 0.035), s + arc, 0.0, 0.06, mask=H * (np.abs(sdf) < 0.06))
 
@@ -1322,61 +1362,52 @@ def paint_hull(cv, text_mask):
     for js, ja in JACK_POINTS:
         for side in (1, -1):
             r = np.hypot(s - js, arc - float(c.arc_at(js, side * ja)))
-            cv.paint(cv.coverage(np.abs(r - 0.07), 0.018) * H, rgb=RED)
+            cv.paint(cv.colour_line(np.abs(r - 0.07), 0.018) * H, rgb=RED)
             cv.paint(cv.fill_coverage(r - 0.03) * H, rgb=DARK, height=-0.003)
 
     # Service covers use ordinary panel grooves; red is reserved for keep-clear markings.
-    keel = np.abs(c.arc_at(s, 180.0)) - ua
     for s0, s1, k0, k1 in SERVICE_PANELS:
-        panel(cv, s0, s1, k0, k1, 0.0, H, arc=keel)
-        latch = np.maximum(np.abs(s - (s0 + s1) / 2) - 0.045, np.abs(keel - (k0 + 0.09)) - 0.025)
+        a0, a1 = service_angles(c, s0, s1, k0, k1)
+        sdf = cv.box(s0, s1, a0, a1, 0.0)
+        cv.groove(np.abs(sdf), mask=H)
+        cv.fasteners(np.abs(sdf + 0.03), s + arc, 0.0, mask=H * (np.abs(sdf) < 0.06))
+        u, v, k = cv.square((s0 + s1) / 2, (a0 + a1) / 2)
+        latch = np.maximum(np.abs(u) - 0.045, np.abs(v - ((a1 - a0) / 2 * k - 0.09)) - 0.025)
         cv.paint(cv.fill_coverage(latch) * H, rgb=DARK, height=-0.004)
     lines, bs, ba = BELLY_STENCIL
     for side in (1, -1):
-        v = float(c.arc_at(bs, side * ba))
         for i, body in enumerate(lines):
-            cv.decal(text_mask(body), (bs, v - side * 0.07 * i), 48 / 0.05, (side, 0), mask=H, rgb=STENCIL)
+            cv.decal_at(text_mask(body), bs, ba, side, 48 / 0.05, mask=H, rgb=STENCIL, dv=-0.07 * i)
 
     # walkway either side of the spine cover, NO STEP outside it
     s0, s1, g = WALKWAY
     dash = ((s - s0) % 0.32) < 0.2
-    cv.paint(cv.coverage(np.abs(ua - g), 0.025) * H * dash * (s > s0) * (s < s1), rgb=WALK)
+    cv.paint(cv.colour_line(np.abs(ua - g), 0.025) * H * dash * (s > s0) * (s < s1), rgb=WALK)
     for side in (1, -1):
         for st_, gi in NOSTEP:
-            cv.decal(text_mask("NO STEP"), (st_, side * gi), 48 / 0.06, (side, 0), mask=H, rgb=STENCIL)
-
-    # national insignia, low visibility: a star and bar in a darker grey, the star in the paint
-    cs, ca, R = INSIGNIA
-    for side in (1, -1):
-        v = float(c.arc_at(cs, side * ca))
-        up = -side  # toward the crown
-        circle = np.hypot(s - cs, arc - v) - R
-        bar = rrect_sdf(s, arc, cs - 2.0 * R, cs + 2.0 * R, v + up * 0.35 * R, v - up * 0.31 * R, 0.0)
-        sym = np.minimum(circle, bar)
-        star = star_sdf(s, arc, cs, v, R * 0.92, up)
-        cv.paint(cv.fill_coverage(sym) * H, rgb=MARKING, smooth=0.38)
-        cv.paint(cv.fill_coverage(star) * H, rgb=(0.36, 0.37, 0.385), smooth=0.42)
-        cv.paint(cv.coverage(np.abs(sym + 0.03), 0.012) * H * (star > 0.02), rgb=(0.36, 0.37, 0.385))
+            cv.decal(text_mask("NO STEP"), (st_, side * gi), 48 / 0.14, (side, 0), mask=H, rgb=STENCIL)
 
     # serial number on both cone flanks, refuel and bay stencils
     body, ss_, sa, size = SERIAL
     for side in (1, -1):
-        cv.decal(text_mask(body), (ss_, side * float(c.arc_at(ss_, sa))), 48 / size, (side, 0), mask=H, rgb=MARKING)
+        cv.decal_at(text_mask(body), ss_, sa, side, 48 / size, mask=H, rgb=MARKING)
     s_, a_ = SPR_STENCIL
-    cv.decal(text_mask("SPR"), (s_, float(c.arc_at(s_, a_))), 48 / 0.07, (1, 0), mask=H, rgb=STENCIL)
+    cv.decal_at(text_mask("SPR"), s_, a_, 1, 48 / 0.07, mask=H, rgb=STENCIL)
 
     # laser hazard: a yellow triangle with a dark rim, a dark source and its beam, above LASER
     ls, la = LASER_SIGN
-    v = float(c.arc_at(ls, la))
-    tri = [(ls, v - 0.1), (ls + 0.115, v + 0.1), (ls - 0.115, v + 0.1)]
-    sdf = poly_sdf(s, ua, tri)
+    lu, lv, _ = cv.square(ls, la)
+    # at 60 px/m on the skin: the triangle over 20 texels tall, its rim and beam over 2 texels wide, LASER's capitals
+    # 7 texels tall (a 0.2 m triangle with a 0.8 texel rim and 4 texel letters was a blob and a smear, audit 49). Sized
+    # in square()'s v, the arc, which on the cone here runs 1.25 times the skin's girth: a girth size shows at 0.8.
+    sdf = poly_sdf(lu, lv, [(0.0, -0.225), (0.2, 0.225), (-0.2, 0.225)])
     cv.paint(cv.fill_coverage(sdf) * H, rgb=YELLOW)
-    cv.paint(cv.coverage(np.abs(sdf + 0.012), 0.014) * H, rgb=DARK)
-    d, _ = seg_dist(s, ua, (ls, v + 0.045), (ls + 0.075, v + 0.045))
-    cv.paint(cv.coverage(d, 0.012) * H * (sdf < -0.02), rgb=DARK)
-    cv.paint(cv.fill_coverage(np.hypot(s - ls, ua - (v + 0.045)) - 0.02) * H, rgb=DARK)
+    cv.paint(cv.coverage(np.abs(sdf + 0.025), 0.05) * H, rgb=DARK)
+    d, _ = seg_dist(lu, lv, (0.0, 0.09), (0.13, 0.09))
+    cv.paint(cv.coverage(d, 0.045) * H * (sdf < -0.05), rgb=DARK)
+    cv.paint(cv.fill_coverage(np.hypot(lu, lv - 0.09) - 0.04) * H, rgb=DARK)
     for side in (1, -1):
-        cv.decal(text_mask("LASER"), (ls, side * (v - 0.2)), 48 / 0.07, (side, 0), mask=H, rgb=STENCIL)
+        cv.decal_at(text_mask("LASER"), ls, la, side, 48 / 0.25, mask=H, rgb=STENCIL, dv=0.45)
 
 
 def well_doubler(cv):
@@ -1416,15 +1447,19 @@ def paint_fairing(cv, text_mask, edge, wing):
     # Girth comes from |x| alone, so the swell's tuck, dropping steeply under the root, reads as on the wing's line;
     # where that line turns over the leading edge the tuck faces fore and the bead would fill it as a dark beak.
     along = smoothstep(0.5, 0.3, np.abs(cv.nrm[:, 1]))
+    # Past a line the fairing turns down under the body or the root (the tuck), filled with sealant; a face past it that
+    # still faces up lies on top of the analytic line (the root's trailing edge, the nose's run-in on the crown) and takes
+    # the bead alone, or it shows as a dark block.
+    tuck = smoothstep(0.7, 0.5, cv.nrm[:, 2])
     for d, m in ((edge, F), (wing, F * along)):
-        cv.paint(cv.coverage(d - 0.008, 0.014) * m, rgb=SEAL, smooth=0.3)
+        bead = np.maximum(cv.coverage(np.abs(d - 0.008), 0.014), (d < 0.008) * tuck)
+        cv.paint(bead * m, rgb=SEAL, smooth=0.3)
         cv.fasteners(np.abs(d - 0.05), s + ua, 0.0, 0.08, mask=m * (d > 0.02))
     clear = F * (edge > 0.1) * (wing > 0.1)
     for st_ in FAIRING_FRAMES:
         d = np.abs(s - st_)
-        cv.groove(d, mask=clear)
-        if st_ in FAIRING_SPLICES:
-            cv.fasteners(d, ua, 0.03, mask=clear)
+        cv.groove(d, 0.016, mask=clear)
+        cv.fasteners(d, ua, 0.035, mask=clear)
     for g, s0, s1 in FAIRING_LONG:
         d = np.abs(ua - g)
         cv.groove(d, mask=clear * (s > s0) * (s < s1))
@@ -1433,11 +1468,11 @@ def paint_fairing(cv, text_mask, edge, wing):
     # escape hatch on the crown: a yellow-rimmed panel with its handle
     s0, s1, v0, v1, _ = FAIRING_PANELS[1]
     sdf = poly_sdf(s, arc, [(s0 + 0.08, v0 + 0.08), (s1 - 0.08, v0 + 0.08), (s1 - 0.08, v1 - 0.08), (s0 + 0.08, v1 - 0.08)])
-    cv.paint(cv.coverage(np.abs(sdf), 0.025) * F, rgb=YELLOW)
+    cv.paint(cv.colour_line(np.abs(sdf), 0.025) * F, rgb=YELLOW)
     cv.paint(cv.fill_coverage(np.maximum(np.abs(s - (s0 + s1) / 2) - 0.1, np.abs(arc) - 0.03)) * F, rgb=DARK, height=-0.004)
     # NACA inlets on the forward shoulders and exhaust louvres on the aft flanks
     s0, s1, g = FAIRING_NACA
-    naca(cv, s0, s1, g, F)
+    naca(cv, s0, s1, F, [(cv.arc, g), (cv.arc, -g)])
     s0, s1, g, n = FAIRING_LOUVRES
     for i in range(n):
         si = s0 + (s1 - s0) * i / (n - 1)
@@ -1448,56 +1483,55 @@ def paint_fairing(cv, text_mask, edge, wing):
     hs = FAIRING_PANELS[1]
     dash = ((s - s0) % 0.32) < 0.2
     keep = (s < hs[0] - 0.1) | (s > hs[1] + 0.1)
-    cv.paint(cv.coverage(np.abs(ua - g), 0.025) * F * dash * (s > s0) * (s < s1) * keep, rgb=WALK)
+    cv.paint(cv.colour_line(np.abs(ua - g), 0.025) * F * dash * (s > s0) * (s < s1) * keep, rgb=WALK)
     for side in (1, -1):
         for st_, gi in NOSTEP_FAIRING:
-            cv.decal(text_mask("NO STEP"), (st_, side * gi), 48 / 0.06, (side, 0), mask=F, rgb=STENCIL)
+            cv.decal(text_mask("NO STEP"), (st_, side * gi), 48 / 0.14, (side, 0), mask=F, rgb=STENCIL)
 
 
 
 def flare_plates(cv, plates, mask):
     """Flare dispensers on both sides, each (station from, to, angle from, to): a dark plate of cartridge caps."""
     np = cv.xp
-    from .paint import rrect_sdf
-    s, ua, c = cv.s, np.abs(cv.arc), cv.coords
     for s0, s1, a0, a1 in plates:
-        sm = (s0 + s1) / 2
-        v0, v1 = float(c.arc_at(sm, a0)), float(c.arc_at(sm, a1))
-        sdf = rrect_sdf(s, ua, s0, s1, v0, v1, 0.02)
+        sdf = cv.box(s0, s1, a0, a1, 0.02)
+        u, v, k = cv.square((s0 + s1) / 2, (a0 + a1) / 2)
+        hu, hv = (s1 - s0) / 2, abs(a1 - a0) / 2 * k
         cv.paint(cv.fill_coverage(sdf) * mask, rgb=(0.15, 0.155, 0.16), smooth=0.3, height=-0.005)
         cv.paint(cv.coverage(np.abs(sdf + 0.012), 0.024) * mask, rgb=(0.33, 0.34, 0.35), height=0.003)
         cv.groove(np.abs(sdf), 0.014, mask=mask)
-        nu, nv = 9, 3
-        gu = s0 + (s1 - s0) * (np.clip(np.floor((s - s0) / (s1 - s0) * nu), 0, nu - 1) + 0.5) / nu
-        gv = v0 + (v1 - v0) * (np.clip(np.floor((ua - v0) / (v1 - v0) * nv), 0, nv - 1) + 0.5) / nv
-        cv.paint(cv.fill_coverage(np.hypot(s - gu, ua - gv) - 0.036) * mask * (sdf < -0.01), rgb=(0.06, 0.06, 0.065),
+        nu, nv = 9, 3  # the cartridge caps in rows along the longerons, columns in station planes
+        gu = -hu + 2 * hu * (np.clip(np.floor((u + hu) / (2 * hu) * nu), 0, nu - 1) + 0.5) / nu
+        gv = -hv + 2 * hv * (np.clip(np.floor((v + hv) / (2 * hv) * nv), 0, nv - 1) + 0.5) / nv
+        cv.paint(cv.fill_coverage(np.hypot(u - gu, v - gv) - 0.036) * mask * (sdf < -0.01), rgb=(0.06, 0.06, 0.065),
                  height=-0.003)
 
 
-def naca(cv, s0, s1, g, mask):
-    """A NACA submerged inlet on both sides at girth g: its walls curving out from a narrow nose to the mouth, the
-    ramp floor sinking and darkening toward the mouth, a bright lip across the mouth's aft edge."""
+def naca(cv, s0, s1, mask, sides):
+    """NACA submerged inlets from station s0 to s1: walls curving out from a narrow nose to the mouth, the ramp floor
+    sinking and darkening toward the mouth, a bright lip across the mouth's aft edge. sides: (V, v) per inlet, V a
+    coordinate round the part in metres whose constant lines run along it (Canvas.square's v on the body), v the
+    inlet's axis in it."""
     from .paint import poly_sdf, seg_dist
     ts = np.linspace(0.0, 1.0, 9)
     half = 0.025 + 0.085 * ts ** 1.6
     st_ = s0 + (s1 - s0) * ts
-    for side in (1, -1):
-        v = side * g
+    for V, v in sides:
         pts = [(a, v - h) for a, h in zip(st_, half)] + [(a, v + h) for a, h in zip(st_[::-1], half[::-1])]
-        sdf = poly_sdf(cv.s, cv.arc, pts)
+        sdf = poly_sdf(cv.s, V, pts)
         t = np.clip((cv.s - s0) / (s1 - s0), 0, 1)
         fill = cv.fill_coverage(sdf) * mask
         cv.paint(fill, rgb=(0.27, 0.275, 0.28))
         cv.paint(fill * t ** 2, rgb=(0.08, 0.08, 0.085), smooth=0.25)
         cv.height += -0.014 * t * fill
         cv.groove(np.abs(sdf), 0.012, mask=mask * (cv.s < s1 - 0.01))
-        d, _ = seg_dist(cv.s, cv.arc, (s1 + 0.012, v - half[-1]), (s1 + 0.012, v + half[-1]))
+        d, _ = seg_dist(cv.s, V, (s1 + 0.012, v - half[-1]), (s1 + 0.012, v + half[-1]))
         cv.paint(cv.coverage(d, 0.016) * mask, rgb=BARE, smooth=BARE_SMOOTH, metal=BARE_METAL, height=0.002)
 
 
 def paint_spine(cv, text_mask):
     """The spine cover: the clamshell split down the middle, the hinge lines along the outer edges, the cross seams
-    between the lids, latch marks on the split, fastener rows, NO STEP on each half."""
+    between the lids, latch marks on the split, fastener rows."""
     np = cv.xp
     S = cv.on(SPINE).astype(float)
     if not S.any():
@@ -1531,8 +1565,8 @@ def paint_spine(cv, text_mask):
             cv.paint(cv.fill_coverage(latch) * S, rgb=(0.33, 0.34, 0.35), smooth=0.45, height=0.003)
             cv.groove(np.abs(latch), 0.01, -0.002, 0.3, mask=S)
             cv.paint(cv.fill_coverage(np.maximum(np.abs(s - ls) - 0.035, ua - 0.012)) * S, rgb=DARK, height=-0.002)
-        cv.decal(text_mask("NO STEP"), (s0 + seg * (i + 0.5), 0.22), 48 / 0.05, (1, 0), mask=S * (arc > 0), rgb=STENCIL)
-        cv.decal(text_mask("NO STEP"), (s0 + seg * (i + 0.5), -0.22), 48 / 0.05, (-1, 0), mask=S * (arc < 0), rgb=STENCIL)
+    # no lettering on the lids: the two halves share their UV islands, so one half read its NO STEP mirrored
+    # (check_lettering.py); the walkway's NO STEP beside the cover says it
 
 
 def paint_doors(cv):

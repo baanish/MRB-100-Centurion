@@ -1,6 +1,5 @@
 {
  "source_blend": ".cache/art/awacs_mount/awacs_mount.blend",
- "source_sha256": "79c6f7bb161c959c30694cbdd29ff6082d914764be9ab7f7410742f2f9eb8d2c",
  "axes": "Unity = (-x, z, -y) of Blender; pivots are world positions, bounds are part-local (in axes_unity)",
  "parts": {
   "awacs_base": {
@@ -36,7 +35,7 @@
    "props": {
     "mass_kg": 1500.0
    },
-   "sha256": "91bf182567d300f42d675087c9f69179bcfef2a5e7d00dbb522035abe665d75a",
+   "sha256": "54439860951eeeb4be0996fc19103e731ceaab39d1a4d7dd7b85817f45f245ce",
    "bounds_blender": [
     [
      -0.42,
@@ -153,8 +152,17 @@
      1.0
     ]
    },
-   "props": {},
-   "sha256": "44647b11f8f59246f215cdada70e76927d3e3137aa18b7dceaae647bb6e6ac3d",
+   "props": {
+    "crown_joints": [
+     28.25,
+     33.0
+    ],
+    "crown_span": [
+     25.086000000000002,
+     34.486000000000004
+    ]
+   },
+   "sha256": "19407ee06c41b06bbc61c340e24df9ae69e3373545a03dbadd73b6d1952621f7",
    "bounds_blender": [
     [
      -0.4,
@@ -255,7 +263,7 @@
     ]
    },
    "props": {},
-   "sha256": "19d779ee54fecc18f1e09b1e34b0d321b1c317c44f24dc7f00d7b135b01d6e8a",
+   "sha256": "a7e0873ed3119a44142b67150bdff91b0dcffc435e5f0fede11c5f1a750b8998",
    "bounds_blender": [
     [
      -0.37,
@@ -388,7 +396,7 @@
     ]
    },
    "props": {},
-   "sha256": "385dca0537ab7809af7aaa5fb3d1e60201545000125c8905a819ebb59a2b6077",
+   "sha256": "837e1881580d15f5330134a6417d2832b442efd39f23be08ff209788a66d2f20",
    "bounds_blender": [
     [
      -0.37,
@@ -521,7 +529,7 @@
     ]
    },
    "props": {},
-   "sha256": "84bf3f687f311d81fb3a5074b5c8ef7e69c37882c23e222af64720d691e416c0",
+   "sha256": "a168e99e80b0f67064baa3165f4bad59a764f6ccfe21c11e188490d66926e8ed",
    "bounds_blender": [
     [
      -0.22503,
@@ -654,7 +662,7 @@
     ]
    },
    "props": {},
-   "sha256": "4fe77e0d3611ed267d1b996c506c68e6a45d0f8c54eebe0099f144fe1f548422",
+   "sha256": "a96145672db2a23969f6db0265c5b1986d10db73eab5e95b3a6483c7401ac16c",
    "bounds_blender": [
     [
      -0.23101,
@@ -790,10 +798,10 @@
   }
  },
  "textures": {
-  "awacs_b.png": "2ab39efd48d4d7d7bb88b4d1784031e14d30afc9341fc51d8dc8d00714044b20",
-  "awacs_paint.png": "e5d37543e439dafdfd68d47cacf929451b6e24235b1dc9bf742a6c501f5ac423",
-  "awacs_m.png": "7714e2e7cacefcd41fac5febb1eda488d1021cc24ba673451a861d727feb016e",
-  "awacs_ao.png": "f36fef4a5f2302162317d418f0805757f65b285fe63632b578a32138b4f8ee47",
-  "awacs_n.png": "ad0ddaf4ad2588fda14738f56d617bfe5901ce8c2343bae799450d9d6909d53d"
+  "awacs_b.png": "1339f341ac45cb4f78d98778632642fb79e2127e26cc79de1d0363f18b51cf9c",
+  "awacs_paint.png": "c43be218f7c4af0f70ff4566cefed319aab1b67ee7071932b3591c76cfc977d2",
+  "awacs_m.png": "4e1f2147164cc9cc51616c10ec7c80a884138b19d7ed6a5be21377a34f81e38c",
+  "awacs_ao.png": "e844d581498f217978fd1e2ff9de04d2202ebd5bf7d7d5dcaabf2601273d2196",
+  "awacs_n.png": "fd6e32fd11a8e4aa2bfab7abccddfc732acda3f8e7f281be3420a1eaa01d3a9c"
  }
 }

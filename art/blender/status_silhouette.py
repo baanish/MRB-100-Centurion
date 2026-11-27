@@ -11,9 +11,12 @@ the JSON written beside it:
   damage diagram, which colours a part's sprite as it loses hit points.
 
 blender --background --factory-startup --python art/blender/status_silhouette.py -- [--blend PATH] [--out DIR]
+    [--damage-blend PATH]
 
 --blend defaults to .cache/art/blockout_s61/centurion_s61_retracted.blend (the retracted span: the extended wing would
 leave the body a sliver; the span gauge also opens the _extended blend beside it); --out to the mod's Cockpit folder.
+--damage-blend redraws only the damage diagram, from the damage part tree's blend (art/blender/damage_parts.py), whose
+parts are the ones the game damages.
 Coordinates in the JSON are metres: x outboard along the right wing (Blender -X), s the station."""
 
 import json
@@ -52,7 +55,7 @@ def parse_args():
     opts = {"blend": REPO / ".cache/art/blockout_s61/centurion_s61_retracted.blend",
             "out": REPO / "unity/Assets/Blueprinter/Mods/centurion/Cockpit"}
     for key, value in zip(argv[::2], argv[1::2]):
-        if key not in ("--blend", "--out"):
+        if key not in ("--blend", "--out", "--damage-blend"):
             raise SystemExit(f"unknown argument {key}")
         opts[key[2:]] = Path(value)
     return opts
@@ -233,6 +236,8 @@ def damage_diagram(view, parts, out):
     layout = {}
     for name, obj in sorted(damaged_parts(parts).items()):
         cover = sprite((view.ids([obj]) >= 0).astype(float))
+        if not (cover[..., 3] > 0).any():
+            raise SystemExit(f"{name}: nothing of it shows from above")
         rows, cols = np.nonzero(cover[..., 3] > 0)
         r0, r1, c0, c1 = max(rows.min() - 1, 0), rows.max() + 2, max(cols.min() - 1, 0), cols.max() + 2
         file = f"centurion_part_{name}"
@@ -248,6 +253,12 @@ def damage_diagram(view, parts, out):
 
 def main():
     opts = parse_args()
+    if "damage-blend" in opts:
+        bpy.ops.wm.open_mainfile(filepath=str(opts["damage-blend"]))
+        parts = render_parts()
+        layout = damage_diagram(TopView(load_blockout(), parts), parts, opts["out"])
+        print(f"damage diagram: {len(layout)} parts -> {opts['out']}")
+        return
     extended = opts["blend"].with_name(opts["blend"].name.replace("_retracted", "_extended"))
     bpy.ops.wm.open_mainfile(filepath=str(extended))
     bl = load_blockout()

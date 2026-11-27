@@ -26,11 +26,17 @@ sealed class CabinEngineSound : MonoBehaviour
         CameraStateManager cam = SceneSingleton<CameraStateManager>.i;
         // CameraStateManager.SwitchState:177 and CameraCockpitState.EnterState:56 use this state and followed unit.
         bool inside = aircraft != null && cam != null && cam.currentState == cam.cockpitState && cam.followingUnit == aircraft;
+        if (!inside)
+        {
+            if (source.isPlaying) source.Stop();
+            return;
+        }
+
         float rpmRatio = 0f;
         foreach (Turbofan engine in engines)
             if (engine != null) rpmRatio += engine.GetRPMRatio();
         if (engines.Length > 0) rpmRatio /= engines.Length;
-        source.volume = inside && rpmRatio > 0f ? CabinVolume : 0f;
+        source.volume = rpmRatio > 0f ? CabinVolume : 0f;
         source.pitch = rpmRatio * TurbineMaxPitch;
         if (source.volume > 0f)
         {

@@ -1,20 +1,20 @@
 """Part group 4: the engines. Two late-UltraFan adaptive-cycle engines, 4.25 m across, hung under the wing on pylons,
-the lifting strut passing through each nacelle's core.
+the lifting strut entering each nacelle's cowl.
 
 Parts: nacelle_1/2 (intake lip, acoustic liner, inlet cowl, fan cowl doors stepping down 12 mm onto the thrust
 reverser's translating sleeve, the sleeve running on into the fan nozzle's trailing edge, the bypass duct, the fan case,
-the splitter and core inlet behind the fan, the outlet guide vanes, the strut fillets on the duct wall, the generator
+the splitter and core inlet behind the fan, the outlet guide vanes, the generator
 fairing with its cooling air hood, the chine, an inlet probe and drain masts), pylon_1/2 (from the inlet cowl's crown
 into the wing's leading edge and lower skin, the aft fairing over the core cowl with its heat shield, filleted into the
 wing and the cowls), fan_1/2 (spinner and 22 swept wide-chord blades about the fan part's spin axis) and nozzle_1/2
-(the core cowl with the strut fillets, tapering aft to the core nozzle, and the tail plug).
+(the core cowl, tapering aft to the core nozzle, and the tail plug).
 
 Dimensions are the blockout's (build_centurion S6_ENGINE, S6_UF_OUTER, S6_UF_INNER): a 4.25 m nacelle on a 6.8 m cowl,
 the fan 0.15 of the cowl behind the intake plane. The exhaust end is a large geared turbofan's on the blockout's
 nozzle colliders: the fan nozzle 0.8 m behind the cowl, the core cowl's shoulder where the blockout's third-stream lip
 was, the core nozzle where its core nozzle ended, the plug past its tip. The strut line is the blockout's
-(s6_strut_line); its collars on the outer cowl belong to the struts group, the fillets where it crosses the bypass duct
-and the core cowl to this one.
+(s6_strut_line); its collars on the outer cowl belong to the struts group, which ends it in the cowl wall: nothing of
+it crosses the bypass duct.
 
 Engine positions are (a, theta): a in metres aft of the intake plane along the engine axis, theta in degrees round the
 axis from the top, positive outboard. The left engine is built and the right one is its mirror image (MIRROR_PARTS:
@@ -60,6 +60,10 @@ COWL, SLEEVE, LIP, LINER, PYLON, GEN, CORE_COWL, HEAT_SHIELD = 41, 42, 43, 44, 4
 
 # ---------- nacelle ----------
 SEG = 48  # nacelle ring vertices; vertex 0 on top, under the pylon (64 before the damage stage's reclaim)
+# The lip's rings take LIP_SEG times SEG: its profile turns through 90 degrees, so seen from the side its silhouette runs
+# across the rings and SEG's 7.5 degree corners showed against the sky (build 47). The cowl behind it is near
+# cylindrical, its silhouette along a vertex column, so SEG stays there.
+LIP_SEG = 2
 # The nacelle wall as one closed loop of (r, a, band from this point to the next, UV ring seam here), on the blockout's
 # S6_UF_OUTER and S6_UF_INNER (r 2.125, L 6.8) with the corners rounded: the lip from its highlight, the inlet cowl,
 # the fan cowl doors ending in a 12 mm step down onto the reverser sleeve, the sleeve's boat-tail running on past the
@@ -102,7 +106,9 @@ CORE_HUB = ((0.0, 1.40), (0.62, 1.40), (0.78, 2.85), (0.0, 2.85))
 SPLITTER = ((0.856, 1.600, "mech"), (0.905, 1.700, "matte"), (0.985, 2.050, "matte"), (1.058, 2.800, "matte"),
             (1.000, 2.800, "matte"), (0.880, 2.000, "matte"), (0.836, 1.700, "mech"), (0.840, 1.625, "mech"))
 SPLITTER_SEG = 32
-OGV = (44, 2.06, 0.30, 0.98, 1.905, 42.0)  # count, leading edge a, chord, root and tip radius, turning (deg)
+# count, leading edge a, chord, root and tip radius, turning (deg). 24, not a real engine's 44: the overlapping fan
+# blades hide them from ahead and the 5.5 m of dark duct from behind, and the 528 triangles a nacelle pay for the lip.
+OGV = (24, 2.06, 0.30, 0.98, 1.905, 42.0)
 GENERATOR = (-135.0, 1.18, 3.48, 1.24, 0.30)  # theta (inboard, low), a from, to, width, height above the cowl
 GEN_SEG = 32  # generator fairing vertices across its arc
 GEN_LAND = 0.015  # its edges this far under the cowl
@@ -149,8 +155,11 @@ CORE = ((0.0, -4.000, "matte"), (1.058, -4.000, "matte"), (1.126, 0.000, "core")
         (0.0, 1.700, None))
 CORE_TE = next(i for i, c in enumerate(CORE) if c[1] == CORE_EXIT)
 CORE_SEG = 48
-# A 17.5 deg plug flank continues the converging cowl, with a rounded tip 1.88 m beyond the exit.
+# A 17.5 deg plug flank continues the converging cowl, with a rounded tip 1.88 m beyond the exit. The flank is ringed
+# every 40 % or so of its radius: as one band its quads ran from r 0.66 to 0.044, and normals interpolated across such
+# tapering triangles shade the cone as a fan of flat wedges from behind (build 45).
 PLUG = ((0.0, 1.550), (0.665, 1.550), (0.670, 1.920), (0.660, 2.030),
+        (0.420, 2.792), (0.260, 3.300), (0.150, 3.649), (0.085, 3.855),
         (0.044, 3.985), (0.020, 4.060), (0.006, 4.105), (0.0, 4.140))
 PLUG_SEG = 32
 
@@ -341,14 +350,13 @@ def build(bl, surf, slots):
     parts = {}
     num, side, x, front = bl.NACELLES[0]
     origin = Vector((x, bl.st(front), bl.NACELLE_Z))
-    strut = strut_crossings(bl, origin)
     for num, side, x, front in bl.NACELLES:
         p = parts[f"nacelle_{num}"] = sf.Part(f"nacelle_{num}", (SKIN,))
-        nacelle(bl, p, origin, tags, strut, slots)
+        nacelle(bl, p, origin, tags, slots)
         q = parts[f"pylon_{num}"] = sf.Part(f"pylon_{num}", (SKIN,))
         pylon(bl, q, origin, front, slots)
         z = parts[f"nozzle_{num}"] = sf.Part(f"nozzle_{num}", (MECH,))
-        nozzle(bl, z, origin, tags, strut, slots)
+        nozzle(bl, z, origin, tags, slots)
         if side < 0:
             for part in (p, q, z):
                 mirror_x(part)
@@ -357,15 +365,13 @@ def build(bl, surf, slots):
     return parts
 
 
-def nacelle(bl, p, origin, tags, strut, slots):
+def nacelle(bl, p, origin, tags, slots):
     SKIN, STRUCT, _, MECH = slots[:4]
     nacelle_wall(p, origin, tags)
     # behind the fan: the core inlet's hub wall, the splitter, the outlet guide vanes
     revolve(p, origin, CORE_HUB, 32, [(STRUCT, 0)] * (len(CORE_HUB) - 1))
     revolve(p, origin, [(r, a) for r, a, _ in SPLITTER], SPLITTER_SEG, [tags[b] for _, _, b in SPLITTER], loop=True)
     ogvs(bl, p, origin, MECH)
-    for d, toward in strut["wall"]:  # inside the duct, out of every view: the coarser section
-        strut_fillet(bl, p, origin, inner_r, d, toward, free=-1, slot=STRUCT, n=4)
     generator(p, origin, SKIN, STRUCT, MECH)
     a, t, h, c0, c1, sweep, thick = STRAKE
     base = axis_point(origin, outer_r(a), a, t)
@@ -379,11 +385,14 @@ def nacelle(bl, p, origin, tags, strut, slots):
 
 
 def nacelle_wall(p, origin, tags):
-    """Keep 64 points on the lip and exterior, 32 on the enclosed dark duct."""
+    """SEG points on the exterior, twice that on the lip (its rings and the ring closing it), half on the enclosed
+    dark duct."""
     bm = p.bm
     rings = []
-    for r, a, band, _ in WALL:
+    for i, (r, a, band, _) in enumerate(WALL):
         count = SEG // 2 if band in ("matte", "mech") and a < FAN_NOZZLE_TE else SEG
+        if "lip" in (band, WALL[i - 1][2]):
+            count = SEG * LIP_SEG
         rings.append([bm.verts.new(axis_point(origin, r, a, 360.0 * k / count)) for k in range(count)])
     for i, ra in enumerate(rings):
         rb = rings[(i + 1) % len(rings)]
@@ -478,91 +487,6 @@ def ram_hood(p, surf, a0, length, half, height, SKIN, STRUCT):
     g.seam_column(0)
 
 
-def strut_crossings(bl, origin):
-    """Where the strut line crosses the duct wall and the core cowl, as (distance from the strut root, the direction
-    along the line toward the duct's free side)."""
-    root, hub, node = bl.s6_strut_line(1)
-    ax = (node - root).normalized()
-    length = (node - root).length
-
-    def excess(d, fn):
-        q = root + ax * d
-        a = q.y - origin.y
-        return math.hypot(q.x - origin.x, q.z - origin.z) - fn(a)
-
-    out = {}
-    for key, fn, free in (("wall", inner_r, -1), ("core", core_r, 1)):
-        ds = [length * i / 800 for i in range(801)]
-        found = []
-        for d0, d1 in zip(ds, ds[1:]):
-            a0 = (root + ax * d0).y - origin.y
-            if not 0.5 < a0 < 7.9:
-                continue
-            e0, e1 = excess(d0, fn), excess(d1, fn)
-            if (e0 > 0) != (e1 > 0):
-                for _ in range(40):
-                    m = (d0 + d1) / 2
-                    if (excess(m, fn) > 0) == (e0 > 0):
-                        d0 = m
-                    else:
-                        d1 = m
-                d = (d0 + d1) / 2
-                g = excess(d + 0.05, fn) - excess(d - 0.05, fn)
-                found.append((d, free * (1 if g > 0 else -1)))
-        out[key] = found
-    out["root"], out["ax"] = root, ax
-    return out
-
-
-def strut_fillet(bl, p, origin, radius_fn, d_cross, toward, free, slot, n=6):
-    """A fillet where the strut crosses a revolved surface of the duct: rings of the strut's section, thickened, whose
-    every point is slid along the strut onto the surface (the foot, 3 cm under it, and the edge on it), then two rings
-    climbing the strut and closing onto it. free: +1 where the free side is outside the surface (the core cowl),
-    -1 inside it (the duct wall)."""
-    root, hub, node = bl.s6_strut_line(1)
-    ax = (node - root).normalized()
-    ch, th = bl.S6_STRUT["chord"], bl.S6_STRUT["thick"]
-    cd = (Vector((0, 1, 0)) - ax * ax.y).normalized()
-    td = ax.cross(cd).normalized()
-
-    def offsets(kc, kt):
-        return [q - cd * (0.4 * ch * kc) for q in bl.airfoil(Vector(), ch * kc, th * kt, cd, td, n=n, te=0.01)]
-
-    def excess(q):
-        a = q.y - origin.y
-        return math.hypot(q.x - origin.x, q.z - origin.z) - radius_fn(a)
-
-    def foot(o, target):
-        f = lambda d: excess(root + ax * d + o) - target
-        lo, hi = d_cross - 1.2, d_cross + 1.2
-        ds = [lo + (hi - lo) * i / 96 for i in range(97)]
-        best = None
-        for d0, d1 in zip(ds, ds[1:]):
-            if (f(d0) > 0) != (f(d1) > 0) and (best is None or abs(d0 - d_cross) < abs(best[0] - d_cross)):
-                best = (d0, d1)
-        if best is None:
-            return d_cross
-        d0, d1 = best
-        for _ in range(36):
-            m = (d0 + d1) / 2
-            d0, d1 = (m, d1) if (f(m) > 0) == (f(d0) > 0) else (d0, m)
-        return (d0 + d1) / 2
-
-    rings = []
-    for kc, kt, rise, target in ((1.03, 1.60, 0.0, -free * 0.03), (1.03, 1.60, 0.0, 0.0), (1.02, 1.46, 0.025, None),
-                                 (1.0, 1.22, 0.10, None), (0.97, 0.95, 0.22, None)):
-        ring = []
-        for o0, o in zip(offsets(1.0, 1.0), offsets(kc, kt)):
-            d = foot(o0, 0.0)
-            if target is not None:
-                d = foot(o, target)
-            ring.append(root + ax * (d + toward * rise) + o)
-        rings.append(ring)
-    g = sf.Grid(p.bm, rings, loop=True)
-    g.seam_column(0)
-    p.tag(g.faces() + sf.cap(p.bm, g.V[0][::-1]) + sf.cap(p.bm, g.V[-1]), slot)
-
-
 def fan(p, centre, mech):
     revolve(p, centre, SPINNER, SPINNER_SEG, [(mech, 0)] * (len(SPINNER) - 1))
     for b in range(FAN_BLADES):
@@ -606,14 +530,12 @@ def blade_section(centre, theta, r, chord, stagger, thick, camber, sweep, lag, x
     return out
 
 
-def nozzle(bl, p, origin, tags, strut, slots):
+def nozzle(bl, p, origin, tags, slots):
     SKIN, STRUCT, _, MECH = slots[:4]
     rear = origin + Vector((0, 6.8, 0))
     revolve(p, rear, [(r, a) for r, a, _ in CORE], CORE_SEG, [tags[b] for _, _, b in CORE[:-1]],
             seams=(0, CORE_SEG // 2))
     revolve(p, rear, PLUG, PLUG_SEG, [(MECH, 0)] * (len(PLUG) - 1))
-    for d, toward in strut["core"]:
-        strut_fillet(bl, p, origin, core_r, d, toward, free=1, slot=STRUCT, n=12)
 
 
 def pylon(bl, p, origin, front, slots):
@@ -984,12 +906,14 @@ PANELS = (  # a from, to, theta from, to, corner radius, side
     (1.75, 2.00, 28.0, 40.0, 0.03, 0),
     (4.70, 5.00, 118.0, 130.0, 0.03, -1),
     (4.75, 5.35, 28.0, 48.0, 0.05, 0),  # sleeve: reverser control access, upper
-    (5.85, 6.25, 112.0, 128.0, 0.04, 0),  # sleeve: blocker door inspection, lower
 )
+# No panel on the boat-tail aft of 5.6: there the sleeve curves in fastest, a rectangle's ends follow the cross-section
+# and read as a rhombus seen from ahead, and its aft edge sat 5 cm from the sleeve's aft joint (build 45).
 HINGES = (1.85, 2.55, 3.25, 4.25, 5.05, 5.85)  # hinge fittings along the hinge lines
 LATCHES = (1.90, 2.40, 2.90, 3.35, 4.95, 5.50, 6.05)  # along the bottom split: 4 on the fan cowl, 3 on the sleeve
 # Ring joints on the reverser sleeve: the translating cowl's split from the fixed structure ahead of it (a moving joint,
-# no fasteners) and its aft joint (a, groove width, fastener rows). They stop short of the strut doublers.
+# no fasteners) and its aft joint (a, groove width, fastener rows). They run into the strut doublers' outlines: stopped
+# 5 cm short, the forward one ended in plain skin above the doubler (build 47).
 SLEEVE_JOINTS = ((4.55, 0.018, 0), (6.30, 0.016, 1))
 HOIST = ((1.40, 97.0), (3.80, 97.0))  # yellow hoist points, both sides
 FIRE_ACCESS = (2.25, 118.0, 0.06)  # a, theta, radius: outboard
@@ -1015,7 +939,10 @@ PAINT_COWL = (0.38, 0.39, 0.405)  # paint.PAINT[HULL]
 # the lip only within LIP_BAND (m, in the wall's (r, a) plane) of the highlight.
 SATIN, SATIN_SMOOTH, SATIN_METAL = (0.46, 0.47, 0.48), 0.54, 0.2  # the wing's SATIN
 LIP_BAND = 0.15
-PAINT_LINER = (0.12, 0.10, 0.09)  # dark maroon-brown, as the stock intakes (art.md "Markings")
+# Dark warm grey, the tone of the fan case's duct swatch (detail_centurion MECH_SWATCHES "duct", sRGB 58, 60, 64) that it
+# runs into ahead of the blade tips. At sRGB 0.12 (linear 1.5%) the duct, in the nacelle's own shadow, read as a pure
+# black void from above, and the fan case's band between it and the blades as a grey ring round the fan (build 47).
+PAINT_LINER = (0.22, 0.21, 0.20)
 DARK = (0.10, 0.105, 0.11)
 RED = (0.55, 0.10, 0.08)  # the wing's red, at its keep-clear line weight
 RED_LINE = 0.022  # the wing's line weight
@@ -1091,9 +1018,16 @@ def paint(cv, text_mask):
     arc = R * np.radians(th)
     ath = np.abs(th)
 
-    def arc_to(t0):
-        """Signed girth from the line at theta t0 (positive toward larger theta), wrapped."""
-        return R * np.radians(((th - t0 + 180.0) % 360.0) - 180.0)
+    def arc_to(t0, at=None):
+        """Signed girth from the line at theta t0 (positive toward larger theta), wrapped; with at, measured at the
+        cowl's radius at station at, so a feature's sides follow meridians (on the tapering cowl a girth measured at
+        each texel's own radius slants them: the owner's skewed panels)."""
+        return (R if at is None else float(np.interp(at, OUTER_A, OUTER_R))) * np.radians(((th - t0 + 180.0) % 360.0) - 180.0)
+
+    def height_at(at):
+        """Height above the cowl's crown at station at: a pylon feature's level reference (above the crown at each
+        texel's own station, its sides sloped up toward the tail with the cowl)."""
+        return cv.pos[:, 2] - bl.NACELLE_Z - float(np.interp(min(at, 6.8), OUTER_A, OUTER_R))
 
     # The cowl is a serviceable metal shell; the final band is heat tinted ahead of the bright nozzle lip.
     N = core.astype(float)
@@ -1104,11 +1038,8 @@ def paint(cv, text_mask):
         for la in (7.90, 8.35, 8.70):
             sdf = rrect_sdf(a, girth, la - 0.07, la + 0.07, -0.028, 0.028, 0.01)
             cv.paint(cv.fill_coverage(sdf) * N, rgb=DARK, smooth=0.3, height=-0.002)
-        for a0, a1, t0, t1 in ((7.85, 8.18, 45.0, 68.0), (8.32, 8.65, 112.0, 139.0)):
-            v0, v1 = sorted((math.radians(sg * t0), math.radians(sg * t1)))
-            sdf = rrect_sdf(a, r * np.radians(th), a0, a1, r * v0, r * v1, 0.035)
-            cv.groove(np.abs(sdf), 0.014, mask=N)
-            cv.fasteners(np.abs(sdf), a + r * np.radians(th), 0.025, mask=N * (np.abs(sdf) < 0.06))
+        # No access panel outlines: the core cowl unwraps to a fan, where an outline's circumferential edges and rounded
+        # corners cross the texel grid aslant and read as drawn by hand from 3 m (builds 45 and 46)
 
     H = heat.astype(float)
     heat_h = cv.pos[:, 2] - bl.NACELLE_Z
@@ -1156,7 +1087,7 @@ def paint(cv, text_mask):
         cv.paint(cv.fill_coverage(sdf) * m, height=0.0015)
         cv.groove(np.abs(sdf), 0.014, mask=m)
         cv.fasteners(np.abs(sdf + 0.035), a + v, 0.02, 0.07, mask=m * (np.abs(sdf + 0.035) < 0.05))
-        clear *= 1 - cv.fill_coverage(sdf - 0.05) * m
+        clear *= 1 - cv.fill_coverage(sdf) * m
 
     S = sleeve.astype(float) * clear
     for j, w, rows in SLEEVE_JOINTS:
@@ -1171,45 +1102,46 @@ def paint(cv, text_mask):
             am = (a0 + a1) / 2
             Rm = float(np.interp(am, OUTER_A, OUTER_R))
             v0, v1 = sorted((Rm * math.radians(sg * t0), Rm * math.radians(sg * t1)))
-            sdf = rrect_sdf(a, arc, a0, a1, v0, v1, rad)
+            vm = Rm * np.radians(th)  # girth at the panel's own station: its sides on meridians
+            sdf = rrect_sdf(a, vm, a0, a1, v0, v1, rad)
             cv.groove(np.abs(sdf), mask=C)
-            cv.fasteners(np.abs(sdf), a + arc, 0.028, mask=C * (np.abs(sdf) < 0.06))
+            cv.fasteners(np.abs(sdf), a + vm, 0.028, mask=C * (np.abs(sdf) < 0.06))
 
     # hinge fittings along the hinge lines, latches along the bottom split with red trigger tabs
     for sg in (1, -1):
-        v = arc_to(sg * HINGE_LINE)
         for ha in HINGES:
+            v = arc_to(sg * HINGE_LINE, ha)
             sdf = rrect_sdf(a, v, ha - 0.05, ha + 0.05, -0.02, 0.02, 0.006)
             cv.paint(cv.fill_coverage(sdf) * C, rgb=DARK, smooth=0.3, height=0.002)
-    v = arc_to(LATCH_LINE)
     for la in LATCHES:
+        v = arc_to(LATCH_LINE, la)
         sdf = rrect_sdf(a, v, la - 0.12, la + 0.12, -0.035, 0.035, 0.012)
         cv.paint(cv.fill_coverage(sdf) * C, rgb=DARK, smooth=0.3, height=-0.003)
         cv.groove(np.abs(sdf), 0.012, mask=C)
         cv.paint(cv.fill_coverage(rrect_sdf(a, v, la + 0.07, la + 0.11, -0.03, 0.03, 0.006)) * C, rgb=RED)
     for ha, ht in HOIST:
         for sg in (1, -1):
-            sdf = rrect_sdf(a, arc_to(sg * ht), ha - 0.04, ha + 0.04, -0.04, 0.04, 0.008)
+            sdf = rrect_sdf(a, arc_to(sg * ht, ha), ha - 0.04, ha + 0.04, -0.04, 0.04, 0.008)
             cv.paint(cv.fill_coverage(sdf) * C, rgb=YELLOW)
-            cv.paint(cv.fill_coverage(np.hypot(a - ha, arc_to(sg * ht)) - 0.015) * C, rgb=DARK, height=-0.003)
+            cv.paint(cv.fill_coverage(np.hypot(a - ha, arc_to(sg * ht, ha)) - 0.015) * C, rgb=DARK, height=-0.003)
     fa, ft, fr = FIRE_ACCESS
-    d = np.hypot(a - fa, arc_to(ft))
-    cv.paint(cv.coverage(np.abs(d - fr), RED_LINE) * C, rgb=RED)
+    d = np.hypot(a - fa, arc_to(ft, fa))
+    cv.paint(cv.colour_line(np.abs(d - fr), RED_LINE) * C, rgb=RED)
     cv.paint(cv.fill_coverage(d - fr + 0.025) * C, rgb=DARK, height=-0.002)
 
     # the fan-plane danger band, arrows pointing forward at the intake
     ia, t0, t1 = FAN_ARC
     m = C * smoothstep(t0 - 1, t0, ath) * smoothstep(t1 + 1, t1, ath)
-    cv.paint(cv.coverage(np.abs(a - ia), RED_LINE) * m, rgb=RED)
+    cv.paint(cv.colour_line(np.abs(a - ia), RED_LINE) * m, rgb=RED)
     for t in ARC_ARROWS:
         for sg in (1, -1):
-            vv = arc_to(sg * t)
+            vv = arc_to(sg * t, ia)
             tri = [(ia - 0.14, 0.0), (ia - 0.04, -0.05), (ia - 0.04, 0.05)]
             cv.paint(cv.fill_coverage(poly_sdf(a, vv, tri)) * C, rgb=RED)
 
     # grilles
     for a0, a1, t0, t1, kind in GRILLES:
-        vv = arc_to((t0 + t1) / 2)
+        vv = arc_to((t0 + t1) / 2, (a0 + a1) / 2)
         Rm = float(np.interp((a0 + a1) / 2, OUTER_A, OUTER_R))
         hw = Rm * math.radians(abs(t1 - t0)) / 2
         sdf = rrect_sdf(a, vv, a0, a1, -hw, hw, 0.015)
@@ -1227,7 +1159,7 @@ def paint(cv, text_mask):
     # placards: small light plates ruled with lines of fine print, which read either way round
     for pa, pt, pw, ph in PLACARDS:
         for sg in (1, -1):
-            vv = arc_to(sg * pt)
+            vv = arc_to(sg * pt, pa)
             sdf = rrect_sdf(a, vv, pa - pw / 2, pa + pw / 2, -ph / 2, ph / 2, 0.006)
             plate = cv.fill_coverage(sdf) * C
             cv.paint(plate, rgb=PLACARD[0], smooth=0.35)
@@ -1267,12 +1199,13 @@ def paint(cv, text_mask):
         cv.groove(d, mask=P)
         cv.fasteners(d, h, 0.03, mask=P * (d < 0.06))
     for a0, a1, h0, h1, rad in PYLON_PANELS:
-        sdf = rrect_sdf(a, h, a0, a1, h0, h1, rad)
+        hp = height_at((a0 + a1) / 2)
+        sdf = rrect_sdf(a, hp, a0, a1, h0, h1, rad)
         cv.groove(np.abs(sdf), mask=P)
-        cv.fasteners(np.abs(sdf), a + h, 0.028, mask=P * (np.abs(sdf) < 0.06))
+        cv.fasteners(np.abs(sdf), a + hp, 0.028, mask=P * (np.abs(sdf) < 0.06))
     fa, fh, fr = PYLON_FIRE
-    d = np.hypot(a - fa, h - fh)
-    cv.paint(cv.coverage(np.abs(d - fr), 0.016) * P, rgb=RED)
+    d = np.hypot(a - fa, height_at(fa) - fh)
+    cv.paint(cv.colour_line(np.abs(d - fr), 0.016) * P, rgb=RED)
     cv.paint(cv.fill_coverage(d - fr + 0.02) * P, rgb=(0.85, 0.82, 0.25))
     psoot = smoothstep(6.6, 7.6, a) * (0.5 + 0.5 * fbm(cv.pos * np.array([3.0, 0.6, 3.0]), 0.4, 2, seed=29))
     psoot *= smoothstep(0.5, 0.0, cv.pos[:, 2] - bl.NACELLE_Z - 1.3)
@@ -1282,6 +1215,6 @@ def paint(cv, text_mask):
     sgn = np.sign(cv.nrm[:, 0] + 1e-9)
     for body, on_x in (("ENG 1", 1.0), ("ENG 2", -1.0)):
         mask = P * (np.sign(cv.pos[:, 0]) == on_x) * (np.abs(cv.nrm[:, 0]) > 0.5)
-        stamp(cv, text_mask(body), sgn * (a - ta), h - tz, 48 / (tl * 1.4), mask, STENCIL)
+        stamp(cv, text_mask(body), sgn * (a - ta), height_at(ta) - tz, 48 / (tl * 1.4), mask, STENCIL)
 
 

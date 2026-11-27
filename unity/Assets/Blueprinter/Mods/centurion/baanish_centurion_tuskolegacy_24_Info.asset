@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1706624141, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Name: baanish_centurion_tuskolegacy_24_Info
+  m_EditorClassIdentifier: 
+  weaponPrefab: {fileID: 1709254077376921, guid: 258525847a7a9f84aa8e322fa4d59f5a,
+    type: 3}
+  effectiveness:
+    antiSurface: 0.84
+    antiAir: 0
+    antiMissile: 0
+    antiRadar: 0
+  targetRequirements:
+    lineOfSight: 0
+    minAltitude: 0
+    maxAltitude: 100000
+    minRange: 3000
+    maxRange: 60000
+    maxSpeed: 50
+    minIR: 0
+    minRadar: 0
+    minAlignment: 30
+    minOwnerSpeed: 0
+    minValue: 1
+  pK: 2
+  weaponName: 'LEGACY: Tusko-B (HE)'
+  shortName: Tusko-B
+  description: Long-range anti-surface missile employing a quasi-ballistic trajectory,
+    allowing it to reach distant targets at supersonic speeds.
+  fireInterval: 0.25
+  muzzleVelocity: 0
+  maxSpeed: -1
+  dragCoef: 0.1
+  gravMult: 1
+  pierceDamage: 1500
+  blastDamage: 200
+  weaponIcon: {fileID: 21300000, guid: cd84068163f18d445800beb1bb6ad4be, type: 2}
+  armorTierEffectiveness: 8
+  airburstHeight: 0
+  visibilityWhenFired: 1000
+  costPerRound: 1.65
+  massPerRound: 650
+  useWeaponDoors: 1
+  boresight: 0
+  laserGuided: 0
+  missile: 1
+  bomb: 0
+  glideBomb: 0
+  gun: 0
+  overHorizon: 0
+  nuclear: 0
+  strategic: 0
+  energy: 0
+  jammer: 0
+  troops: 0
+  hideInDisplay: 0
+  cargo: 0
+  rearmGround: 0
+  rearmShip: 0
+  sling: 0

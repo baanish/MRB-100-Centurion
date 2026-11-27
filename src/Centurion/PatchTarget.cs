@@ -11,7 +11,7 @@ namespace Centurion;
 /// </summary>
 public sealed class PatchTarget
 {
-    public PatchTarget(string feature, Type type, string method, Type[]? parameters = null, MethodInfo? prefix = null, MethodInfo? postfix = null, MethodInfo? transpiler = null)
+    public PatchTarget(string feature, Type type, string method, Type[]? parameters = null, MethodInfo? prefix = null, MethodInfo? postfix = null, MethodInfo? transpiler = null, bool diagnostic = false)
     {
         Feature = feature;
         Type = type;
@@ -20,6 +20,7 @@ public sealed class PatchTarget
         Prefix = prefix;
         Postfix = postfix;
         Transpiler = transpiler;
+        Diagnostic = diagnostic;
     }
 
     public string Feature { get; }
@@ -29,20 +30,28 @@ public sealed class PatchTarget
     public MethodInfo? Prefix { get; }
     public MethodInfo? Postfix { get; }
     public MethodInfo? Transpiler { get; }
+    /// <summary>Exists only to measure or to drive a test: installed only when diagnostics are on at startup, so a game
+    /// without them runs no diagnostic hooks (skill patching.md). A release build compiles none.</summary>
+    public bool Diagnostic { get; }
 
     string Name => Type.Name + "." + Method;
 
     /// <summary>
-    /// Patches each target and logs one line per target: "found/patched" or "missing: feature off". Returns the features
-    /// switched off, so their code can stand down.
+    /// Patches each target and logs one line per target: "found/patched" or "missing: feature off"; a diagnostic target only
+    /// when <paramref name="diagnostics"/> is on. Returns the features switched off, so their code can stand down.
     /// </summary>
-    public static HashSet<string> InstallAll(Harmony harmony, IReadOnlyList<PatchTarget> targets, CenturionLog log)
+    public static HashSet<string> InstallAll(Harmony harmony, IReadOnlyList<PatchTarget> targets, CenturionLog log, bool diagnostics)
     {
         var off = new HashSet<string>();
         var installed = new List<(PatchTarget Target, MethodInfo Original)>();
         log.Info($"Harmony: {targets.Count} patch targets");
         foreach (PatchTarget target in targets)
         {
+            if (target.Diagnostic && !diagnostics)
+            {
+                off.Add(target.Feature);
+                continue;
+            }
             if (off.Contains(target.Feature)) continue;
             try
             {
@@ -73,6 +82,10 @@ public sealed class PatchTarget
             }
         }
 
+        int diagnosticCount = 0;
+        foreach (var entry in installed)
+            if (entry.Target.Diagnostic && !off.Contains(entry.Target.Feature)) diagnosticCount++;
+        log.Info($"diagnostic patches: {diagnosticCount} installed (diagnostics enabled: {diagnostics})");
         return off;
     }
 }

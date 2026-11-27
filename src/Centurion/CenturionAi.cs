@@ -5,9 +5,10 @@ using NuclearOption.SavedMission;
 using UnityEngine;
 using static Centurion.AircraftReadout;
 
+#if CENTURION_DEV
 namespace Centurion;
 
-/// <summary>AI diagnostics and loadout identity, independent of weapon-mount initialization.</summary>
+/// <summary>A dev build's AI telemetry for each Centurion: loadout, takeoffs, damage and the AWACS phase, for AgenticState() and SortieLog.</summary>
 sealed class CenturionAi : MonoBehaviour
 {
     internal static readonly List<CenturionAi> All = new();
@@ -25,22 +26,16 @@ sealed class CenturionAi : MonoBehaviour
     string loadoutName = NoText, spawnAirbase = NoText;
     SortieLog.Sortie? sortie;
 
-    internal CenturionAwacsState AwacsState { get; } = new();
+    CenturionSystems Systems => GetComponent<CenturionSystems>();
+    CenturionAwacsState AwacsState => Systems.AwacsState;
+    bool IsAwacs => Systems.IsAwacs;
     Pilot? Pilot => aircraft.pilots.Length > 0 ? aircraft.pilots[0] : null;
     public bool IsLocalPlayer => GameManager.GetLocalAircraft(out Aircraft local) && local == aircraft;
     public bool Simulated => aircraft.LocalSim;
     bool AiFlown => Simulated && !IsLocalPlayer && aircraft.Player == null
         && Pilot != null && Pilot.currentState != null && Pilot.currentState is not PilotPlayerState;
 
-    // LoadHardpointSet applies the same restriction before fitting a mount. A lost beam keeps its loadout identity.
-    internal bool IsAwacs => aircraft.loadout != null && aircraft.loadout.weapons.Count > 2
-        && aircraft.loadout.weapons[2] != null && aircraft.loadout.weapons[2].jsonKey == "baanish_centurion_awacs"
-        && (aircraft.NetworkHQ == null || !aircraft.NetworkHQ.restrictedWeapons.Contains(aircraft.loadout.weapons[2].name));
-
-    internal static void Install(ConfigFile config, CenturionLog logger)
-    {
-        log = logger;
-    }
+    internal static void Install(ConfigFile config, CenturionLog logger) => log = logger;
 
     internal static void AddDefaults(Dictionary<string, object> state)
     {
@@ -53,12 +48,15 @@ sealed class CenturionAi : MonoBehaviour
             "ai_awacs_standoff_m", "ai_awacs_anchor_dist_m", "ai_awacs_anchor_changes", "ai_awacs_orbit_s",
             "ai_awacs_recovery_fuel_frac", "ai_hostile_air_tracks", "ai_loadout_customs", "ai_spawn_rejects",
             "ai_strike_rounds", "ai_missiles_in_flight",
+            "ai_ingress_m",
         }) state[key] = NotRead;
         foreach (string key in new[]
         {
             "ai_name", "ai_state", "ai_weapon", "ai_loadout", "ai_spawn_airbase", "ai_tear", "ai_beam_state",
             "ai_awacs_phase", "ai_awacs_home", "ai_awacs_anchor", "ai_loadouts", "ai_spawn_rejected",
+            "ai_last_release_hold", "ai_locked_target", "ai_last_lock_release",
         }) state[key] = NoText;
+        state["ai_target_home_range_m"] = -1f;
     }
 
     internal static void Read(Dictionary<string, object> state)
@@ -77,6 +75,7 @@ sealed class CenturionAi : MonoBehaviour
         state["ai_loadout_customs"] = loadoutCustoms;
         state["ai_spawn_rejects"] = AiAirfieldRules.SpawnRejects;
         state["ai_spawn_rejected"] = AiAirfieldRules.SpawnRejected;
+        AiSamLoadout.Read(state, watched?.aircraft);
         if (watched != null) watched.ReadWatched(state);
     }
 
@@ -186,7 +185,8 @@ sealed class CenturionAi : MonoBehaviour
         state["ai_alive"] = aircraft.disabled ? 0 : 1;
         state["ai_ejected"] = pilot.ejected || pilot.dead ? 1 : 0;
         state["ai_strike_rounds"] = AiHighStrike.StrikeRounds(aircraft);
-        state["ai_missiles_in_flight"] = IsAwacs ? AwacsState.Arad.MissilesInFlight : AiHighStrike.MissilesInFlight(pilot);
+        state["ai_missiles_in_flight"] = IsAwacs ? AwacsState.Arad.MissilesInFlight : AiHighStrike.MissilesInFlight(aircraft);
+        if (!IsAwacs && pilot.currentState is AIPilotCombatModes combat) AiHighStrike.ReadIngress(aircraft, combat, state);
         if (seen)
         {
             state["ai_loadout"] = loadoutName;
@@ -241,3 +241,4 @@ sealed class CenturionAi : MonoBehaviour
         sortie?.Despawned();
     }
 }
+#endif

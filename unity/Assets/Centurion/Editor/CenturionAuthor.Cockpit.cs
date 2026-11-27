@@ -18,6 +18,7 @@ namespace Centurion.Editor
         // The generator's sprites and the JSON that places them, in metres (x outboard along the right wing, s the station).
         private const string CockpitArtFolder = ModFolder + "/Cockpit";
         private const string StatusSilhouettePath = CockpitArtFolder + "/centurion_status_top.png";
+        private const float StoresSilhouetteScale = 48f / 54f, StoresRowTextScale = 1.25f;
         private const string StatusFramingPath = CockpitArtFolder + "/centurion_status_top.json";
         private const string SpanLayoutPath = CockpitArtFolder + "/centurion_span.json";
         private const string DamageLayoutPath = CockpitArtFolder + "/centurion_damage.json";
@@ -82,7 +83,11 @@ namespace Centurion.Editor
         private static void ShowHardpoints(Build b, Build edit)
         {
             var profile = (RectTransform)FindDeep(edit.Root.transform, "frontProfile");
-            Set(ImageOf(profile), "m_Sprite", ImportSprite(StatusSilhouettePath));
+            Set(ImageOf(profile), "m_Sprite", ImportSprite(StatusSilhouettePath, mipmapped: true));
+            // The silhouette drawn at StoresSilhouetteScale of the stock panel's rect: at full size its wing tips crossed the
+            // page's border (105% of its width); the Darkreach's outline spans 93% of its page, and so does this. The
+            // markers below are placed per metre of the scaled rect.
+            profile.sizeDelta *= StoresSilhouetteScale;
             var framing = ReadLayout(StatusFramingPath);
             var perMetre = profile.sizeDelta.x / Convert.ToSingle(framing["size_m"]);
             var centreZ = OriginStation - Convert.ToSingle(framing["centre_station"]) - b.Blockout.Origin.z;
@@ -115,6 +120,15 @@ namespace Centurion.Editor
                     .Select(k => (Component)element.FindPropertyRelative("pylonTexts").GetArrayElementAtIndex(k).objectReferenceValue).ToArray();
                 var name = texts.Single(t => Prop(new SerializedObject(t), "m_text").stringValue.StartsWith((i + 1) + " ", StringComparison.Ordinal));
                 SetText(name, $"{i + 1} {set.FindPropertyRelative("name").stringValue.ToUpperInvariant()}");
+                // The row's name and its status at StoresRowTextScale of the stock size: at 14 they read faint from the seat.
+                // The widest, "1 FORWARD BAY" and "ARMED", still clear each other and the row's edge (up to 1.4).
+                foreach (var t in texts)
+                {
+                    var so = new SerializedObject(t);
+                    so.FindProperty("m_fontSize").floatValue *= StoresRowTextScale;
+                    so.FindProperty("m_fontSizeBase").floatValue *= StoresRowTextScale;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
             }
 
             // The aft bay's hardpoint and the dorsal mount's are 0.8 m apart: markers that would overlap spread fore and
@@ -269,7 +283,7 @@ namespace Centurion.Editor
                 instance.name = Path.GetFileNameWithoutExtension(StatusDisplayPath);
                 var edit = new Build { Root = instance };
                 var frame = (RectTransform)instance.transform;
-                Set(ImageOf(frame), "m_Sprite", ImportSprite(StatusSilhouettePath));
+                Set(ImageOf(frame), "m_Sprite", ImportSprite(StatusSilhouettePath, mipmapped: true));
                 var displayType = GameType("StatusDisplay");
                 var entries = Prop(new SerializedObject(instance.GetComponent(displayType)), "statusDisplays");
                 var alkyon = Enumerable.Range(0, entries.arraySize)
@@ -340,19 +354,24 @@ namespace Centurion.Editor
             File.Exists(path) ? (Dictionary<string, object>)MiniJson.Parse(File.ReadAllText(path))
                 : throw new FileNotFoundException("Run art/blender/status_silhouette.py first.", path);
 
-        // A generated sprite as a single sprite, as the stock status sprites import.
-        private static Sprite ImportSprite(string path)
+        // A generated sprite as a single sprite, as the stock status sprites import. The silhouette (mipmapped: true)
+        // keeps mipmaps and no block compression: drawn on the Stores page at about 190 px from its 512, without mips
+        // its thin outline aliased into raster steps, and block compression roughened its edges further.
+        private static Sprite ImportSprite(string path, bool mipmapped = false)
         {
             if (!File.Exists(path))
                 throw new FileNotFoundException("Run art/blender/status_silhouette.py first.", path);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single || importer.mipmapEnabled || !importer.alphaIsTransparency)
+            var compression = mipmapped ? TextureImporterCompression.Uncompressed : importer.textureCompression;
+            if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single
+                || importer.mipmapEnabled != mipmapped || !importer.alphaIsTransparency || importer.textureCompression != compression)
             {
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
-                importer.mipmapEnabled = false;
+                importer.mipmapEnabled = mipmapped;
                 importer.alphaIsTransparency = true;
+                importer.textureCompression = compression;
                 importer.SaveAndReimport();
             }
             return Load<Sprite>(path);

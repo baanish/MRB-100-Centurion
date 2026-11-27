@@ -73,7 +73,8 @@ namespace Centurion.Editor
             var fan = b.Visuals[name];
             var axis = (List<object>)b.Blockout.Parts[name].Props["spin_axis_unity"];
             var spin = new Vector3(Convert.ToSingle(axis[0]), Convert.ToSingle(axis[1]), Convert.ToSingle(axis[2]));
-            var offAxis = Vector3.Cross(fan.position - nacelle.position, fan.forward).magnitude;
+            // On the engine's axis, which runs through the nacelle shape's centre (BuildEngines), not the part's origin.
+            var offAxis = Vector3.Cross(fan.position - FindDeep(b.Root.transform, "engine" + k).position, fan.forward).magnitude;
             if (Mathf.Abs(Mathf.Abs(spin.z) - 1f) > 1e-4f || offAxis > 1e-3f)
                 throw new InvalidDataException($"{name} must spin about its local Z on the nacelle's axis (FanSpin): spin axis {spin}, pivot {offAxis:F4} m off the axis.");
         }

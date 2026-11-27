@@ -9,9 +9,9 @@ strips, stage collars and end caps, inlet lips) is base paint too, a shade light
 livery-coloured satin; left at its baked grey it showed as pale edges under every livery (owner, 2026-10-17).
 Markings, stencils, the engines' hot section (BARE), lights and interiors keep the baked colour. The camouflage is a
 function of 3D position (with |x|, since the body's right side reuses the left side's islands outside its text
-bands), so it runs across every UV seam. The faction insignia replace the aft body's
-star and bar (painted out; the insignia sits in the same text band, unique on both sides, above it) and sit on the
-upper and lower skin of the wing whose islands the other wing copies. The insignia are drawn here as vector shapes after the factions' marks:
+bands), so it runs across every UV seam. The faction insignia sit in the aft body's text band round
+fuselage_aft.INSIGNIA (unique on both sides) and on the upper and lower skin of the wing whose islands the other wing
+copies. The insignia are drawn here as vector shapes after the factions' marks:
 BDF's shield between three stripes, PALA's ring round a triangle of triangles; the matte liveries take them in greys.
 
 CenturionAuthor.AuthorLiveries reads the files as <stem>_livery_<key>.png and keeps the same names, factions and
@@ -40,7 +40,7 @@ LIVERIES = {
 # Desert blotches: (feature size m, threshold, seed) for each tone after the base, about 30% and 20% of the skin.
 CAMO = ((7.0, 0.56, 41), (5.0, 0.60, 43))
 
-INSIGNIA_D = 1.6  # m across on the body: inside fuselage_aft's 2.14 m text band round its star and bar
+INSIGNIA_D = 1.6  # m across on the body: inside fuselage_aft's 2.14 m text band round INSIGNIA
 INSIGNIA_DEG = 60.0  # its centre's angle from the crown: above the sponson's blend into the flank, which is the struts'
 WING_STATION_X = 15.5  # m out on the wing: between the nacelle and the strut foot
 WING_D_CHORD = 0.5  # the wing insignia's width as a fraction of the local chord
@@ -148,20 +148,6 @@ def body_frames(coords, s, arc, deg):
         yield (np.abs(x) < 1.05) & (np.abs(y) < 1.05) & (np.sign(deg) == side), x, y
 
 
-def old_marking(coords, s, arc):
-    """The signed distance to fuselage_aft's star and bar (its disc and bar, as it paints them), both sides."""
-    np = paint.np
-    cs, ca, R = fuselage_aft.INSIGNIA
-    sym = np.full(len(s), 1e9)
-    for side in (1, -1):
-        v = float(coords.arc_at(cs, side * ca))
-        up = -side
-        circle = np.hypot(s - cs, arc - v) - R
-        bar = paint.rrect_sdf(s, arc, cs - 2.0 * R, cs + 2.0 * R, v + up * 0.35 * R, v - up * 0.31 * R, 0.0)
-        sym = np.minimum(sym, np.minimum(circle, bar))
-    return sym
-
-
 def wing_frames(pos, nrm, sel_wing, px):
     """The insignia frames on the wing that owns the islands, upper and lower: a planar projection about the skin
     point over (under) the upper skin's mid chord at WING_STATION_X, x right and y forward as seen from outside, in
@@ -204,14 +190,6 @@ def paint_liveries(coords, flat, albedo, metal, groups, px):
     if bool(body.any()):
         s_b, deg_b, arc_b = coords.locate(pos[body])
         s[body], deg[body], arc[body] = s_b, deg_b, arc_b
-        # Under the old star and bar the paint takes the livery at the marking's own brightness variation: the dark
-        # disc and bar (fuselage_aft.MARKING), or the star and its inner outline in the paint's grey.
-        sym = old_marking(coords, s[body], arc[body])
-        under = np.clip(0.5 - (sym - 0.015) / px, 0.0, 1.0)
-        own = np.where(lum[body] > 0.27, 0.372, 0.175)
-        idx = np.nonzero(body)[0]
-        ratio[idx] = ratio[idx] * (1 - under) + (lum[idx] / own) * under
-        w[idx] = np.maximum(w[idx], under)
     wing = (flat["group"] == groups.index("wing") + 1) & ~flat["moving"] if "wing" in groups else np.zeros(len(cls), bool)
     frames = []
     if bool(body.any()):

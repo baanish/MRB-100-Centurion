@@ -1635,6 +1635,11 @@ def uv_raster(objs, size=ATLAS):
 
 # ---------- smoothing ----------
 SHARP_ANGLE = math.radians(50.0)
+# Between two recess faces (the flat-painted primer: the split halves' inner faces, their nose wedges, the spoiler
+# wells): smoothed at SHARP_ANGLE, a lower half's inner face shared normals with the recess faces round it, corners
+# leaning up to 21 degrees, and its 3 m slivers shaded from those corners to the upright ones in diagonal stripes
+# (build 48)
+PRIMER_SHARP_ANGLE = math.radians(5.0)
 
 
 def bake_normals(objs):
@@ -1648,10 +1653,15 @@ def bake_normals(objs):
         bm = bmesh.new()
         bm.from_mesh(o.data)
         soft = bm.edges.layers.int.get("soft")
+        # the exterior pass's recess and primer faces (s4_uv "primer") sit on the skin's material: their edge onto the
+        # skin stays hard as a material change was, or the thin split halves' inner faces shaded in a soft dark band
+        primer = bm.faces.layers.int.get("primer")
         n = 0
         for e in bm.edges:
             f = e.link_faces
             hard = len(f) == 2 and (f[0].material_index != f[1].material_index or
+                                    (primer is not None and f[0][primer] != f[1][primer]) or
+                                    (primer is not None and f[0][primer] and e.calc_face_angle(0.0) > PRIMER_SHARP_ANGLE) or
                                     (e.calc_face_angle(0.0) > SHARP_ANGLE and not (soft and e[soft])))
             e.smooth = not hard
             n += hard

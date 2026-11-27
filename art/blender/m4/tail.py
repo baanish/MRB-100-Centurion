@@ -35,12 +35,13 @@ import bpy
 import numpy as np
 from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
+from mathutils.kdtree import KDTree
 
 from . import airfoil as af
 from . import fuselage_aft as aft_body
 from . import render
 from . import surface as sf
-from .tail_join import conform_fillet_boundary, join_fillet_nose, land_panel_root
+from .tail_join import join_fillet_nose, land_panel_root
 
 GROUP = "tail"
 # The split tail's moving surfaces (build_centurion S61_SPLIT_TAIL): 1 inboard, biased to yaw; 2 outboard, biased to pitch.
@@ -50,7 +51,7 @@ PARTS = ("vtail_L", "vtail_R") + tuple(f"ruddervator_{s}{n}_visible" for s in "L
 # composite's spare for the tip ring at u 0.12 (TIP_U), so the leading edge seen from above leaves the panel under 12 deg.
 BUDGET_TRIS = 8000  # damage stage 2: reclaim and leaner damage structure (was 7664)
 # vtail_R stays unique for its tail code. The shared atlas can mirror all of it but TAIL_CODE's region on the upper
-# face (about d 3.8 to 5.4 m, chord fractions 0.2 to 0.47) and the NO STEP stencils, once the entry script can mirror
+# face (about d 3.8 to 5.8 m, chord fractions 0.2 to 0.47) and the NO STEP stencils, once the entry script can mirror
 # part of a part across x = 0.
 MIRROR_PARTS = {f"ruddervator_R{n}_visible": f"ruddervator_L{n}_visible" for n in SURFACES}
 # Close-ups (m4/render.py's view form); the first four make the contact sheet.
@@ -118,17 +119,26 @@ FILLET_T_LO = (0.00025, 0.001, 0.002, 0.004, 0.5 * (1 - math.cos(math.pi / PANEL
                0.009, 0.016, FILLET_NOSE_T,
                0.036, 0.05, 0.075, 0.11, 0.16, 0.22, 0.27, 0.32, 0.38, 0.43, 0.48,
                0.53, 0.57, 0.61, 0.65, 0.69, 0.73, 0.76, 0.78)
-# lower_footprint: the chord fractions it relaxes between (to the last section ahead of build_fillet's end blend onto
-# the root), relaxation passes
+# lower_footprint: the chord fractions it relaxes between (to the last section ahead of the fillet's end on the root's
+# bare landing), relaxation passes
 LOWER_FOOTPRINT_SMOOTH = (0.38, 0.73, 6)
-FILLET_ARC = (0.0, 0.035, 0.7, 0.9, 1.0)  # Bezier parameters of the arc, panel edge to body edge
+FILLET_ARC = (0.0, 0.035, 0.3, 0.55, 0.75, 0.9, 1.0)  # Bezier parameters of the arc, panel edge to body edge
 FILLET_R = 0.54  # nominal radius along each surface
 STRAKE_LEN, STRAKE_SIGMA = 1.6, 0.23  # the strake's run forward on the cone, and its width as sqrt(chord fraction)
 STRAKE_NARROW = 0.35  # retain the leading-edge radius as it turns onto the cone
-FILLET_RUN = 0.16
-FILLET_LIP = 0.001  # a sealant film above the facets keeps the tangent landing from z-fighting
+# The cone edge's closing face dives into the cone this far back under the fillet. Run out past the edge instead, it put
+# the cone's skin just outside the fillet inside the fillet's shell, so the build moved those faces to structure and
+# they showed the trim sheet as a pale green-grey sliver along the root.
+FILLET_RUN = 0.02
+FILLET_LIP = 0.001  # the bare root's landing line, this far above the cone's facets
+# The arc lands tangent on both surfaces with its edge zones FILLET_STANDOFF off them: at 1 mm the cone's facets came
+# through it in patches (a crumpled sheet on each root); landed at an angle, its own AO drew a crease along each edge
+# that the bake's texels turned into a jagged crack. Out along the cone's normal, multiples of it at each FILLET_ARC
+# point; along the panel's, it fades as (1 - u)^2 from the panel edge.
+FILLET_STANDOFF = 0.008
+FILLET_STANDOFF_FADE = 0.1  # sections narrower than this, toward each end of the fillet, stand off in proportion
+FILLET_BODY_STANDOFF = (0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0)
 FILLET_SINK = 0.035  # the closing points run this far inside the panel and the cone
-FILLET_EDGE_SINK = 0.03  # the arc's panel end sits under the panel's facets
 
 # Built geometry the paint reads (left side): the fillet's panel and body edges, the ruddervator's span.
 EDGES = {}
@@ -256,11 +266,8 @@ def panel_ring(bl, sec, d, n, cut=False, thick_k=1.0):
     if not cut:
         return pts, set()
     hc, rn, rc = hinge_circle(bl, sec, d)
-    _, A, f = axis_frame(bl, sec, d)
     t_se = skin_end_t(bl, sec, d)
-    p = airfoil_point(bl, le, c, th, cd, td, cam, t_se, True) - hc
-    p -= A * p.dot(A)
-    phi_se = math.degrees(math.atan2(p.dot(td), p.dot(f)))
+    phi_se = cove_lip_deg(bl, sec, d)
     up_idx = [i for i in range(n) if cols[i][0] > t_se]
     lo_idx = [i for i in range(n + 1, 2 * n + 1) if cols[i][0] > t_se]
     j = len(up_idx)
@@ -269,6 +276,14 @@ def panel_ring(bl, sec, d, n, cut=False, thick_k=1.0):
     for k, i in enumerate(reversed(lo_idx)):  # i = 2n (deepest) .. the skin end
         pts[i] = axis_point(bl, sec, d, rc, -(2.0 + (phi_se - 2.0) * k / (j - 1)))
     return pts, set(up_idx) | set(lo_idx)
+
+
+def cove_lip_deg(bl, sec, d):
+    """The angle about the hinge line, from straight ahead, at which the fixed skin meets the cove (its lip)."""
+    hc, A, f = axis_frame(bl, sec, d)
+    p = point(bl, sec, d, skin_end_t(bl, sec, d), True) - hc
+    p -= A * p.dot(A)
+    return math.degrees(math.atan2(p.dot(sec(d)[4]), p.dot(f)))
 
 
 def tip_ds(bl):
@@ -359,7 +374,6 @@ def build(bl, surf, slots):
     parts = {}
     for sfx, side in (("L", 1), ("R", -1)):
         p = sf.Part(f"vtail_{sfx}", (slots[0],))
-        p.bm.verts.layers.float.new('tail_fillet_chord')
         build_panel(bl, surf, p, side, slots)
         build_fillet(bl, surf, p, side, slots)
         build_tip(bl, p, side, slots)
@@ -517,13 +531,11 @@ def build_panel(bl, surf, p, side, slots):
     land_panel_root(p, p.tail_panel_grid, bare, hull, FILLET_LIP, SKIN, STRUCT, ROOT)
     build_cove_ends(bl, p, sec, SKIN)
     bmesh.ops.recalc_face_normals(p.bm, faces=p.bm.faces)
-    p.bm.verts.index_update()
-    p.tail_root_surface = BVHTree.FromPolygons([v.co for v in p.bm.verts],
-                                              [[v.index for v in f.verts] for f in p.bm.faces if f[p.cls] == ROOT])
 
 
 def build_cove_ends(bl, p, sec, skin):
-    """End ribs close the circular cove up to the moving nose's swept envelope."""
+    """End ribs close the circular cove up to the moving nose's swept envelope, lip to lip: swept on to 90 degrees each
+    side, past the skin, they stood out of the cut-out as a tab above and a block below at each end."""
     c0, c1 = cutout_span(bl)
     d0, d1 = ruddervator_mesh_span(bl)
     for wall, end, sign in ((c0, d0, 1), (c1, d1, -1)):
@@ -533,16 +545,18 @@ def build_cove_ends(bl, p, sec, skin):
         limit = (min if sign > 0 else max)(q.dot(axis) for q in nose) - sign * COVE_GAP
         d = wall - sign * 0.005
         rc = hinge_circle(bl, sec, d)[2]
-        ring = [axis_point(bl, sec, d, rc, 90 - 180 * k / 12) for k in range(13)]
+        lip = cove_lip_deg(bl, sec, d)
+        ring = [axis_point(bl, sec, d, rc, lip * (1 - 2 * k / 12)) for k in range(13)]
         back = (min if sign > 0 else max)([q.dot(axis) for q in ring] + [limit - sign * 0.01])
         rings = [[q + axis * (plane - q.dot(axis)) for q in ring] for plane in (back, limit)]
         af.loft(p, rings, skin, RUDDER_END, seams=(0, 12))
 
 
-def fillet_size(t, upper, room):
+def fillet_size(t, upper, room, narrow=1.0):
     """(along the panel, along the cone, strake weight) for the fillet section at chord fraction t: full size forward,
     a long, narrow strake running forward on the cone at the leading edge, narrowing where the ruddervator's root
-    leaves no room (room: metres of fixed panel between the junction and the cut-out) and at the trailing edge."""
+    leaves no room (room: metres of fixed panel between the junction and the cut-out, taken in by the weight narrow) and
+    at the trailing edge."""
     from .paint import smoothstep
     le = math.exp(-t / 0.05)
     strake = math.exp(-((math.sqrt(t) / STRAKE_SIGMA) ** 2))
@@ -554,19 +568,22 @@ def fillet_size(t, upper, room):
     # Cutout clearance narrows the panel side without pinching the body's lap curve.
     rb = (1.15 * ra + 0.1 * le) * (1 - STRAKE_NARROW * strake)
     if room is not None:
-        ra = min(ra, max(0.012, room - 0.06))
+        ra += (min(ra, max(0.012, room - 0.06)) - ra) * narrow
     return ra, rb, strake
 
 
 def fillet_reach(bl, sec, t, upper):
     """(junction d, panel metres per d, along the panel, along the cone, strake weight) of the fillet section at chord
     fraction t, or None where the face misses the cone."""
+    from .paint import smoothstep
     dj = junction(bl, sec, t, upper)
     if dj is None:
         return None
     per_m = (point(bl, sec, dj + 0.01, t, upper) - point(bl, sec, dj - 0.01, t, upper)).length / 0.02
-    room = (cutout_span(bl)[0] - dj) * per_m if t > hinge_t(bl, dj) - 0.08 else None
-    return (dj, per_m, *fillet_size(t, upper, room))
+    # taken in over 12% of the chord ahead of the cut-out: at once, it left a notch in the fillet at the hinge line
+    narrow = float(smoothstep(hinge_t(bl, dj) - 0.2, hinge_t(bl, dj) - 0.08, t))
+    room = (cutout_span(bl)[0] - dj) * per_m if narrow > 0 else None
+    return (dj, per_m, *fillet_size(t, upper, room, narrow))
 
 
 def fillet_edge(bl, sec, t, upper):
@@ -599,7 +616,7 @@ def build_fillet(bl, surf, p, side, slots):
     """The root fillet: one closed shell along the junction, both faces round the leading edge, drawn forward at the
     leading edge into a long, narrow strake on the cone. Each section is a concave arc from the panel to the cone, laid
     out in (along the cone, along the panel) from the junction and mapped onto both surfaces, so it follows the cone's
-    curvature. The body boundary follows the cone's triangles, with a tangent rise into the arc. The closure stays buried."""
+    curvature. It lands tangent on both, a few millimetres off each. The closure stays buried."""
     SKIN, STRUCT = slots[0], slots[1]
     sec = section(bl, side)
     asurf = af.AirfoilSurface(bl, sec)
@@ -621,17 +638,19 @@ def build_fillet(bl, surf, p, side, slots):
     ahead = frame(0.0, True)[5]  # the strake runs this way: forward along the cone from the leading edge
     frames = [frame(t, up) for t, up in cols]
     widths = lower_footprint(cols, [f[6][1] for f in frames])
-    rings, p1s, p2s = [], [], []
+    rings, p1s = [], []
     for (t, up), (dj, J, n_p, per_m, n_b, b, (ra, _, strake)), rb in zip(cols, frames, widths):
         reach = STRAKE_LEN * strake / rb
         ts = cosine_ts(PANEL_N)
         i = min(max(int(np.searchsorted(ts, t)) - 1, 0), PANEL_N - 1)
-        join = []
-        for tt in ts[i:i + 2]:
-            d = fillet_edge(bl, sec, tt, up)
-            join.append(point(bl, sec, bare_edge_d(bl, sec, tt, up) if d is None else d, tt, up))
-        panel_join = join[0].lerp(join[1], (t - ts[i]) / (ts[i + 1] - ts[i]))
-        join_offset = panel_join - facet_point(bl, sec, dj + ra / per_m, t, up)
+        # the panel edge onto the panel ring under it; beside a column that runs bare that ring is the bare landing's,
+        # PANEL_EDGE_D out, and drew the fillet's last sections out to it in a wedge
+        edge_ds = [fillet_edge(bl, sec, tt, up) for tt in ts[i:i + 2]]
+        join_offset = Vector()
+        if None not in edge_ds:
+            join = [point(bl, sec, d, tt, up) for d, tt in zip(edge_ds, ts[i:i + 2])]
+            panel_join = join[0].lerp(join[1], (t - ts[i]) / (ts[i + 1] - ts[i]))
+            join_offset = panel_join - facet_point(bl, sec, dj + ra / per_m, t, up)
 
         def on_body(x):
             """The cone point x out from the junction, carried forward by the strake in proportion."""
@@ -650,58 +669,38 @@ def build_fillet(bl, surf, p, side, slots):
         # leaves the leading edge along it on one radius (2/3 is the quadratic arc about the junction corner)
         h = 2 / 3
         c1, c2 = (0.0, ra * (1 - h)), (rb * (1 - h), 0.0)
-        sink = FILLET_EDGE_SINK * ra * max(0.0, min(1.0, (t - FILLET_NOSE_T) / 0.025))
-        g = (b + ahead * reach).length  # metres on the cone per unit of x: the landing angle and run are in metres
+        g = (b + ahead * reach).length  # metres on the cone per unit of x
+        # held off in full, the ends' last millimetre-wide sections stood out of the corner as a wedge
+        off = FILLET_STANDOFF * min(1.0, min(ra, rb * g) / FILLET_STANDOFF_FADE)
+        lip = off * max(0.0, min(1.0, (t - FILLET_NOSE_T) / 0.025))  # none round the welded nose
         arc = []
-        for u in FILLET_ARC:
+        for u, k in zip(FILLET_ARC, FILLET_BODY_STANDOFF):
             w = ((1 - u) ** 3, 3 * (1 - u) ** 2 * u, 3 * (1 - u) * u * u, u ** 3)
             x = w[1] * c1[0] + w[2] * c2[0] + w[3] * rb
             y = w[0] * ra + w[1] * c1[1] + w[2] * c2[1]
-            q = at(x, y) - n_p * (sink * (1 - u) ** 2) + on_body(x)[1] * (FILLET_LIP * u * u)
+            q = at(x, y) + n_p * (lip * (1 - u) ** 2) + on_body(x)[1] * (off * k)
+            if u > 0:  # where the lower face runs nearly tangent past the cone, the mapping cuts a chord under its skin
+                hit, facet, _, _ = hull.find_nearest(q)
+                facet = facet if facet.dot(surf.normal(*body_frame(bl, hit))) > 0 else -facet
+                q += facet * max(0.0, off - (q - hit).dot(facet))
             arc.append(q)
-        P1, P2 = arc[0], arc[-1]
+        P1 = arc[0]
         e = FILLET_SINK
-        under, n2 = on_body(rb + FILLET_RUN / g)
+        under, n2 = on_body(max(0.0, rb - FILLET_RUN / g))
         inner = [under - n2 * e, J - (n_p + n_b).normalized() * e * 1.4, P1 - n_p * e]
         rings.append(arc + inner)
         p1s.append(P1)
-        p2s.append(P2)
-    m = len(FILLET_ARC) - 1  # the arc's faces are skin; the lap edge's face into the cone and the closing ones structure
+    # the arc's faces are skin, and so are both edges' faces into their surfaces, whose first millimetres show under the
+    # standoff; the closing faces inside are structure
+    m = len(FILLET_ARC) - 1
     le_col = len(FILLET_T_UP) - 1
     g = af.loft(p, rings, SKIN, FILLET, ring_seams=(le_col,), cap_slot=(STRUCT, STRUCT), cap_cls=(0, 0),
-                face_tag=lambda r, k: (STRUCT, 0) if k >= m else None)
-    chord_layer = p.bm.verts.layers.float['tail_fillet_chord']
-    for (t, up), row in zip(cols, g.V):
-        for vertex in row:
-            vertex[chord_layer] = t * (1 if up else -1)
+                face_tag=lambda r, k: (STRUCT, 0) if m < k < m + 3 else None)
     g.seam_column(0)
     g.seam_column(m)
-    body_boundary = conform_fillet_boundary(p, g, m, hull, FILLET_LIP)
-    p2s = [tuple(vertex.co) for vertex in body_boundary]
     join_fillet_nose(p, p.tail_panel_grid, g, columns(PANEL_N), cols, FILLET_NOSE_T, STRUCT)
-    edges = [edge for edge in p.bm.edges if len(edge.link_faces) == 2
-             and all(face[p.cls] == FILLET for face in edge.link_faces)]
-    midpoints = np.array([tuple((edge.verts[0].co + edge.verts[1].co) / 2) for edge in edges])
-    body_distance = polyline_dist(midpoints, p2s)[0]
-    panel_distance = polyline_dist(midpoints, p1s)[0]
-    for edge, midpoint, db, dp in zip(edges, midpoints, body_distance, panel_distance):
-        if db >= 0.18 or db >= dp:
-            continue
-        q = Vector(midpoint)
-        hit, normal, _, _ = hull.find_nearest(q)
-        if (q - hit).dot(normal) < -0.0001:
-            _, vertex = bmesh.utils.edge_split(edge, edge.verts[0], 0.5)
-            vertex.co = hit + normal * FILLET_LIP
-    from .paint import smoothstep
-    for vertex in {v for f in p.bm.faces if f[p.cls] == FILLET for v in f.verts}:
-        t = vertex[chord_layer]
-        weight = float(smoothstep(0.865, 0.93, t) if t > 0 else smoothstep(0.727, 0.78, -t))
-        if weight > 0:
-            hit, normal, _, _ = p.tail_root_surface.find_nearest(vertex.co)
-            vertex.co = vertex.co.lerp(hit - normal * FILLET_LIP, weight)
     if side > 0:
         EDGES["fillet_panel"] = [tuple(v) for v in p1s]
-        EDGES["fillet_body"] = [tuple(vertex.co) for vertex in body_boundary]
 
 
 def ruddervator_ring(bl, sec, d):
@@ -784,7 +783,7 @@ def build_tip(bl, p, side, slots):
         faces = sf.surface_patch(p, asurf, corners, 1, 8, 0.006, -0.012, GREEN)
         underside = [asurf.point(*sf.bilinear(corners, i, j / 8)) - asurf.normal(*sf.bilinear(corners, i, j / 8)) * 0.012
                      for i in (0, 1) for j in (2, 4, 6)]
-        buried = [vertex for vertex in {v for group in faces for face in group for v in face.verts}
+        buried = [vertex for vertex in dict.fromkeys(v for group in faces for face in group for v in face.verts)
                   if any((vertex.co - point).length < 1e-6 for point in underside)]
         bmesh.ops.dissolve_verts(p.bm, verts=buried, use_face_split=False)
     for back in DISCHARGERS["tip"]:
@@ -858,6 +857,20 @@ def check(bl, objs):
                                                "pass": not clear}
     found = {k: v for k, v in bl.overlaps(scene).items() if any(n in k for n in PARTS)}
     res["no_overlap_unjointed_parts"] = {"value": found or "none", "pass": not found}
+    # The fillets come from the same code with side -1, so they mirror unless something fits them to the cone's own
+    # triangles, which differ left to right (build 45's fillets differed by 15 cm and read as two shapes).
+    centres = {}
+    for s in "LR":
+        o = objs[f"vtail_{s}"]
+        cls = o.data.attributes["cls"].data
+        centres[s] = [o.matrix_world @ p.center for p in o.data.polygons if cls[p.index].value == FILLET]
+    kd = KDTree(len(centres["L"]))
+    for i, c in enumerate(centres["L"]):
+        kd.insert(c, i)
+    kd.balance()
+    worst = max(kd.find(Vector((-c.x, c.y, c.z)))[2] for c in centres["R"])
+    res["fillets_mirror"] = {"value": round(worst, 4), "limit": "right fillet's face centres mirrored within 0.01 m of "
+                             "the left's", "pass": len(centres["L"]) == len(centres["R"]) and worst < 0.01}
     return res
 
 
@@ -888,7 +901,7 @@ RUDDER_ACCESS = {"1": (2.55,), "2": (4.9, 6.6)}
 LAP_CONTRAST = 0.5  # lap joints' groove darkening and depth, as a fraction of the full-span joints'
 # The tail code on both upper faces, the side the game's chase camera sees: (text, d, chord fraction, font size in
 # metres). It reads from behind, glyphs upright toward the nose, so the right panel keeps its own islands.
-TAIL_CODE = (("MR", 4.6, 0.265, 0.71), ("1043", 4.6, 0.43, 0.27))
+TAIL_CODE = (("MR", 4.6, 0.265, 0.71), ("1043", 5.44, 0.43, 0.27))
 PAINT_RGB = (0.38, 0.39, 0.405)  # paint.PAINT[HULL]
 WINDOW_RGB = (0.33, 0.335, 0.34)  # the dielectric antenna window
 BRACKET_RGB = (0.35, 0.36, 0.37)
@@ -1008,6 +1021,11 @@ def paint(cv, text_mask):
                        + img[y0 + 1, x0] * (1 - tx) * ty + img[y0 + 1, x0 + 1] * tx * ty)
         cv.paint(cov * mask, rgb=rgb)
 
+    # the hinge doublers (drawn below) are plates over the skin: no joint runs across one, and each is one tone. The
+    # joints stop clear of the outline's outer fastener row (0.03 m out), so their heads do not crowd it.
+    doubler = np.min([rrect_sdf(X, S, x - 0.16, x + 0.16, S_se - BRACKET_LEN - 0.1, S_se - 0.012, 0.03)
+                      for x in brackets], axis=0)
+    clear_of_doublers = 1.0 - (doubler < 0.06) * up
     # panel tones: each skin between joints differs a little
     strip = np.searchsorted(np.array((LE_JOINT, FRONT_SPAR, 0.32, REAR_SPAR)), U)
     bay = np.zeros(cv.n, int)
@@ -1019,6 +1037,7 @@ def paint(cv, text_mask):
     cell = ((strip * 16 + bay) * 2 + UP) * 16 + np.clip(kind - 59, 0, 15)
     tone = ((cell * 2654435761) % 1000) / 1000.0 - 0.5
     tone[(PANELS > 0) & (X > tip_joint)] = 0.0  # the tip cap in the panel's mean tone, so it reads as one with it
+    tone[(PANELS > 0) & UP & (doubler < 0)] = 0.0
     cv.albedo *= (1 + 0.045 * tone * on(*SKIN_CLASSES))[:, None]
 
     # ---- fixed panel ----
@@ -1028,11 +1047,11 @@ def paint(cv, text_mask):
     span_end = tip_joint
     spanwise(PANELS, LE_JOINT, 0, 1, ROOT_D, span_end)
     spanwise(PANELS, FRONT_SPAR, 0, 2, ROOT_D, span_end)
-    spanwise(PANELS, REAR_SPAR, 0, 2, ROOT_D, span_end)
+    spanwise(PANELS * clear_of_doublers, REAR_SPAR, 0, 2, ROOT_D, span_end)
     for u0, s in LAPS:
         spanwise(PANELS, u0, s, 0, ROOT_D, span_end)
     for u0, u1, s, xs in SPLICES:
-        m = PANELS * side_mask(s) * (U >= u0) * (U <= u1)
+        m = PANELS * clear_of_doublers * side_mask(s) * (U >= u0) * (U <= u1)
         for x in xs:
             splice(m, x)
     splice_x = [x for *_, xs in SPLICES for x in xs]
@@ -1049,12 +1068,12 @@ def paint(cv, text_mask):
     # a thin red keep-clear line ahead of the hinge, broken at the flush fittings
     near_cut = PANELS * (X > d0 - 0.02) * (X < d1 + 0.02)
     clear_of_fittings = np.min([np.abs(X - x) for x in brackets], axis=0) > 0.22
-    cv.paint(cv.coverage(np.abs(S - (S_se - 0.09)), 0.022) * near_cut * clear_of_fittings, rgb=RED)
+    cv.paint(cv.colour_line(np.abs(S - (S_se - 0.09)), 0.022) * near_cut * clear_of_fittings, rgb=RED)
     # crush hazard symbols by the ruddervator's inboard end: thin red triangles
     for s in (1, -1):
         sx, su = d0 + 0.35, hinge_t(bl, d0) * chord(d0) - 0.45
         tri = [(sx - 0.1, su - 0.08), (sx + 0.1, su - 0.08), (sx, su + 0.1)]
-        cv.paint(cv.coverage(np.abs(poly_sdf(X, S, tri)), 0.018) * PANELS * side_mask(s), rgb=RED)
+        cv.paint(cv.colour_line(np.abs(poly_sdf(X, S, tri)), 0.018) * PANELS * side_mask(s), rgb=RED)
     # hinge fittings: a fastened doubler under each, the fitting itself a shade darker
     for x in brackets:
         sdf = rrect_sdf(X, S, x - 0.16, x + 0.16, S_se - BRACKET_LEN - 0.1, S_se - 0.012, 0.03)
@@ -1097,11 +1116,9 @@ def paint(cv, text_mask):
         a, b = mesh_span(bl, n)
         for x in ((a + b) / 2, a + 0.07, b - 0.12 if n == SURFACES[-1] else b - 0.07):
             splice(RD * (U > th_) * (X > a - 0.01) * (X < b + 0.01), x)
+    # No plate at the hinge fittings on the moving surface: aft of the fixed panel's doubler, at another width, it read as
+    # one box drawn across the joint, doubled and offset, and split once the surface turned.
     cv.paint(RD * smoothstep(0.965, 0.975, U), rgb=(0.30, 0.305, 0.31))
-    for x in brackets:  # the moving half of each hinge fitting: a fastened plate on the nose skin
-        sdf = rrect_sdf(X, S, x - 0.11, x + 0.11, th_ * C - 0.05, th_ * C + 0.3, 0.03)
-        cv.groove(np.abs(sdf), mask=RD * up)
-        cv.fasteners(np.abs(sdf), X + S, 0.028, mask=RD * up * (np.abs(sdf) < 0.06))
     for x in (x for n in SURFACES for x in RUDDER_ACCESS[n]):  # on the lower face
         panel(RD, x, 0.72 * chord(x) - 0.12, 0.72 * chord(x) + 0.12, 0.3, 0.04, -1)
     cv.paint(RE, rgb=(0.34, 0.345, 0.355), smooth=0.38)

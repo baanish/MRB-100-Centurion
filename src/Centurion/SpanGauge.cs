@@ -29,7 +29,6 @@ static class SpanGauge
 
     static void AfterRefresh(IWingAngleGauge ___wingAngleInterface, Transform ___wingIcon, Transform ___inputPivot, TextMeshProUGUI ___label)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("span gauge")) return;
         if (___wingAngleInterface is not TelescopeController telescope)
         {
             return;

@@ -10,12 +10,36 @@ namespace Centurion.Editor
 {
     public static partial class CenturionAuthor
     {
+        // Saved missions name a mount by its jsonKey, so the 0.1.3 keys stay and carry the balanced racks, whatever count
+        // the key names; the 0.1.3 counts moved to new <slug>legacy_<count> keys (owner, 2026-11-21 and 2026-11-22).
         private const string Bomb500ForwardKey = "baanish_centurion_b500_45";
         private const string Bomb500AftKey = "baanish_centurion_b500_48";
         private const string Bomb250ForwardKey = "baanish_centurion_b250_90";
         private const string Bomb250AftKey = "baanish_centurion_b250_108";
         private const string BombGlideForwardKey = "baanish_centurion_b250lr_84";
         private const string BombGlideAftKey = "baanish_centurion_b250lr_90";
+
+        private static readonly Vector3 Bomb500Size = new Vector3(0.41968f, 0.43636f, 2.73131f);
+        private static readonly Vector3 Bomb250Size = new Vector3(0.28620f, 0.30005f, 2.25149f);
+        private static readonly Vector3 BombGlideSize = new Vector3(0.28318f, 0.33788f, 2.25149f);
+
+        // Three deep, each rack on its own bay (set 0 forward, 1 aft). Balanced racks hold the Darkreach's rounds per cubic
+        // metre of bay (its 96 to 103 m3 against the Centurion's 175 to 180 m3); LEGACY racks are event content.
+        private static readonly (string Key, int Set, bool Legacy, string StockKey, int StockCount, int Columns, int Layers, float Mass, Vector3 Size)[] BombRacks =
+        {
+            (Bomb500ForwardKey, 0, false, "bomb_500_internalx12", 12, 5, 2, 500f, Bomb500Size),
+            (Bomb500AftKey, 1, false, "bomb_500_internalx12", 12, 4, 3, 500f, Bomb500Size),
+            ("baanish_centurion_b500legacy_45", 0, true, "bomb_500_internalx12", 12, 5, 3, 500f, Bomb500Size),
+            ("baanish_centurion_b500legacy_48", 1, true, "bomb_500_internalx12", 12, 4, 4, 500f, Bomb500Size),
+            (Bomb250ForwardKey, 0, false, "bomb_250_internalx18", 18, 5, 4, 250f, Bomb250Size),
+            (Bomb250AftKey, 1, false, "bomb_250_internalx18", 18, 5, 4, 250f, Bomb250Size),
+            ("baanish_centurion_b250legacy_90", 0, true, "bomb_250_internalx18", 18, 5, 6, 250f, Bomb250Size),
+            ("baanish_centurion_b250legacy_108", 1, true, "bomb_250_internalx18", 18, 6, 6, 250f, Bomb250Size),
+            (BombGlideForwardKey, 0, false, "bomb_250_glide_internalx8", 8, 5, 4, 270f, BombGlideSize),
+            (BombGlideAftKey, 1, false, "bomb_250_glide_internalx8", 8, 5, 4, 270f, BombGlideSize),
+            ("baanish_centurion_b250lrlegacy_84", 0, true, "bomb_250_glide_internalx8", 8, 7, 4, 270f, BombGlideSize),
+            ("baanish_centurion_b250lrlegacy_90", 1, true, "bomb_250_glide_internalx8", 8, 5, 6, 270f, BombGlideSize),
+        };
 
         // Fixed stock orientation, default 0.08 m store gaps, 0.10 m to the detailed bay structure. The roof rack reaches
         // down to 4.23 m. Aft fit assumes the forward cross-section at stations 23.6 to 32.6, hardpoint 28.1 / 3.55 m;
@@ -30,25 +54,29 @@ namespace Centurion.Editor
 
         private static void AuthorBombMounts(Dictionary<string, Object> weapons, List<(string Key, int Set)> modMounts)
         {
-            var racks = new[]
+            foreach (var (key, set, legacy, stockKey, stockCount, columns, layers, mass, size) in BombRacks)
             {
-                (Bomb500ForwardKey, "bomb_500_internalx12", 12, 5, 3, 500f, new Vector3(0.41968f, 0.43636f, 2.73131f)),
-                (Bomb500AftKey, "bomb_500_internalx12", 12, 4, 4, 500f, new Vector3(0.41968f, 0.43636f, 2.73131f)),
-                (Bomb250ForwardKey, "bomb_250_internalx18", 18, 5, 6, 250f, new Vector3(0.28620f, 0.30005f, 2.25149f)),
-                (Bomb250AftKey, "bomb_250_internalx18", 18, 6, 6, 250f, new Vector3(0.28620f, 0.30005f, 2.25149f)),
-                (BombGlideForwardKey, "bomb_250_glide_internalx8", 8, 7, 4, 270f, new Vector3(0.28318f, 0.33788f, 2.25149f)),
-                (BombGlideAftKey, "bomb_250_glide_internalx8", 8, 5, 6, 270f, new Vector3(0.28318f, 0.33788f, 2.25149f)),
-            };
-            foreach (var (key, stockKey, stockCount, columns, layers, mass, size) in racks)
+                weapons[key] = AuthorBombMount(weapons[stockKey], key, stockCount, columns, layers, mass, size, legacy: legacy);
+                modMounts.Add((key, set));
+            }
+        }
+
+        // The bomb racks are authored before the prefab, so their clearance is checked once the bays exist.
+        private static void CheckBombRackClearance(Vector3[][][] bayTriangles)
+        {
+            var gap = new Vector3(BombStoreGap, BombStoreGap, BombStoreGap);
+            foreach (var rack in BombRacks)
             {
-                weapons[key] = AuthorBombMount(weapons[stockKey], key, stockCount, columns, layers, mass, size);
-                modMounts.Add((key, 0));
-                modMounts.Add((key, 1));
+                var extent = Vector3.Scale(rack.Size + gap, new Vector3(rack.Columns, rack.Layers, 3)) - gap;
+                var bounds = new Bounds(new Vector3(0, BombGridTop - BombHardpointHeight - extent.y * 0.5f, 0), extent);
+                if (!RackFits(bounds, bayTriangles[rack.Set]))
+                    throw new InvalidDataException($"{rack.Key}: {rack.Columns}x{rack.Layers}x3 no longer clears its bay");
             }
         }
 
         private static Object AuthorBombMount(Object stockMount, string key, int stockCount, int columns, int layers,
-            float massPerRound, Vector3 size, int tandem = 3, bool denseMissile = false, float tandemGap = BombStoreGap)
+            float massPerRound, Vector3 size, int tandem = 3, bool denseMissile = false, float tandemGap = BombStoreGap,
+            bool legacy = false)
         {
             var count = columns * layers * tandem;
             var stock = new SerializedObject(stockMount);
@@ -57,13 +85,13 @@ namespace Centurion.Editor
                 throw new InvalidDataException(key + ": stock bay rack settings changed");
             // The rack carries the stock weapon itself (its name, stats and icon), not a copy.
             var info = Prop(stock, "info").objectReferenceValue;
-            AssetDatabase.DeleteAsset(ModFolder + "/" + key + "_Info.asset");
+            if (!legacy) AssetDatabase.DeleteAsset(ModFolder + "/" + key + "_Info.asset");
             var bomb = (GameObject)Prop(new SerializedObject(info), "weaponPrefab").objectReferenceValue;
             var missile = bomb.GetComponent(GameType("Missile"));
             var definition = Prop(new SerializedObject(missile), "definition").objectReferenceValue;
             if (Prop(new SerializedObject(definition), "mass").floatValue != massPerRound)
                 throw new InvalidDataException(key + ": stock bomb mass changed");
-            if (denseMissile && key.StartsWith("baanish_centurion_auger_", StringComparison.Ordinal))
+            if (denseMissile && key.StartsWith("baanish_centurion_auger", StringComparison.Ordinal))
             {
                 // The game also has a mounted mesh with this name; name-only rebinding can select it instead of the missile,
                 // so the Auger keeps one copy of its stock info, pointing at a renamed projectile.
@@ -78,6 +106,20 @@ namespace Centurion.Editor
                 info = SaveAsset(info, ModFolder + "/" + info.name + ".asset");
             }
             var name = Prop(new SerializedObject(info), "weaponName").stringValue;
+            var mountInfo = info;
+            if (legacy)
+            {
+                // WeaponMount.Initialize names the mount "<info.weaponName> x<ammo>" from the mount's own info, then takes
+                // the first store's info (WeaponMount.cs:120-131). This copy only labels the menu; the stores keep the
+                // stock info, so stations and cost per round stay the stock bomb's.
+                name = "LEGACY: " + name;
+                mountInfo = Object.Instantiate(info);
+                var label = new SerializedObject(mountInfo);
+                Prop(label, "weaponName").stringValue = name;
+                label.ApplyModifiedPropertiesWithoutUndo();
+                mountInfo.name = key + "_Info";
+                mountInfo = SaveAsset(mountInfo, ModFolder + "/" + mountInfo.name + ".asset");
+            }
 
             var root = Object.Instantiate((GameObject)Prop(stock, "prefab").objectReferenceValue);
             try
@@ -146,7 +188,9 @@ namespace Centurion.Editor
                 Prop(so, "jsonKey").stringValue = key;
                 Prop(so, "mountName").stringValue = name + " x" + count;
                 Prop(so, "prefab").objectReferenceValue = SavePrefab(root, ModFolder + "/" + key + ".prefab");
-                Prop(so, "info").objectReferenceValue = info;
+                Prop(so, "info").objectReferenceValue = mountInfo;
+                // The game's event content flag: offered only where the mission allows event content (WeaponMount.cs:92-104).
+                Prop(so, "isEventContent").boolValue = legacy;
                 Num(so, "ammo", count);
                 Num(so, "mass", massPerRound * count);
                 if (denseMissile)

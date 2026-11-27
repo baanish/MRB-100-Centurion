@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
@@ -29,9 +30,9 @@ static class PlayerInputHold
     internal static readonly PatchTarget[] PatchTargets =
     {
         new("debug-inputs", typeof(PilotPlayerState), "PlayerAxisControls",
-            postfix: AccessTools.Method(typeof(PlayerInputHold), nameof(HoldPitchAndThrottle))),
+            postfix: AccessTools.Method(typeof(PlayerInputHold), nameof(HoldPitchAndThrottle)), diagnostic: true),
         new("debug-inputs", typeof(PilotPlayerState), "PlayerThrottleAxis1Controls",
-            postfix: AccessTools.Method(typeof(PlayerInputHold), nameof(HoldThrottle))),
+            postfix: AccessTools.Method(typeof(PlayerInputHold), nameof(HoldThrottle)), diagnostic: true),
     };
 
     /// <summary>
@@ -40,7 +41,6 @@ static class PlayerInputHold
     /// </summary>
     static void HoldPitchAndThrottle(ControlInputs ___controlInputs, Pilot ___pilot)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("debug-inputs")) return;
         HoldThrottle(___controlInputs, ___pilot);
         if (Pitch.Value != Off && IsLocalPlayer(___pilot))
         {
@@ -60,7 +60,6 @@ static class PlayerInputHold
 
     static void HoldThrottle(ControlInputs ___controlInputs, Pilot ___pilot)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("debug-inputs")) return;
         if (Throttle.Value != Off && IsLocalPlayer(___pilot))
         {
             ___controlInputs.throttle = Mathf.Clamp01(Throttle.Value);
@@ -70,3 +69,4 @@ static class PlayerInputHold
     static bool IsLocalPlayer(Pilot pilot) =>
         Diagnostics.Value && GameManager.GetLocalAircraft(out Aircraft aircraft) && aircraft == pilot.aircraft;
 }
+#endif

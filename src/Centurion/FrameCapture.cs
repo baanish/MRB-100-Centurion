@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -360,3 +361,4 @@ public static class FrameIndex
         return true;
     }
 }
+#endif

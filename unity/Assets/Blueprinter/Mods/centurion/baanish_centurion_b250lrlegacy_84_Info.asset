@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1706624141, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Name: baanish_centurion_b250lrlegacy_84_Info
+  m_EditorClassIdentifier: 
+  weaponPrefab: {fileID: 1709254077376921, guid: e4f18850577114041a3dfa3dad19eb5c,
+    type: 3}
+  effectiveness:
+    antiSurface: 0.5
+    antiAir: 0.2
+    antiMissile: 0
+    antiRadar: 0
+  targetRequirements:
+    lineOfSight: 1
+    minAltitude: 0
+    maxAltitude: 100
+    minRange: 1000
+    maxRange: 10000
+    maxSpeed: 30
+    minIR: 0
+    minRadar: 0
+    minAlignment: 30
+    minOwnerSpeed: 200
+    minValue: 0
+  pK: 2
+  weaponName: 'LEGACY: PAB-250LR'
+  shortName: PAB-250LR
+  description: Optically guided 250kg bomb, fitted with range extension kit to allow
+    it to glide over long distances.
+  fireInterval: 0.3
+  muzzleVelocity: 0
+  maxSpeed: -1
+  dragCoef: 0.1
+  gravMult: 1
+  pierceDamage: 350
+  blastDamage: 250
+  weaponIcon: {fileID: 21300000, guid: e0b4fdcd752cee1419efcdf260537d34, type: 2}
+  armorTierEffectiveness: 7
+  airburstHeight: 0
+  visibilityWhenFired: 0
+  costPerRound: 0.105
+  massPerRound: 270
+  useWeaponDoors: 1
+  boresight: 0
+  laserGuided: 0
+  missile: 0
+  bomb: 0
+  glideBomb: 1
+  gun: 0
+  overHorizon: 0
+  nuclear: 0
+  strategic: 0
+  energy: 0
+  jammer: 0
+  troops: 0
+  hideInDisplay: 0
+  cargo: 0
+  rearmGround: 0
+  rearmShip: 0
+  sling: 0

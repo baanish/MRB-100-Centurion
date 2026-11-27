@@ -21,6 +21,7 @@ No text: every island here is shared with the right-hand side (MIRROR_PARTS), wh
 entry script mirrors whole parts, so no island can be kept unique. Placards are plain ruled rectangles."""
 
 import math
+from contextlib import contextmanager
 
 import bmesh
 import bpy
@@ -29,9 +30,9 @@ from mathutils import Matrix, Vector
 from mathutils.kdtree import KDTree
 
 from . import airfoil as af
-from . import render
+from . import fuselage_aft, render
 from . import surface as sf
-from .paint import INTERIOR
+from .paint import INTERIOR, check_seams
 from .surface import DOOR, FITTING
 from .struts_hull import conform_root_boundary, hull_triangles, land_root_column
 
@@ -40,6 +41,22 @@ PARTS = ("strut_inner_L", "strut_inner_R", "strut_outer_L", "strut_outer_R", "sp
          "geardoor_LM_visible", "geardoor_RM_visible")
 BUDGET_TRIS = 14700  # damage stage 2: reclaim and leaner damage structure (was 13400)
 MIRROR_PARTS = {n: n.replace("_R", "_L", 1) for n in PARTS if "_R" in n}
+# The main gear doors' AO is baked again with the gear up (the legs stowed, the doors swung shut) and each door texel
+# keeps the lighter of the two (detail_centurion.texture_atlas): baked only at rest, where a door hangs open beside the
+# body with its outer skin facing the belly, that skin took AO 0.45, 0.25 under the sponson skin beside it once shut,
+# and in flight the door read as a darker panel than the skin round it (the owner's playtest of build 52)
+STOWED_AO_CLASSES = (DOOR,)
+
+
+@contextmanager
+def stowed(objs):
+    """The gear up for this group's STOWED_AO_CLASSES bake: the main legs stowed (gear.stowed) and the main doors
+    shut (gear.doors_shut); the legs are the gear group's objects, found by name."""
+    from . import gear
+    with gear.stowed({n: bpy.data.objects[n] for n in ("gear_LM", "gear_RM")}), gear.doors_shut(("geardoor_LM", "geardoor_RM")):
+        yield
+
+
 # Close-ups (m4/render.py's view form); the first four make the contact sheet.
 # The review sun shines from ahead, right and above, so the close-ups look at the right-hand side (x < 0), whose parts
 # are the left's mirrored and wear the same maps.
@@ -104,7 +121,9 @@ FOOT_INSET = 0.004  # the node fairing's top pressed into the wing's lower skin 
 # Node fairing on the wing's lower skin, round the strut's foot: metres ahead of and behind the node, half width,
 # depth, its centre's offset outboard of the node, and its fullest section as a fraction of its length. The tail
 # ends 30 cm ahead of the aileron hinge.
-POD_FWD, POD_AFT, POD_W, POD_D, POD_DX, POD_VM = 1.3, 0.78, 0.44, 0.27, -0.22, 0.42
+# The tail ends clear of the aileron's swept volume: at 0.78 aft its tip reached the cove the exterior pass cuts round
+# the aileron, which cut it off onto a structure face, a black notch at the tip (finding 36, build 45)
+POD_FWD, POD_AFT, POD_W, POD_D, POD_DX, POD_VM = 1.3, 0.62, 0.44, 0.27, -0.22, 0.42
 POD_RINGS = 15  # cosine spaced along the pod, so the nose and the pointed tail get the most rings
 POD_ARC = 13  # points on the fairing's lower arc
 POD_FLANGE = (0.05, 0.007)  # the attachment flange on the wing skin: width past the fairing's side, thickness
@@ -343,13 +362,10 @@ def build_inner(bl, p, S, slots, body_hull):
     rings.append(S.ring([d + 0.06 for d in entry], kc0, kt0))  # inside the cowl wall
     duct = cowl_sdf(bl, -0.01, duct=True)
     wall = [S.crossing(j, 1.0, 1.0, duct, S.d_in - 0.6, S.d_hub) for j in range(M)]
-    rings.append(S.ring(wall))  # 1 cm inside the wall, at the duct's outer wall
-    zones += [STRUCT, STRUT]
-    for d in (S.d_hub - bl.S6_STRUT_JOIN, S.d_hub + 0.12):
-        rings.append(S.ring(d))
-        zones.append(STRUT)
+    rings.append(S.ring(wall))  # 1 cm outside the duct's outer wall, in the cowl wall: the strut ends here, capped
+    zones += [STRUCT, STRUCT]  # (on across the bypass duct to the node in the core, it read as a stray rod in the duct)
     check_monotone(rings[ROOT_ARC - 2:], S, "strut_inner")  # the fillet turns back along the axis on the acute side
-    hidden = {0, first_hidden, first_hidden + 1, len(rings) - 2}  # the dive, the cowl wall, the core
+    hidden = {0, first_hidden, first_hidden + 1}  # the dive, the cowl wall
     grid = af.loft(p, rings, SKIN, STRUT, seams=(0, S.section_n, 2 * S.section_n), soft=(S.section_n,), ring_seams=(first_hidden,),
             cap_slot=(STRUCT, STRUCT), cap_cls=(0, 0), face_tag=zones_tag(zones, hidden, SKIN, STRUCT))
     conform_root_boundary(p, grid, body_hull, ROOT_FACET_IN)
@@ -363,9 +379,8 @@ def build_outer(bl, p, S, slots):
     SKIN, STRUCT = slots[0], slots[1]
     M = len(S.sec)
     rings, zones = [], []
-    for d in (S.d_hub - 0.12, S.d_hub + bl.S6_STRUT_JOIN):
-        rings.append(S.ring(d))
-        zones.append(STRUT)
+    # it starts 1 cm outside the duct's outer wall, in the cowl wall, capped: from the node in the core across the
+    # bypass duct it read as a stray rod in the duct
     duct = cowl_sdf(bl, -0.01, duct=True)
     wall = [S.crossing(j, 1.0, 1.0, duct, S.d_hub + 0.3, S.d_out + 0.4) for j in range(M)]
     rings.append(S.ring(wall))
@@ -411,8 +426,8 @@ def build_outer(bl, p, S, slots):
                         + 0.002 + 0.005 * (q.z - z0) / (z1 - z0))) for q in rings[-1]]
     zones += [STRUT] * (len(TAPER_U) - 1) + [NODE_POD] * (arc + 1)
     check_monotone(rings[:len(rings) - arc], S, "strut_outer")
-    # the core, the cowl wall (the duct between shows) and the fillet's dive into the node fairing
-    hidden = {0, first_shown - 2, first_shown - 1, len(rings) - 2}
+    # the cowl wall and the fillet's dive into the node fairing
+    hidden = {0, first_shown - 1, len(rings) - 2}
     af.loft(p, rings, SKIN, STRUT, seams=(0, S.section_n, 2 * S.section_n), soft=(S.section_n,), ring_seams=(first_shown,),
             end=sum(rings[-1], Vector()) / M, cap_slot=(STRUCT, STRUCT), cap_cls=(0, 0),
             face_tag=zones_tag(zones, hidden, SKIN, STRUCT))
@@ -781,9 +796,9 @@ class Sponson:
         return out, inb
 
 
-def junctions(SP, stations):
+def junctions(SP, stations, found_only=False):
     """Per station, the ray angles where the skin crosses the hull above and below the pod (the junction lines);
-    where the pod is still under the skin, its nearest station's."""
+    where the pod is still under the skin, its nearest station's (with found_only, None there)."""
     def outside(s, phi):
         x, z = SP.local(s, phi)
         w, zc, h = SP.body(s)
@@ -802,6 +817,8 @@ def junctions(SP, stations):
         ins = [k for k in range(103) if flags[k] != flags[k + 1]]
         found.append((edge(s, grid[ins[0]], grid[ins[0] + 1]), edge(s, grid[ins[-1]], grid[ins[-1] + 1]))
                      if len(ins) >= 2 else None)
+    if found_only:
+        return found
     known = [i for i, f in enumerate(found) if f]
     return [f or found[min(known, key=lambda j: abs(j - i))] for i, f in enumerate(found)]
 
@@ -1260,30 +1277,37 @@ ROOT_JOINT = 1.05  # the root fairing's joint to the strut, metres along the axi
 COLLAR_FLANGE = 0.30  # the collar fitting's flange line on the strut, metres along the axis from the cowl
 # Sponson, on (station, psi): psi is the angle round the pod's own centre at that station, 0 at its bottom, 90
 # outboard, 180 on top, so a line of constant psi follows the pod into its nose and tail like a stringer.
-# Full-girth joints (primary: nose cap, the door's ends carried up the flank, tail cone); the skin between them in
-# bands between longitudinal laps on stringer lines, each band split at its own frames (part-girth laps, staggered
-# band to band like brickwork, so no frame runs the full girth); access panels (station from, to, psi from, to);
-# placards (station, psi, width, height); the jacking point and the ground point (station, psi); drains (station,
-# psi); the flush inlet (station from, to, psi); the louvres (station from, to, psi, count). The well's opening runs
-# from the door's hinge (psi -40) to psi 55 between the door's stations.
-SPONSON_RINGS = (20.35, WELL_S[0] - 0.02, WELL_S[1] + 0.02, 30.3)
-SPONSON_BANDS = ((-60.0, 20.0, (21.9, 29.3)), (20.0, 62.0, (21.7, 29.0)), (62.0, 95.0, (21.3, 24.4, 26.6, 29.4)),
-                 (95.0, 128.0, (21.9, 25.5, 28.75)), (128.0, 158.0, (22.5, 26.0, 29.2)),
-                 (158.0, 200.0, (21.6, 24.8, 28.2)))
-# Access panels stand at least 7 degrees (about 0.12 m) and 0.15 m clear of every lap and joint, or their edges
-# read as doubled lines.
-SPONSON_PANELS = ((20.6, 21.05, 70.0, 87.0), (20.85, 21.45, 102.0, 121.0), (21.95, 22.55, 30.0, 52.0),
-                  (22.45, 22.85, 102.0, 121.0), (23.5, 24.15, 136.0, 151.0), (23.6, 24.2, 70.0, 87.0),
-                  (26.0, 26.5, 102.0, 121.0), (26.85, 27.55, 70.0, 87.0), (28.15, 28.65, 136.0, 151.0),
-                  (29.35, 29.9, 30.0, 50.0), (29.6, 30.0, 70.0, 87.0), (30.6, 31.05, 102.0, 121.0),
-                  (21.0, 21.5, -30.0, 0.0))
-SPONSON_PLACARDS = ((21.62, 80.0, 0.2, 0.11), (22.5, 12.0, 0.16, 0.09), (28.3, 112.0, 0.18, 0.1), (25.0, 108.0, 0.16, 0.09))
+# Seams from the structure in few large sheets, carrying the body's on (fuselage_aft.py): butt joints right round the
+# pod on the body's rings that cross it, so each meets the body's own ring at the fillet, and laps on two stringer
+# lines from the first ring to the last (SPONSON_LAPS, psi); access panels (station from, to, psi from, to), each
+# inside one sheet; placards (station, psi, width, height); the jacking point and the ground point (station, psi);
+# drains (station, psi); the flush inlet (station from, to, psi); the louvres (station from, to, psi, count). The well's
+# opening runs from the door's hinge (psi -40) to psi 55 between the door's stations. check_seams holds the layout on
+# load; outlines stand 7 degrees (about 0.12 m) clear of every seam, or their edges read as doubled lines.
+SPONSON_RINGS = tuple(b for b in fuselage_aft.BUTT_JOINTS if 20.0 < b < 32.0)  # 21.2, 25.0, 28.25: inside the pod
+SPONSON_LAPS = (125.0, 158.0)
+SPONSON_PSI = (-60.0, 200.0)  # the pod's skin round from the inboard to the upper fillet's edges on the body
+SPONSON_PANELS = ((21.95, 22.55, 30.0, 52.0), (23.6, 24.2, 70.0, 87.0), (26.0, 26.5, 100.0, 116.0),
+                  (29.35, 29.9, 30.0, 50.0))
+SPONSON_PLACARDS = ((21.62, 80.0, 0.2, 0.11), (22.5, 12.0, 0.16, 0.09), (28.7, 112.0, 0.18, 0.1), (25.5, 108.0, 0.16, 0.09))
 JACK = (22.15, 10.0)
 GROUND_POINT = (22.95, 34.0)
-DRAINS = ((20.6, 2.0), (22.8, -6.0), (28.3, 4.0), (29.8, -2.0), (30.9, 6.0))
-FLUSH_INLET = (21.15, 21.75, 142.0)
-LOUVRES = (28.1, 28.55, 40.0, 8)
+DRAINS = ((20.6, 2.0), (22.8, -6.0), (28.5, 4.0), (29.8, -2.0), (30.9, 6.0))
+FLUSH_INLET = (21.45, 22.05, 142.0)
+LOUVRES = (28.55, 29.0, 40.0, 8)
 FASTEN_PITCH = 0.09
+check_seams(
+    [(f"sponson butt joint {r}", r, r, *SPONSON_PSI) for r in SPONSON_RINGS if not WELL_S[0] <= r <= WELL_S[1]]
+    + [(f"sponson butt joint {r}", r, r, lo, hi) for r in SPONSON_RINGS if WELL_S[0] <= r <= WELL_S[1]
+       for lo, hi in ((SPONSON_PSI[0], -40.0), (55.0, SPONSON_PSI[1]))]
+    + [(f"sponson lap {p}", SPONSON_RINGS[0], SPONSON_RINGS[-1], p, p) for p in SPONSON_LAPS],
+    [(f"sponson panel {p}", *p) for p in SPONSON_PANELS]
+    + [(f"placard {p[:2]}", p[0] - p[2] / 2, p[0] + p[2] / 2, p[1] - 4.0, p[1] + 4.0) for p in SPONSON_PLACARDS]
+    + [(f"fitting {p}", p[0] - 0.07, p[0] + 0.07, p[1] - 4.0, p[1] + 4.0) for p in (JACK, GROUND_POINT, *DRAINS)]
+    + [("flush inlet", FLUSH_INLET[0], FLUSH_INLET[1], FLUSH_INLET[2] - 6.0, FLUSH_INLET[2] + 6.0),
+       ("louvres", LOUVRES[0] - 0.05, LOUVRES[1] + 0.05, LOUVRES[2] - 12.0, LOUVRES[2] + 12.0),
+       ("formation strip", 28.62, 28.93, 74.0, 106.0)],
+    [("main door", WELL_S[0], WELL_S[1], -40.0, 55.0)], ends=SPONSON_PSI, across=7.0)
 
 
 def paint(cv, text_mask):
@@ -1317,6 +1341,40 @@ def placard(cv, u, v, centre, size, mask):
     for k in (-1, 0, 1):
         d = np.abs(v - (cv_ + k * h * 0.25))
         cv.paint(cv.coverage(d, 0.006) * inside * (np.abs(u - cu) < w / 2 - 0.025), rgb=STENCIL)
+
+
+SEAL_WIDTH = 0.03
+_JUNCTION_LINES = {}
+
+
+def sponson_junction_distance(bl, pos):
+    """Metres from each point (left side: |x|) to the left sponson's junction lines, where its skin leaves the hull
+    above and below the pod: the junction columns, which lie on the hull (build_sponson), over the stations where the
+    pod stands out of it. The sealant line is drawn on these, on the sponson's texels and the hull's (fuselage_aft),
+    so it runs clean along the edge whichever face shows there: read off the body's analytic skin it wandered
+    across the faceted junction in notches and a kink (findings 2 and 33, build 45)."""
+    from . import paint
+    np = paint.np
+    if id(bl) not in _JUNCTION_LINES:
+        SP = Sponson(bl, 1)
+        stations = sponson_stations(SP)
+        found = junctions(SP, stations, found_only=True)
+        _JUNCTION_LINES[id(bl)] = [[tuple(SP.point(s, f[k])) for s, f in zip(stations, found) if f] for k in (0, 1)]
+    out = np.full(len(pos), np.inf)
+    for line in _JUNCTION_LINES[id(bl)]:
+        L = np.asarray(line, dtype=float)
+        lo, hi = L.min(axis=0) - 0.2, L.max(axis=0) + 0.2
+        near = np.all((pos >= lo) & (pos <= hi), axis=1)
+        if not near.any():
+            continue
+        P = pos[near]
+        best = np.full(len(P), np.inf)
+        for a, b in zip(L[:-1], L[1:]):
+            ab = b - a
+            t = np.clip(((P - a) @ ab) / max(float(ab @ ab), 1e-12), 0.0, 1.0)
+            best = np.minimum(best, np.linalg.norm(P - (a + t[:, None] * ab), axis=1))
+        out[near] = np.minimum(out[near], best)
+    return out
 
 
 def body_distance(cv, pos):
@@ -1474,36 +1532,26 @@ def paint_sponson(cv, bl, pos, nrm, SPN):
         fu, fv = (fn(st + 1e-3, arc) - f0) / 1e-3, (fn(st, arc + 1e-3) - f0) / 1e-3
         return np.abs(f0) / np.maximum(np.linalg.norm(fu[:, None] * G_st + fv[:, None] * G_arc, axis=1), 0.25)
     db = body_distance(cv, pos)  # off the body's skin
-    w, top, bot = cv.coords._profile(st)
-    zc = (top + bot) / 2
-    nb = np.stack([pos[:, 0], np.zeros(len(pos)), pos[:, 2] - zc], axis=1)
-    nb /= np.linalg.norm(nb, axis=1)[:, None] + 1e-9
-    slope = np.sqrt(np.clip(1 - np.sum(nrm * nb, axis=1) ** 2, 0.0025, 1.0))
     pod = SPN * (db > 0.1)
     s0, s1 = SPONSON_RINGS[0], SPONSON_RINGS[-1]
     inside = (st > s0) * (st < s1)
 
-    # panel tones between the joints: each band's cells between its own frames
-    cell = np.zeros(len(st), np.int64)
-    for i, (p0, p1, splits) in enumerate(SPONSON_BANDS):
-        m = (psi >= p0) & (psi < p1)
-        cell[m] = (i + 1) * 64 + np.searchsorted(np.array(sorted(SPONSON_RINGS + splits)), st[m])
+    # panel tones: a sheet between the rings and the laps
+    cell = np.searchsorted(np.array(SPONSON_RINGS), st) * 4 + np.searchsorted(np.array(SPONSON_LAPS), psi)
     tone = ((cell * 2654435761) % 1000) / 1000.0 - 0.5
     cv.albedo *= (1 + 0.04 * tone * SPN)[:, None]
-    # the fillet's edge on the body: a sealant line exactly on it, a fastener row on the sponson beside it
-    edge = db / slope  # metres along the skin from the edge
-    cv.paint(cv.coverage(np.abs(edge), 0.03) * SPN, rgb=SEALANT, smooth=0.3)
-    cv.fasteners(np.abs(edge - 0.05), st + arc, 0.0, FASTEN_PITCH, mask=SPN * (edge < 0.1))
-    # full-girth joints: nose cap, the door's ends carried up the flank, tail cone
+    # the fillet's edge on the body: a sealant line on the junction (the hull's texels take it too), a fastener row on
+    # the sponson beside it
+    dj = sponson_junction_distance(bl, pos)
+    cv.paint(cv.coverage(dj, SEAL_WIDTH) * SPN, rgb=SEALANT, smooth=0.3)
+    cv.fasteners(np.abs(dj - 0.05), st + arc, 0.0, FASTEN_PITCH, mask=SPN * (dj < 0.1) * (db > 0.0))
+    # butt joints right round on the body's rings, the laps between the first and the last (check_seams holds them)
     for x in SPONSON_RINGS:
         d = skin_d(lambda u, v: u - x)
-        cv.groove(d, 0.02, mask=pod)
-        cv.fasteners(d, arc, 0.03, FASTEN_PITCH, mask=pod * (d < 0.08))
-    # longitudinal laps between the bands and each band's frame laps (no fasteners)
-    for p0, p1, splits in SPONSON_BANDS:
-        cv.groove(skin_d(lambda u, v: v - to_arc(p1)), mask=pod * inside)
-        for x in splits:
-            cv.groove(skin_d(lambda u, v: u - x), mask=pod * (psi > p0) * (psi < p1))
+        cv.groove(d, 0.016, mask=SPN)  # over the fillet too, to meet the body's ring at the junction
+        cv.fasteners(d, arc, 0.035, FASTEN_PITCH, mask=pod * (d < 0.08))
+    for p in SPONSON_LAPS:
+        cv.groove(skin_d(lambda u, v: v - to_arc(p)), mask=pod * inside)
     for t0, t1, p0, p1 in SPONSON_PANELS:
         d = skin_d(lambda u, v: rrect_sdf(u, v - to_arc((p0 + p1) / 2), t0, t1, -to_arc((p1 - p0) / 2), to_arc((p1 - p0) / 2), 0.05))
         cv.groove(d, mask=pod)
@@ -1513,7 +1561,7 @@ def paint_sponson(cv, bl, pos, nrm, SPN):
     # jacking point: a red ring round a dark socket, as the aft body's
     js, jp = JACK
     r = np.hypot(st - js, arc - to_arc(jp))
-    cv.paint(cv.coverage(np.abs(r - 0.07), RED_LINE) * SPN, rgb=RED)
+    cv.paint(cv.colour_line(np.abs(r - 0.07), RED_LINE) * SPN, rgb=RED)
     cv.paint(cv.fill_coverage(r - 0.03) * SPN, rgb=DARK, height=-0.003)
     # ground point: a stud in a bare ring; drains: small dark holes along the keel
     gs, gp = GROUND_POINT
@@ -1562,7 +1610,7 @@ def paint_door(cv, bl, pos, DR):
     tab = cx * np.clip(np.maximum(1 - (st - s0) / cl, 1 - (s1 - st) / cl), 0.0, None)
     h1 = float(h[(DR > 0) & (tab == 0)].max()) + tab  # the free edge, out over the tabs at the ends
     edge = np.minimum(np.minimum(st - s0, s1 - st), h1 - h)
-    cv.paint(DR * cv.coverage(np.abs(edge - 0.025), 0.022), rgb=RED)
+    cv.paint(DR * cv.colour_line(np.abs(edge - 0.025), 0.022), rgb=RED)
     cv.fasteners(np.abs(edge - 0.07), st + h, 0.0, mask=DR * (np.abs(edge - 0.07) < 0.03) * (h > 0.08))
     for x in (s0 + cl, (s0 + s1) / 2, s1 - cl):
         cv.fasteners(np.abs(st - x), h, 0.0, mask=DR * (np.abs(st - x) < 0.03) * (edge > 0.1))

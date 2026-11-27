@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,8 @@ namespace Centurion;
 /// Debug.* hooks for scenarios that the framework can't set up, applied every physics step while Diagnostics.Enabled is
 /// on. SpeedHoldMps moves the throttle, BallastKg adds
 /// mass the way stores do, FlightAssist flips the stock pitch-limiter switch, Loadout picks the stores the loadout menu would,
-/// Ignition throws the stock engine switch and CockpitLook turns the cockpit camera as the player's view controls would.
+/// Ignition throws the stock engine switch, CockpitSeat moves the cockpit camera to the mission commander's eye and
+/// CockpitLook turns it as the player's view controls would.
 /// EjectionCamera follows the local dismounted pilot for screenshots after the sortie ends.
 /// </summary>
 static class ScenarioHooks
@@ -34,6 +36,7 @@ static class ScenarioHooks
     internal static ConfigEntry<string> Loadout = null!;
     internal static ConfigEntry<string> Ignition = null!;
     internal static ConfigEntry<string> CockpitLook = null!;
+    internal static ConfigEntry<string> CockpitSeat = null!;
     internal static CenturionLog Log = null!;
 
     static FieldInfo? flyThrottle;
@@ -51,7 +54,12 @@ static class ScenarioHooks
     static readonly FieldInfo PanView = AccessTools.Field(typeof(CameraCockpitState), "panView");
     static readonly FieldInfo TiltView = AccessTools.Field(typeof(CameraCockpitState), "tiltView");
     static readonly FieldInfo ViewOffset = AccessTools.Field(typeof(CameraCockpitState), "viewOffset");
+    static readonly FieldInfo FovAdjustment = AccessTools.Field(typeof(CameraCockpitState), "FOVAdjustment");
     static string lookApplied = "";
+    // Debug.CockpitSeat: the aircraft whose cockpit view point now is the commander's eye, the pilot's point it had, and
+    // the aircraft already warned it has no commander's eye.
+    static Aircraft? seatMoved, seatMissing;
+    static Transform? pilotEye;
     static ConfigEntry<bool>? ejectionCamera;
 
     public static void FixedUpdate()
@@ -93,6 +101,7 @@ static class ScenarioHooks
         GearDropProbe.Update(aircraft);
         HoldLoadout(aircraft);
         HoldIgnition(aircraft);
+        HoldCockpitSeat(aircraft);
         HoldCockpitLook();
         if (FlightAssist.Value != "pilot" && aircraft.flightAssist != (FlightAssist.Value == "on"))
         {
@@ -237,7 +246,9 @@ static class ScenarioHooks
     /// <summary>
     /// Debug.CockpitLook: "pan,tilt,raise" holds the cockpit camera's view where the player's Pan View, Tilt View and Move
     /// Vertical controls would put it (CameraCockpitState.cs:150-170): pan degrees right, tilt degrees down, the head raised
-    /// 0 to 0.15 m. The camera turns toward it at the player's view smoothing; it eases back to centre once blank.
+    /// 0 to 0.15 m; an optional fourth value is the field of view in degrees (20 to 120), where the player's Zoom View
+    /// would put it (its FOVAdjustment on the default, lines 141-145). The camera turns toward it at the player's view
+    /// smoothing; it eases back to centre, and to the default field of view, once blank.
     /// </summary>
     static void HoldCockpitLook()
     {
@@ -255,6 +266,7 @@ static class ScenarioHooks
                 PanView.SetValue(cam.cockpitState, 0f);
                 TiltView.SetValue(cam.cockpitState, 0f);
                 ViewOffset.SetValue(cam.cockpitState, 0f);
+                FovAdjustment.SetValue(cam.cockpitState, 0f);
                 lookApplied = "";
                 Log.Info("Debug.CockpitLook: the view back to centre");
             }
@@ -263,14 +275,18 @@ static class ScenarioHooks
         }
 
         string[] parts = wanted.Split(',');
-        if (parts.Length != 3 || !float.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float pan)
-            || !float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float tilt)
-            || !float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float raise))
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var num = System.Globalization.NumberStyles.Float;
+        float fov = 0f;
+        if (parts.Length < 3 || parts.Length > 4 || !float.TryParse(parts[0], num, inv, out float pan)
+            || !float.TryParse(parts[1], num, inv, out float tilt)
+            || !float.TryParse(parts[2], num, inv, out float raise)
+            || (parts.Length == 4 && !float.TryParse(parts[3], num, inv, out fov)))
         {
             if (wanted != lookApplied)
             {
                 lookApplied = wanted;
-                Log.Warning($"Debug.CockpitLook: \"{wanted}\" isn't pan,tilt,raise");
+                Log.Warning($"Debug.CockpitLook: \"{wanted}\" isn't pan,tilt,raise[,fov]");
             }
 
             return;
@@ -279,10 +295,79 @@ static class ScenarioHooks
         PanView.SetValue(cam.cockpitState, Mathf.Clamp(pan, -165f, 165f));
         TiltView.SetValue(cam.cockpitState, Mathf.Clamp(tilt, -65f, 65f));
         ViewOffset.SetValue(cam.cockpitState, Mathf.Clamp(raise, 0f, 0.15f));
+        FovAdjustment.SetValue(cam.cockpitState, parts.Length == 4 ? Mathf.Clamp(fov, 20f, 120f) - cam.desiredFOV : 0f);
         if (wanted != lookApplied)
         {
             lookApplied = wanted;
-            Log.Info(Invariant($"Debug.CockpitLook: pan {pan:0} deg, tilt {tilt:0} deg, head raised {raise:0.00} m"));
+            Log.Info(Invariant($"Debug.CockpitLook: pan {pan:0} deg, tilt {tilt:0} deg, head raised {raise:0.00} m")
+                     + (parts.Length == 4 ? Invariant($", field of view {fov:0} deg") : ""));
+        }
+    }
+
+    /// <summary>
+    /// Debug.CockpitSeat: "commander" points the aircraft's cockpitViewPoint, which the cockpit camera follows every frame
+    /// (CameraCockpitState.cs:214), at the camera point on the head of Aircraft.pilots[1]'s rig; "pilot" restores the
+    /// pilot's. The stock rigs name it by seat: helmetCamPoint on the Darkreach's Pilot, helmetCamPoint2 on its WSO, which
+    /// the Centurion's commander is a copy of. Changing it while the cockpit camera is on re-enters
+    /// that state, since EnterState parents the camera to the view point (CameraCockpitState.cs:78-84); the re-entry also
+    /// centres the view, and CockpitLook turns it again from there.
+    /// </summary>
+    static void HoldCockpitSeat(Aircraft aircraft)
+    {
+        bool commander = CockpitSeat.Value == "commander";
+        if (seatMoved != null && (seatMoved != aircraft || !commander))
+        {
+            seatMoved.cockpitViewPoint = pilotEye;
+            ReenterCockpit(seatMoved);
+            Log.Info($"Debug.CockpitSeat: pilot, the cockpit camera back at {seatMoved.name}'s pilot's eye");
+            seatMoved = null;
+        }
+
+        if (!commander || seatMoved == aircraft)
+        {
+            return;
+        }
+
+        Transform? eye = aircraft.pilots.Length > 1 && aircraft.pilots[1] != null ? HelmetPoint(aircraft.pilots[1]) : null;
+        if (eye == null)
+        {
+            if (seatMissing != aircraft)
+            {
+                seatMissing = aircraft;
+                string heads = string.Join("; ", aircraft.pilots.Where(p => p != null).Select(p => p.name + ": " + string.Join(", ",
+                    p.GetComponentsInChildren<Transform>(true).Where(t => t.name.IndexOf("cam", StringComparison.OrdinalIgnoreCase) >= 0
+                        || t.name.IndexOf("head", StringComparison.OrdinalIgnoreCase) >= 0).Select(t => RigPath(t, aircraft.transform)))));
+                Log.Warning($"Debug.CockpitSeat: {aircraft.name} has no helmetCamPoint* under a second crew member ({aircraft.pilots.Length} pilots: {heads}); the camera stays at the pilot's eye");
+            }
+
+            return;
+        }
+
+        pilotEye = aircraft.cockpitViewPoint;
+        aircraft.cockpitViewPoint = eye;
+        seatMoved = aircraft;
+        ReenterCockpit(aircraft);
+        Vector3 offset = pilotEye != null ? aircraft.transform.InverseTransformVector(eye.position - pilotEye.position) : Vector3.zero;
+        Transform? pilotPoint = aircraft.pilots[0] != null ? HelmetPoint(aircraft.pilots[0]) : null;
+        Log.Info(Invariant($"Debug.CockpitSeat: commander, the cockpit camera at {RigPath(eye, aircraft.transform)}, {offset.x:0.00} m right, {offset.y:0.00} m up, {offset.z:0.00} m forward of the pilot's eye ({(pilotEye != null ? RigPath(pilotEye, aircraft.transform) : "none")}; the pilot's rig resolves to {(pilotPoint != null ? RigPath(pilotPoint, aircraft.transform) : "none")})"));
+    }
+
+    static Transform? HelmetPoint(Pilot pilot) =>
+        pilot.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("helmetCamPoint", StringComparison.Ordinal));
+
+    static string RigPath(Transform t, Transform root)
+    {
+        string path = t.name;
+        for (Transform? up = t.parent; up != null && up != root; up = up.parent) path = up.name + "/" + path;
+        return path;
+    }
+
+    static void ReenterCockpit(Aircraft aircraft)
+    {
+        CameraStateManager cam = SceneSingleton<CameraStateManager>.i;
+        if (cam != null && cam.currentState == cam.cockpitState && cam.followingUnit == aircraft)
+        {
+            cam.SwitchState(cam.cockpitState);
         }
     }
 
@@ -302,3 +387,4 @@ static class ScenarioHooks
         Log.Stage("debug-ignition", $"Debug.Ignition: ignition {Ignition.Value}, was {(aircraft.Ignition ? "on" : "off")}");
     }
 }
+#endif

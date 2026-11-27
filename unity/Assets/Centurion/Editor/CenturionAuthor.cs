@@ -41,7 +41,7 @@ namespace Centurion.Editor
         private const int HardpointSetCount = 4;
         private const string HangarUnitKey = "hangar_med";
         // The blockout origin is station 22.475, the middle of the 44.95 m length, so the aircraft sits centred on the hangar
-        // spawn. The prefab root (the fuselage_M pivot, station 21.0) sits SpawnForward ahead of it; checked against the
+        // spawn. The prefab root (the root part's pivot, station 21.0) sits SpawnForward ahead of it; checked against the
         // export in AuthorPrefab.
         private const float OriginStation = 22.475f;
         private const float SpawnForward = 1.475f;
@@ -58,6 +58,7 @@ namespace Centurion.Editor
             { "glass", Stock + "Material/FastBomber1_glass_PLACEHOLDER.mat" },
             { "Centurion_gear", Stock + "Material/SFB_gear_PLACEHOLDER.mat" },
             { "LOD", Stock + "Material/LOD_PLACEHOLDER.mat" },
+            { "honeycomb", Stock + "Material/honeycomb_PLACEHOLDER.mat" }, // the control surfaces' cores, as stock cores are
             // The detailed meshes' lights (art/blender/detail_centurion.py LIGHTS and the wing's STOCK_SLOTS): the stock red
             // nav light for the beacons and the red nav, the stock green nav light for the green nav, the stock white gear
             // light for the strobes and the slipway, and the stock unlit pale green for the formation strips.
@@ -165,99 +166,85 @@ namespace Centurion.Editor
             public float MaxSplit, SplitDrag;
         }
 
-        // Parents before children. Masses are the blockout's mass_kg (docs/BLOCKOUT-S6.md "Masses") and sum to EmptyMass
-        // with the surfaces; the nose and tail cone carry the radar, laser and capacitor mass where step 6.1's balance put it
-        // (2,626 kg moved from the tail cone to the nose against round 4), which holds the empty CG at station 20.64, 42.7%
-        // of the swept wing's MAC, with 24.9% on the nose gear (docs/BLOCKOUT-S6.md "CG and nose gear", BLOCKOUT-S61.md).
-        // Areas: inner wing 180 and fuselage 50 m² as SPEC. The game has no downwash, so every square metre of tail adds as
-        // much stability as control: the V-tail's fixed panels carry 4 m² each and the split tail's surfaces 28 and 56
-        // (Surfaces), which lifts the 199 t extended aircraft off at 77 m/s under the takeoff AI and holds one engine out on
-        // the tail alone from 69 m/s, with a static margin near 4.4 m extended and 6.1 m retracted (docs/M2-DESIGN.md, "The
-        // split tail").
-        // Braces are extra PartJoints to neighbours whose hulls touch, as the Alkyon's cross joints do (the blend's
-        // bonded_to declarations, docs/BLOCKOUT-S6.md "Joints"); WriteJoints resolves them once every part exists.
-        // The finer part tree (art/blender/part_splits.py, docs/M4-ART-PLAN.md "Damage structure") cuts sections, the wing
-        // roots, the stage 2 tips, the V-tail tips and the sponsons' tails into pieces, and lays skin panels round the
-        // body; a cut part's area and drag are on its first piece here and SplitLift shares them out (CutParts).
+        // The damage part tree (art/blender/damage_tree.py, docs/DECISIONS.md 2026-11-22): 45 stock-style parts, each a
+        // section with its skin on it and one convex collider (stage 2 two, its straight stage and its raked tip), cut on
+        // the bay walls and the bay roof so each bay is its own part; the control surfaces are Surfaces. Parents before
+        // children. Masses are the blockout's mass_kg (art/blender/damage_finalize.py: 0.1.3's masses by skin area, moved
+        // so the CG stays 0.1.3's) and sum to EmptyMass with the surfaces.
+        // Aero: each part flies with the area, drag and lift frame of the 0.1.3 part it stands in for, measured on that
+        // part's blockout shape (the export's <part>_shape), so the aircraft flies as 0.1.3 did. Areas: inner wing 180 and
+        // fuselage 50 m² as SPEC. The game has no downwash, so every square metre of tail adds as much stability as control:
+        // the V-tail's fixed panels carry 4 m² each and the split tail's surfaces 28 and 56 (Surfaces), which lifts the 199
+        // t extended aircraft off at 77 m/s under the takeoff AI and holds one engine out on the tail alone from 69 m/s,
+        // with a static margin near 4.4 m extended and 6.1 m retracted (docs/M2-DESIGN.md, "The split tail").
+        // Braces are extra PartJoints to neighbours whose shapes touch, as the Darkreach's cross joints are; WriteJoints
+        // resolves them once every part exists. A part cut from a whole that 0.1.3 flew as one carries the whole's area on
+        // its first piece here and SplitLift shares it out (CutParts).
         private static readonly PartSpec[] Parts =
         {
-            Body("fuselage_M", null, 20, 1.0f, "", 15000),
-            Body("fuselage_F2", "fuselage_M", 0, 0, null, 0, "wingfairing"),
-            Body("fuselage_F", "fuselage_F2", 12, 1.0f, "fuselage_F", 3000),
-            Body("nose", "fuselage_F", 4, 0.6f, "fuselage_F/fuselage_FF"),
-            // The flight deck: the Alkyon cockpit's systems on the Centurion's own interior and crew (BuildFlightDeck).
-            new PartSpec { Name = "cockpit", Parent = "nose", Reuse = "fuselage_F/fuselage_FF/cockpit", Mass = 2000, DragArea = 0, Braces = new[] { "radar_F_fairing" } },
-            new PartSpec { Name = "radar_F_fairing", Parent = "nose", Reuse = "fuselage_F/fuselage_FF/nose", DragArea = 0.05f },
-            Body("fuselage_R", "fuselage_M", 10, 1.0f, "fuselage_R", 3000),
-            Body("tailcone", "fuselage_R", 4, 0.6f, "fuselage_R/tail", 3000),
-            Body("tail_end", "tailcone", 0, 0, null),
-            // Skin panels round the body: a band of skin, lining and members over its core, no lift or drag of their own
-            // (the core keeps the shape the aero is measured on). The V-tails stand on the tail cone's upper half.
-            Plain("fuselage_F_upper", "fuselage_F", 0, null, "fuselage_F2_upper", "nose"),
-            Plain("cheek_L", "fuselage_F_upper", 0, null, "fuselage_F"), Plain("cheek_R", "fuselage_F_upper", 0, null, "fuselage_F"),
-            Plain("fuselage_F2_upper", "fuselage_F2", 0, null, "wingfairing"),
-            Plain("fuselage_M_flank_L", "fuselage_M", 0, null, "sponson_L", "fuselage_F2_upper"),
-            Plain("fuselage_M_flank_R", "fuselage_M", 0, null, "sponson_R", "fuselage_F2_upper"),
-            Plain("fuselage_R_upper_L", "fuselage_R", 0, null, "fuselage_M_flank_L", "sponson_L"),
-            Plain("fuselage_R_upper_R", "fuselage_R", 0, null, "fuselage_M_flank_R", "sponson_R"),
-            Plain("tailcone_upper", "tailcone", 0, null, "fuselage_R_upper_L", "fuselage_R_upper_R"),
-            Plain("tail_end_upper", "tail_end", 0, null, "tailcone_upper"),
-            Tail("vtail_L", "tailcone_upper", 4, "tailcone", "fuselage_R", "tail_end", "tail_end_upper"),
-            Tail("vtail_R", "tailcone_upper", 4, "tailcone", "fuselage_R", "tail_end", "tail_end_upper"),
-            Tail("vtail_tip_L", "vtail_L", 0), Tail("vtail_tip_R", "vtail_R", 0),
-            Plain("sponson_L", "fuselage_M", 0.4f, "gearbay_L", "fuselage_R"),
-            Plain("sponson_R", "fuselage_M", 0.4f, "gearbay_R", "fuselage_R"),
-            Plain("sponson_tail_L", "sponson_L", 0, null, "fuselage_R", "tailcone", "fuselage_R_upper_L"),
-            Plain("sponson_tail_R", "sponson_R", 0, null, "fuselage_R", "tailcone", "fuselage_R_upper_R"),
-            // The swept-back wing's root runs from station 14.69, over fuselage_F2, to 24.44, short of fuselage_R. Its lift acts
-            // at the mean aerodynamic chord's quarter point (station 19.4), 0.7 m ahead of its hull centre; the outer wing
-            // (outboard of 10.7 m) takes its share of the area at the same station (SplitLift).
-            WingRoot("wing_root_L", "wingroot_L", "wing_root_R", "fuselage_F2", "fuselage_F2_upper", "fuselage_M_flank_L"),
-            WingRoot("wing_root_R", "wingroot_R", "fuselage_F2", "fuselage_F2_upper", "fuselage_M_flank_R"),
+            Body("Centurion", null, 20, 1.0f, "", 15000),
+            Body("fuselage_F", "Centurion", 12, 1.0f, "fuselage_F", 3000),
+            // The forward section: the flight deck, the nose gear and the crew door on the Alkyon's cockpit part, which keeps
+            // its Cockpit and WeaponManager; it flies as 0.1.3's nose section did.
+            Body("cockpit", "fuselage_F", 4, 0.6f, "fuselage_F/fuselage_FF/cockpit", 0, "Centurion"),
+            // On the cockpit alone: a brace to fuselage_F, as the Darkreach's nose has, would hang the 12 t cockpit's bending
+            // on the radome's light joints; the two don't touch.
+            Plain("radome", "cockpit", 0.05f, "fuselage_F/fuselage_FF/nose"),
+            Plain("bay_F", "fuselage_F", 0, null, "Centurion", "cockpit"),
+            Body("fuselage_R", "Centurion", 10, 1.0f, "fuselage_R", 3000),
+            Plain("bay_A", "fuselage_R", 0, null, "Centurion"),
+            Body("tailcone", "fuselage_R", 4, 0.6f, "fuselage_R/tail", 3000, "bay_A"),
+            // The tail's second load paths, as the stock bombers' fins and rudders have (the Darkreach's fin ties to two
+            // body parts, its tip and rudder each to a part beyond their parent): on its one joint a fin moved under load,
+            // and held stiffly (StiffJointParts) that one joint broke on a full yaw input from 450 kt. Each brace skips one
+            // part inward, so its tensor is the part skipped and it lets go when that part's joint breaks.
+            Body("tail_end", "tailcone", 0, 0, null, 0, "fuselage_R"),
+            // The fins stand clear of the tail end (art/blender/damage_tree.py CLEAR_PAIRS), with no brace that would hold it on.
+            Tail("vtail_L", "tailcone", 4, "fuselage_R"), Tail("vtail_R", "tailcone", 4, "fuselage_R"),
+            Tail("vtail_tip_L", "vtail_L", 0, "tailcone"), Tail("vtail_tip_R", "vtail_R", 0, "tailcone"),
+            // The main-gear pods outboard of the body side, on the Alkyon's gear bays (their gear mounts).
+            Plain("sponson_L", "Centurion", 0.4f, "gearbay_L", "bay_A", "fuselage_R", "tailcone"),
+            Plain("sponson_R", "Centurion", 0.4f, "gearbay_R", "bay_A", "fuselage_R", "tailcone"),
+            // The swept-back wing's root runs from station 14.69 to 24.44 and out to 12.6 m. Its lift acts at the mean
+            // aerodynamic chord's quarter point (station 19.4), 0.7 m ahead of its shape's centre; the outer wing takes its
+            // share of the area at the same station (SplitLift).
+            WingRoot("wing_root_L", "wingroot_L", "fuselage_F", "fuselage_R"),
+            WingRoot("wing_root_R", "wingroot_R", "fuselage_F", "fuselage_R"),
             WingOuter("wing_outer_L", "wing_root_L"), WingOuter("wing_outer_R", "wing_root_R"),
-            Plain("wingfairing", "fuselage_M", 0, null, "wing_root_L", "wing_root_R"),
             // Telescoping stages, each jointed first to the stage it slides on (TelescopeController makes those joints
             // sliders): stage 1 on the outer wing. Both nest in the root and the outer wing as well, so they are braced to
-            // them: a jointed pair doesn't collide. Stage 2 carries the raked tip (blockout step 5), a piece of its own. Areas
-            // are the retracted ones; the controller gives stage 1 its area with the extension. Stage 1's lift acts at its
-            // hull centre: the swept-back wing moves the neutral point only 0.4 m on extension, where the forward-swept one
-            // needed the lift 6 m aft (docs/M2-DESIGN.md).
+            // them: a jointed pair doesn't collide. Stage 2 carries the raked tip. Areas are the retracted ones; the
+            // controller gives stage 1 its area with the extension. Stage 1's lift acts at its hull centre: the swept-back
+            // wing moves the neutral point only 0.4 m on extension (docs/M2-DESIGN.md).
             Stage("wing_tele1_L", "wing_outer_L", 0f, "wing_root_L"), Stage("wing_tele2_L", "wing_tele1_L", 0f, "wing_outer_L", "wing_root_L"),
             Stage("wing_tele1_R", "wing_outer_R", 0f, "wing_root_R"), Stage("wing_tele2_R", "wing_tele1_R", 0f, "wing_outer_R", "wing_root_R"),
-            Plain("wing_tip_L", "wing_tele2_L", 0), Plain("wing_tip_R", "wing_tele2_R", 0),
-            // Flap-track fairings, under the inner wing at each flap.
-            Plain("flap_track_L1", "wing_root_L", 0, null, "flap_L1"), Plain("flap_track_L2", "wing_root_L", 0, null, "flap_L2"),
-            Plain("flap_track_R1", "wing_root_R", 0, null, "flap_R1"), Plain("flap_track_R2", "wing_root_R", 0, null, "flap_R2"),
-            // Engine 1 on the left wing, 2 on the right. The aft pylon fairing sits on the core cowl, so the pylon is braced
-            // to the nozzle.
-            Plain("pylon_1", "wing_root_L", 0, null, "nozzle_1"), Plain("nacelle_1", "pylon_1", 0.6f, null, "wing_root_L"), Plain("nozzle_1", "nacelle_1", 0),
-            Plain("pylon_2", "wing_root_R", 0, null, "nozzle_2"), Plain("nacelle_2", "pylon_2", 0.6f, null, "wing_root_R"), Plain("nozzle_2", "nacelle_2", 0),
-            // The truss: one straight line from the body side through the engine's axis to the wing, split at the node inside
-            // the nacelle into two collinear segments, each braced to the nacelle and the core it passes through (the
-            // nozzle part) and to each other, so losing an engine leaves the strut whole from body to wing. The inner one's
-            // flared root reaches over station 17 onto fuselage_F2; the outer one meets the outer wing. Each lifts with half
-            // its exposed planform (3.5 and 12.4 m² of 7.0 and 24.8) on a symmetric section whose chord runs with the flow, at
-            // its own centre of mass: at the full planform the 199 t retracted roll reaches the end of the longest runway
-            // 3 m/s short of liftoff, at half 6.5 (docs/M2-DESIGN.md, step 6).
-            Wing("strut_inner_L", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1", "strut_outer_L", "fuselage_F2"),
-            Wing("strut_outer_L", "wing_outer_L", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_1", "nozzle_1"),
-            Wing("strut_inner_R", "fuselage_M", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2", "strut_outer_R", "fuselage_F2"),
-            Wing("strut_outer_R", "wing_outer_R", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_2", "nozzle_2"),
+            // Engine 1 on the left wing, 2 on the right: the pylon blade, the engine pod with its intake and cowl, and the
+            // nozzle aft of the cowl's lip, which the pylon's aft fairing stands clear of (CLEAR_PAIRS).
+            Plain("pylon_1", "wing_root_L", 0, null), Plain("nacelle_1", "pylon_1", 0.6f, null, "wing_root_L"), Plain("nozzle_1", "nacelle_1", 0),
+            Plain("pylon_2", "wing_root_R", 0, null), Plain("nacelle_2", "pylon_2", 0.6f, null, "wing_root_R"), Plain("nozzle_2", "nacelle_2", 0),
+            // The truss: one straight line from the body side through the engine's axis to the wing, split at the nacelle
+            // into two collinear segments, each braced to the nacelle, so losing an engine leaves the strut whole from body to
+            // wing. Each lifts with half its exposed planform (3.5 and 12.4 m² of 7.0 and 24.8) on a symmetric section whose
+            // chord runs with the flow (docs/M2-DESIGN.md, step 6).
+            Wing("strut_inner_L", "Centurion", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_1", "strut_outer_L", "bay_F"),
+            Wing("strut_outer_L", "wing_outer_L", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_1"),
+            Wing("strut_inner_R", "Centurion", 3.5f, WingAirfoil, 0f, null, 0, "nacelle_2", "strut_outer_R", "bay_F"),
+            Wing("strut_outer_R", "wing_outer_R", 12.4f, WingAirfoil, 0f, null, 0, "nacelle_2"),
         };
 
-        // A part the finer part tree cut in two flies as the whole did: its pieces share the whole's area and drag in the
-        // shares that keep its moment (SplitLift), and their sections, chords and lift frame are measured on their shapes
-        // together, which make up the whole's (ShapeGroup). The first piece carries the whole's name, spec and lift frame.
+        // A whole 0.1.3 flew as one part that the tree cuts in two flies as it did: its pieces share the whole's area and
+        // drag in the shares that keep its moment (SplitLift), and their sections, chords and lift frame are measured on
+        // their shapes together, which make up the whole's (ShapeGroup). The first piece carries the whole's name, spec
+        // and lift frame.
         private static readonly string[][] CutParts =
         {
-            new[] { "fuselage_F", "fuselage_F2" }, new[] { "tailcone", "tail_end" },
+            new[] { "tailcone", "tail_end" },
             new[] { "wing_root_L", "wing_outer_L" }, new[] { "wing_root_R", "wing_outer_R" },
             new[] { "vtail_L", "vtail_tip_L" }, new[] { "vtail_R", "vtail_tip_R" },
-            new[] { "wing_tele2_L", "wing_tip_L" }, new[] { "wing_tele2_R", "wing_tip_R" },
         };
 
-        // The part tree's pieces the game draws but does not damage, each a mesh on the part that carries its mass: the
-        // spine cover's lids, which the AWACS beam hides (AwacsBeam's cover) and whose colliders would stand in its envelope.
+        // The pieces the game draws on a part but does not damage on their own, each a mesh on its part: the spine cover's
+        // lids, which the AWACS beam hides (AwacsBeam's cover) and whose colliders would stand in its envelope.
         private static readonly (string Piece, string Part)[] VisualPieces = { ("spine_cover", "fuselage_R"), ("spine_cover_A", "fuselage_R") };
 
         // Spans are |x| in metres from the centreline; the hinge sits ChordFraction of the local chord ahead of
@@ -304,7 +291,7 @@ namespace Centurion.Editor
             new PartSpec { Name = name, Parent = parent, WingArea = area, DragArea = 0.05f, Airfoil = airfoil, ExtraIncidence = extra, Lift = Lift.Wing, Reuse = reuse, FuelKg = fuel, Braces = braces };
 
         private static PartSpec WingRoot(string name, string reuse, params string[] braces) =>
-            new PartSpec { Name = name, Parent = "fuselage_M", WingArea = 72, DragArea = 0.05f, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, LiftAft = -0.7f, Lift = Lift.Wing, Reuse = reuse, Braces = braces };
+            new PartSpec { Name = name, Parent = "Centurion", WingArea = 72, DragArea = 0.05f, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, LiftAft = -0.7f, Lift = Lift.Wing, Reuse = reuse, Braces = braces };
 
         private static PartSpec WingOuter(string name, string root, params string[] braces) =>
             new PartSpec { Name = name, Parent = root, Airfoil = WingAirfoil, ExtraIncidence = WingCamberDeg, Lift = Lift.Wing, Braces = braces };
@@ -377,6 +364,7 @@ namespace Centurion.Editor
             var definition = AuthorDefinition(parameters);
             var prefab = AuthorPrefab(blockout, meshes, definition, awacsMount);
             AuthorDarkreachMounts(prefab, weapons, modMounts);
+            CheckStowedMainWheels(prefab, weapons, modMounts.Where(m => m.Set == 1).Select(m => m.Key).Concat(BayWeapons));
             AuthorStandardLoadouts(parameters, weapons);
             Set(definition, "unitPrefab", prefab);
             foreach (var guid in AssetDatabase.FindAssets("t:Mesh", new[] { MeshFolder }))
@@ -413,7 +401,7 @@ namespace Centurion.Editor
 
             public bool Has(string name) => Parts.ContainsKey(name);
 
-            // Prefab space: the root is the fuselage_M pivot, so a blockout position u lands at u - Origin.
+            // Prefab space: the root is the root part's pivot, so a blockout position u lands at u - Origin.
             public Vector3 Local(string name) => Parts[name].Pivot - Origin;
 
             public Quaternion Rotation(string name) => Parts[name].Rotation;
@@ -425,7 +413,7 @@ namespace Centurion.Editor
             // A mesh part (an FBX) as opposed to an empty such as a control-surface or door hinge.
             public bool HasMesh(string name) => Parts.TryGetValue(name, out var part) && part.Fbx != null;
 
-            public static Blockout Load(string folder, string root = "fuselage_M")
+            public static Blockout Load(string folder, string root = "Centurion")
             {
                 var path = Path.Combine(folder, "blockout.json");
                 if (!File.Exists(path))
@@ -465,16 +453,6 @@ namespace Centurion.Editor
             public (Vector3 Axis, float Travel)? Slide(string name) =>
                 Parts.TryGetValue(name, out var p) && p.Props.ContainsKey("travel_m") ? (Vec(p.Props["slide_axis_unity"]), Convert.ToSingle(p.Props["travel_m"])) : ((Vector3, float)?)null;
 
-            // Span with every telescoping stage run out by its travel along its slide axis (stage 2 carries the tips).
-            public float ExtendedSpan()
-            {
-                var tips = new[] { "wing_tip_L", "wing_tip_R" }.Select(n => Parts[n]).ToArray();
-                var span = tips.Max(t => t.Pivot.x + t.Max.x) - tips.Min(t => t.Pivot.x + t.Min.x);
-                foreach (var stage in Parts.Values.Where(p => p.Props.ContainsKey("travel_m")))
-                    span += Convert.ToSingle(stage.Props["travel_m"]) * Mathf.Abs(Vec(stage.Props["slide_axis_unity"]).x);
-                return span;
-            }
-
             private static Vector3 Vec(object value)
             {
                 var list = (List<object>)value;
@@ -499,15 +477,25 @@ namespace Centurion.Editor
             map[SkinSlot] = skin;
             if (gear != null)
                 map["Centurion_gear"] = gear;
+            // The structure under the skin on the stock mechanical sheet itself, which Blueprinter swaps whole for the
+            // game's (alpha cut at 0.394, its occlusion map): a mod copy keeps placeholder textures Blueprinter cannot
+            // set, and drew untextured in game. ImportBlockout maps each material back to one slot, so the stock sheet
+            // leaves the jet_mechanical slot, which no exported part uses unless the export carries the mech maps.
+            map[TrimCutSlot] = Load<Material>(SlotMaterials["jet_mechanical"]);
             if (mech != null)
                 map["jet_mechanical"] = mech;
+            else
+                map.Remove("jet_mechanical");
             map["glass"] = glass;
             if (airframe != null)
                 map[AirframeSlot] = airframe;
             map["aircraft_structure"] = AuthorStructure();
+            map["honeycomb"] = AuthorCore();
             map[LensSlot] = AuthorLens();
             return map;
         }
+
+        private const string TrimCutSlot = "Centurion_trim_cut"; // the structure under the skin, the art pass's
 
         private static Dictionary<string, PartMeshes> ImportBlockout(Blockout blockout, Dictionary<string, Material> slots,
             string exportFolder = null, string assetFolder = BlockoutFolder)
@@ -570,9 +558,6 @@ namespace Centurion.Editor
                     if (points > 255 || collider.triangles.Length / 3 > 255)
                         throw new InvalidDataException($"{collider.name} has {points} points and {collider.triangles.Length / 3} triangles; the limit is 255.");
                 }
-                // The stock LOD material reads the vertex colour raw: the blockout writes 0.14 grey.
-                if (meshes.Lod1 != null && (meshes.Lod1.colors.Length != meshes.Lod1.vertexCount || meshes.Lod1.colors.Any(c => Mathf.Abs(c.r - 0.14f) > 0.01f)))
-                    throw new InvalidDataException($"{meshes.Lod1.name} lacks its 0.14 grey vertex colour ({meshes.Lod1.colors.Length} colours, first {(meshes.Lod1.colors.Length > 0 ? meshes.Lod1.colors[0].ToString() : "none")}).");
                 if (slots.TryGetValue(SkinSlot, out var skin))
                     (meshes.Render, meshes.Materials) = SkinFirst(meshes.Render, meshes.Materials, skin);
                 result[part.Name] = meshes;
@@ -673,7 +658,7 @@ namespace Centurion.Editor
             {
                 var baked = new Material(Load<Shader>(Stock + "Shader/Shader Graphs_AircraftSkin_PLACEHOLDER.shader")) { name = "Centurion_skin" };
                 foreach (var map in SkinMaps)
-                    baked.SetTexture(map.Property, ImportExportTexture(blockout, map.File, map.SRgb, map.NormalMap));
+                    baked.SetTexture(map.Property, ImportExportTexture(blockout, map.File, map.SRgb, map.NormalMap, sampling: CockpitSampling.Skin));
                 baked.SetTexture("_Livery", baked.GetTexture("_Basecolor"));
                 baked.SetFloat("_HitPoints", 100f);
                 baked.SetFloat("_Glossiness", 0f);
@@ -760,6 +745,25 @@ namespace Centurion.Editor
             return SaveAsset(structure, SkinFolder + "/Centurion_structure.mat");
         }
 
+        // The control surfaces' honeycomb cores, in the split ailerons' open halves and along their split when shut: the
+        // stock honeycomb's white grid read brighter than the skin round it and showed as white dashes along a shut split
+        // (owner's build 43 frames). A flat satin grey no lighter than the matte grey livery (95 to 101 sRGB).
+        private static readonly Color32 CorePaint = new Color32(72, 74, 76, 255);
+
+        private static Material AuthorCore()
+        {
+            var core = OpaqueLit(SlotMaterials["jet_mechanical"], "Centurion_core");
+            core.SetTexture("_BaseMap", null);
+            core.SetTexture("_MainTex", null);
+            core.SetTexture("_MetallicGlossMap", null);
+            core.DisableKeyword("_METALLICSPECGLOSSMAP");
+            core.SetColor("_BaseColor", CorePaint);
+            core.SetColor("_Color", CorePaint);
+            core.SetFloat("_Metallic", 0f);
+            core.SetFloat("_Smoothness", StructureSmoothness);
+            return SaveAsset(core, SkinFolder + "/Centurion_core.mat");
+        }
+
         // A copy of a stock Lit material, opaque (no alpha clip), with its normal and occlusion maps off and a white base.
         private static Material OpaqueLit(string stockPath, string name)
         {
@@ -781,7 +785,8 @@ namespace Centurion.Editor
         // A baked map from the export (the airframe's, or exportFolder's), copied into the skin folder (checked against
         // its hash) and imported at up to SkinMapSize, compressed with mipmaps, in the colour space and type the stock
         // skin maps use.
-        private static Texture2D ImportExportTexture(Blockout blockout, string file, bool sRgb, bool normalMap, string exportFolder = null)
+        private static Texture2D ImportExportTexture(Blockout blockout, string file, bool sRgb, bool normalMap, string exportFolder = null,
+            CockpitSampling sampling = null)
         {
             var bytes = File.ReadAllBytes(Path.Combine(exportFolder ?? ExportFolder, "textures", file));
             if (Sha256(bytes) != blockout.Textures[file])
@@ -792,20 +797,76 @@ namespace Centurion.Editor
                 File.WriteAllBytes(path, bytes);
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             }
+            return ImportSkinTexture(path, sRgb, normalMap, sampling);
+        }
+
+        // A map imported at up to SkinMapSize, compressed with mipmaps, in the colour space and type the stock skin maps use.
+        private static Texture2D ImportSkinTexture(string path, bool sRgb, bool normalMap, CockpitSampling sampling = null)
+        {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             var type = normalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+            var s = sampling ?? CockpitSampling.Default;
             if (importer.textureType != type || importer.sRGBTexture != sRgb || importer.maxTextureSize != SkinMapSize
-                || !importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Compressed || importer.crunchedCompression)
+                || !importer.mipmapEnabled || importer.textureCompression != s.Compression || importer.crunchedCompression
+                || importer.anisoLevel != s.AnisoLevel || importer.filterMode != s.Filter || importer.mipMapBias != s.MipBias
+                || importer.mipmapFilter != s.MipFilter)
             {
                 importer.textureType = type;
                 importer.sRGBTexture = sRgb;
                 importer.maxTextureSize = SkinMapSize;
                 importer.mipmapEnabled = true;
-                importer.textureCompression = TextureImporterCompression.Compressed;
+                importer.textureCompression = s.Compression;
                 importer.crunchedCompression = false;
+                importer.anisoLevel = s.AnisoLevel;
+                importer.filterMode = s.Filter;
+                importer.mipMapBias = s.MipBias;
+                importer.mipmapFilter = s.MipFilter;
                 importer.SaveAndReimport();
             }
             return Load<Texture2D>(path);
+        }
+
+        // How a map is sampled. The default is the importer's own (bilinear, no anisotropic filtering, normal-quality
+        // block compression). The flight deck's sheets are seen from the seats at 50 to 75 degrees off their normal,
+        // where a texture with no anisotropic filtering drops to a mip a quarter of the size across and smears the
+        // lettering (in-game round 1: 27 of 36 shots).
+        private sealed class CockpitSampling
+        {
+            public static readonly CockpitSampling Default = new CockpitSampling(TextureImporterCompression.Compressed, 1, FilterMode.Bilinear, 0f, TextureImporterMipFilter.BoxFilter);
+
+            // The exterior skin's maps and liveries: 16x anisotropic, trilinear. Bilinear without it, the spine and the tail's
+            // underside, seen at a grazing angle, drew from a smaller mip, where a one-texel groove keeps its contrast or
+            // splits across the box filter's 2x2 by its texel phase: build 45's lines read softer than build 43's in the
+            // game though both atlases were equally crisp at full size (passkit mip_crisp.py, line_phase.py). High-quality
+            // block compression: normal quality packs each 4 px block to two colours, which drew a red hinge line as a
+            // sawtooth, frayed the insignia's edge and left brownish blotches on the aft spine (audit of builds 48 and 49).
+            public static readonly CockpitSampling Skin = new CockpitSampling(TextureImporterCompression.CompressedHQ, 16, FilterMode.Trilinear, 0f, TextureImporterMipFilter.BoxFilter);
+
+            // The paint, panel and shell sheets: 16x anisotropic, trilinear.
+            public static readonly CockpitSampling Sheet = new CockpitSampling(TextureImporterCompression.Compressed, 16, FilterMode.Trilinear, 0f, TextureImporterMipFilter.BoxFilter);
+
+            // The lettering sheet: as Sheet, high-quality block compression (normal quality packs a 4 px block of white
+            // glyph and black paint to two colours and frays the strokes), at the mip the screen asks for: half a mip
+            // sharper undersampled the thin strokes and broke small legends up from the seat (round 3, cause 7). Its
+            // mips by the Kaiser filter: at the seat a stroke is 0.6 to 0.8 screen pixels across (ink_measure.py), and the
+            // box filter averaged it into the paint's grey; Kaiser keeps its contrast (round 4, cause 9).
+            public static readonly CockpitSampling Lettering = new CockpitSampling(TextureImporterCompression.CompressedHQ, 16, FilterMode.Trilinear, 0f, TextureImporterMipFilter.KaiserFilter);
+
+            public readonly TextureImporterCompression Compression;
+            public readonly int AnisoLevel;
+            public readonly FilterMode Filter;
+            public readonly float MipBias;
+            public readonly TextureImporterMipFilter MipFilter;
+
+            private CockpitSampling(TextureImporterCompression compression, int anisoLevel, FilterMode filter, float mipBias,
+                TextureImporterMipFilter mipFilter)
+            {
+                MipFilter = mipFilter;
+                Compression = compression;
+                AnisoLevel = anisoLevel;
+                Filter = filter;
+                MipBias = mipBias;
+            }
         }
 
         // A flat 64² texture the mod owns, imported with the colour space and type the stock skin maps use.
@@ -841,8 +902,28 @@ namespace Centurion.Editor
             ("pala_desert_camo", "PALA Desert Camo", "Primeva", new[] { new Color32(168, 145, 107, 255), new Color32(120, 92, 64, 255), new Color32(199, 181, 148, 255) }),
         };
 
-        // Each livery's Texture is its full albedo on the skin atlas (the export's centurion_livery_<key>.png), which
-        // UnitPart.SetLivery sets as _Livery; an export without them (the graybox) gives every livery the skin's own.
+        // The painted liveries carry the game's faction roundels, so they are never in the repository: faction_marks.py
+        // paints them into the Liveries folder (gitignored) and records their hashes. Only those exact files build; a
+        // missing or roundel-free texture stops the build here instead of shipping a livery without its roundels.
+        private static string RequireFactionMarked(string file)
+        {
+            const string fix = "run `python art/textures/faction_marks.py` (it reads the roundels from game_export in tools/local-paths.json)";
+            var record = Path.Combine(RepoRoot, ".cache/faction-marks/marks.json");
+            if (!File.Exists(record))
+                throw new InvalidDataException($"no faction-marked livery textures yet: {fix}");
+            var marks = (Dictionary<string, object>)MiniJson.Parse(File.ReadAllText(record));
+            if ((string)((Dictionary<string, object>)marks["inputs"])["record"] != Sha256(File.ReadAllBytes(Path.Combine(RepoRoot, "art/textures/faction_marks.json"))))
+                throw new InvalidDataException($"the faction-marked textures predate art/textures/faction_marks.json: {fix}");
+            var path = LiveryFolder + "/" + file;
+            if (!((Dictionary<string, object>)marks["outputs"]).TryGetValue(file, out var expected) || !File.Exists(path) || Sha256(File.ReadAllBytes(path)) != (string)expected)
+                throw new InvalidDataException($"{file} is not the faction-marked texture: {fix}");
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            return path;
+        }
+
+        // Each livery's Texture is its full albedo on the skin atlas with the faction's roundels painted in (the export's
+        // roundel-free centurion_livery_<key>.png, marked by art/textures/faction_marks.py), which UnitPart.SetLivery sets
+        // as _Livery; an export without them (the graybox) gives every livery the skin's own.
         private static List<LiveryEntry> AuthorLiveries(Blockout blockout, Texture2D skinLivery)
         {
             var liveryType = GameType("LiveryData");
@@ -855,7 +936,7 @@ namespace Centurion.Editor
                 var data = ScriptableObject.CreateInstance(liveryType);
                 data.name = "centurion_" + key;
                 var so = new SerializedObject(data);
-                Prop(so, "Texture").objectReferenceValue = blockout.Textures.ContainsKey(file) ? ImportExportTexture(blockout, file, true, false) : skinLivery;
+                Prop(so, "Texture").objectReferenceValue = blockout.Textures.ContainsKey(file) ? ImportSkinTexture(RequireFactionMarked(file), true, false, CockpitSampling.Skin) : skinLivery;
                 Prop(so, "Glossiness").floatValue = 0f;
                 var colors = Prop(so, "Colors");
                 colors.arraySize = paint.Length;
@@ -1025,13 +1106,13 @@ namespace Centurion.Editor
             Object W(string key) => key != null && weapons.TryGetValue(key, out var mount) ? mount : null;
             var standard = new List<(string name, Object[] weapons, float fuel)>
             {
-                ("Bombs 500 x93", new[] { W(Bomb500ForwardKey), W(Bomb500AftKey), null, W(CramKey) }, BombLoadoutFuel(W(Bomb500ForwardKey), W(Bomb500AftKey), W(CramKey))),
-                ("Bombs 250 x198", new[] { W(Bomb250ForwardKey), W(Bomb250AftKey), null, W(CramKey) }, BombLoadoutFuel(W(Bomb250ForwardKey), W(Bomb250AftKey), W(CramKey))),
-                ("Glide Bombs 250 x174", new[] { W(BombGlideForwardKey), W(BombGlideAftKey), null, W(CramKey) }, BombLoadoutFuel(W(BombGlideForwardKey), W(BombGlideAftKey), W(CramKey))),
+                ("Bombs 500 x66", new[] { W(Bomb500ForwardKey), W(Bomb500AftKey), null, W(CramKey) }, BombLoadoutFuel(W(Bomb500ForwardKey), W(Bomb500AftKey), W(CramKey))),
+                ("Bombs 250 x120", new[] { W(Bomb250ForwardKey), W(Bomb250AftKey), null, W(CramKey) }, BombLoadoutFuel(W(Bomb250ForwardKey), W(Bomb250AftKey), W(CramKey))),
+                ("Glide Bombs 250 x120", new[] { W(BombGlideForwardKey), W(BombGlideAftKey), null, W(CramKey) }, BombLoadoutFuel(W(BombGlideForwardKey), W(BombGlideAftKey), W(CramKey))),
                 // The AI picks presets evenly (AircraftParameters.GetRandomStandardLoadout), so each bomber preset also makes an
-                // HQ-deployed Centurion an AWACS less often. Rack keys are AuthorDarkreachMounts' pinned counts.
-                ("Glide Bombs 500 x68", new[] { W("baanish_centurion_gbm500lr_32"), W("baanish_centurion_gbm500lr_36"), null, W(CramKey) }, BombLoadoutFuel(W("baanish_centurion_gbm500lr_32"), W("baanish_centurion_gbm500lr_36"), W(CramKey))),
-                ("Tusko-B x48", new[] { W("baanish_centurion_tusko_24"), W("baanish_centurion_tusko_24"), null, W(CramKey) }, BombLoadoutFuel(W("baanish_centurion_tusko_24"), W("baanish_centurion_tusko_24"), W(CramKey))),
+                // HQ-deployed Centurion an AWACS less often. Rack keys are AuthorDarkreachMounts' balanced racks.
+                ("Glide Bombs 500 x54", new[] { W("baanish_centurion_gbm500lr_32"), W("baanish_centurion_gbm500lr_36"), null, W(CramKey) }, BombLoadoutFuel(W("baanish_centurion_gbm500lr_32"), W("baanish_centurion_gbm500lr_36"), W(CramKey))),
+                ("Tusko-B x42", new[] { W("baanish_centurion_tusko_18"), W("baanish_centurion_tusko_24"), null, W(CramKey) }, BombLoadoutFuel(W("baanish_centurion_tusko_18"), W("baanish_centurion_tusko_24"), W(CramKey))),
                 ("AShM-300 x36", new[] { W("baanish_centurion_ashm300_18"), W("baanish_centurion_ashm300_18"), null, W(CramKey) }, BombLoadoutFuel(W("baanish_centurion_ashm300_18"), W("baanish_centurion_ashm300_18"), W(CramKey))),
                 ("Bombs 500 x16", new[] { W("bomb_500_internalx8"), W("bomb_500_internalx8"), null, W(CramKey) }, 1.0f),
             };
@@ -1062,7 +1143,7 @@ namespace Centurion.Editor
             Prop(so, "code").stringValue = "MRB-100";
             // friendlyIcon and hostileIcon stay the donor's hudIcon_aircraft: every stock aircraft's HUD contact is that triangle.
             Prop(so, "mapIcon").objectReferenceValue = ImportSprite(ModFolder + "/Icons/centurion_map.png");
-            Prop(so, "description").stringValue = "Long-endurance multirole bomber with a telescoping high wing, two geared turbofans, nose and tail radars, and a laser point-defence turret. Carries bombs or cruise missiles in two internal bays, or an AWACS radome.";
+            Prop(so, "description").stringValue = "BDF-built long-endurance multirole bomber with a telescoping high wing, two geared turbofans, nose and tail radars, and a laser point-defence turret. Carries bombs or cruise missiles in two internal bays, or an AWACS radome.";
             // Retracted, scaled by footprint from Aryx's MC-260 Chimera (radarSize 9 at 34.6 x 40.2 m; owner, 2026-10-19):
             // TelescopeController adds up to 13 as the wing extends.
             Num(so, "radarSize", 13f);
@@ -1142,6 +1223,10 @@ namespace Centurion.Editor
             public readonly Dictionary<string, Transform> Visuals = new Dictionary<string, Transform>();
             public readonly List<Renderer> Lod1 = new List<Renderer>();
             public readonly List<string> Report = new List<string>();
+            // The Alkyon cockpit part's own children when the cockpit section took it over, which the flight deck replaces.
+            public List<Transform> DonorCockpitChildren;
+            // Each jointed part's joint force (DonorJointForce), worked out once every joint is declared.
+            public Dictionary<string, float> JointForce;
 
             public Transform Donor(string path) => Root.transform.Find(path) ?? throw new MissingReferenceException("Alkyon has no " + path);
             public Component Part(string name) => Parts[name].GetComponent(GameType("AeroPart"));
@@ -1158,7 +1243,7 @@ namespace Centurion.Editor
                 var build = new Build { Root = root, Blockout = blockout, Meshes = meshes };
                 build.Aircraft = root.GetComponent(GameType("Aircraft"));
                 if (Mathf.Abs(blockout.Origin.z - SpawnForward) > 0.01f)
-                    throw new InvalidDataException($"fuselage_M's pivot moved to {blockout.Origin}; update SpawnForward.");
+                    throw new InvalidDataException($"The root part's pivot moved to {blockout.Origin}; update SpawnForward.");
                 build.Skin = Load<Material>(SkinPath);
                 Set(build.Aircraft, "definition", definition);
 
@@ -1195,6 +1280,7 @@ namespace Centurion.Editor
                 CheckDamage(build);
                 CheckEngineAudio(build);
                 CheckSurfaceAudio(build);
+                CheckLightsOnSkin(build);
                 foreach (var line in build.Report)
                     Debug.Log("[Centurion] " + line);
                 return SavePrefab(root, PrefabPath);
@@ -1273,9 +1359,8 @@ namespace Centurion.Editor
             doomed.AddRange(WarningLampObjects(root));
             DestroyWithReferences(b, doomed);
 
-            // Alkyon names that mean something else now (the Alkyon's "nose" is the radar fairing).
-            b.Donor("fuselage_F/fuselage_FF/nose").name = "radar_F_fairing";
-            b.Donor("fuselage_F/fuselage_FF").name = "nose";
+            // Alkyon names that mean something else now (the Alkyon's "nose" is the radome).
+            b.Donor("fuselage_F/fuselage_FF/nose").name = "radome";
             b.Donor("fuselage_R/tail").name = "tailcone";
             b.Donor("gearbay_L").name = "sponson_L";
             b.Donor("gearbay_R").name = "sponson_R";
@@ -1285,7 +1370,7 @@ namespace Centurion.Editor
 
         // A PartSpec.Reuse path (the Alkyon's names) as it reads after StripDonor's renames.
         private static string Renamed(string donorPath) =>
-            donorPath.Replace("fuselage_FF/nose", "nose/radar_F_fairing").Replace("fuselage_FF", "nose").Replace("fuselage_R/tail", "fuselage_R/tailcone")
+            donorPath.Replace("fuselage_FF/nose", "fuselage_FF/radome").Replace("fuselage_R/tail", "fuselage_R/tailcone")
                 .Replace("gearbay_", "sponson_").Replace("wingroot_", "wing_root_");
 
         // Deletes objects after removing every reference to them from the remaining components: a list entry that
@@ -1352,9 +1437,10 @@ namespace Centurion.Editor
             var template = b.Donor("wing_root_L").GetComponent(aeroType);
             var templateCopy = new GameObject("aeropart_template").AddComponent(aeroType);
             EditorUtility.CopySerialized(template, templateCopy);
-            // The reused donor parts, found by their donor paths before any part moves under a new one (fuselage_F under
-            // fuselage_F2).
+            // The reused donor parts, found by their donor paths before any part moves under a new one (the radome under the
+            // cockpit).
             var donors = Parts.Where(p => p.Reuse != null).ToDictionary(p => p.Name, p => p.Reuse == "" ? b.Root : b.Donor(Renamed(p.Reuse)).gameObject);
+            b.DonorCockpitChildren = donors["cockpit"].transform.Cast<Transform>().Where(t => t.name != "CoM").ToList();
             try
             {
                 foreach (var spec in Parts)
@@ -1387,10 +1473,7 @@ namespace Centurion.Editor
                     {
                         RemoveMeshes(go);
                     }
-                    var mass = (spec.Mass ?? b.Blockout.Mass(spec.Name)) + VisualPieces.Where(v => v.Part == spec.Name).Sum(v => b.Blockout.Mass(v.Piece));
-                    // The blockout includes the removable laser hardware in the mass of the part its turret sits on.
-                    if (spec.Name == CramHost) mass -= CramMass;
-                    ConfigurePart(b, go, mass, spec.WingArea, spec.DragArea, spec.Airfoil, !spec.KeepDonorMesh);
+                    ConfigurePart(b, go, spec.Mass ?? b.Blockout.Mass(spec.Name), spec.WingArea, spec.DragArea, spec.Airfoil, !spec.KeepDonorMesh);
                     AddJoint(b, spec.Name, spec.Parent, spec.Braces);
                     var tank = go.GetComponent(GameType("FuelTank"));
                     if (spec.FuelKg > 0)
@@ -1410,6 +1493,10 @@ namespace Centurion.Editor
                 // Once every part stands: a cut part's lift frame is measured on all its pieces' shapes (ShapeGroup).
                 foreach (var spec in Parts.Where(p => p.Lift != Lift.None))
                     SetLiftNormal(b, spec, b.Parts[spec.Name]);
+                // The Alkyon's forward fuselage, whose cockpit and nose cone are now the cockpit section and the radome.
+                var forward = b.Donor("fuselage_F/fuselage_FF");
+                b.Report.Add($"the Alkyon's forward fuselage goes with [{string.Join(", ", forward.Cast<Transform>().Select(t => t.name))}]");
+                DestroyWithReferences(b, new List<Object> { forward.gameObject });
             }
             finally
             {
@@ -1437,9 +1524,10 @@ namespace Centurion.Editor
             var meshes = b.Meshes[blockoutName];
             Ensure<MeshFilter>(go).sharedMesh = meshes.Render;
             Ensure<MeshRenderer>(go).sharedMaterials = b.MaterialsFor(blockoutName);
-            // The blockout's convex pieces, or for a part without any (a nozzle inside its nacelle's cowl) the hull of
-            // its mesh: a part's Rigidbody with no collider gets Unity's unit inertia tensor (PartStructureCheck).
-            foreach (var old in go.GetComponents<MeshCollider>())
+            // The blockout's convex pieces, or for a part without any the hull of its mesh: a part's Rigidbody with no
+            // collider gets Unity's unit inertia tensor (PartStructureCheck). A reused donor part's own solid colliders (the
+            // Alkyon cockpit's box) go: the shape is the part's whole volume.
+            foreach (var old in go.GetComponents<Collider>().Where(c => !c.isTrigger))
                 Object.DestroyImmediate(old);
             foreach (var piece in meshes.Colliders.DefaultIfEmpty(meshes.Shape))
             {
@@ -1481,14 +1569,38 @@ namespace Centurion.Editor
                 if (own != null)
                     renderers.GetArrayElementAtIndex(0).objectReferenceValue = own;
             }
-            // The mass centre for UnitPart.ModifyMass (fuel, stores): the centre of the hulls' bounds, or the pivot.
+            // The mass centre: the hulls' volume centroid, where Unity puts the part's Rigidbody's centre of mass from its
+            // colliders at uniform density, and where UnitPart.ModifyMass (fuel, stores) puts it from this marker
+            // (UnitPart.cs:270-278), so the two agree. A part with no hull keeps its pivot.
             var com = go.transform.Find("CoM") ?? new GameObject("CoM") { layer = go.layer }.transform;
             com.SetParent(go.transform, false);
             var hulls = go.GetComponents<MeshCollider>();
-            var hullBounds = hulls.Select(c => c.sharedMesh.bounds).DefaultIfEmpty().Aggregate((a, c) => { a.Encapsulate(c); return a; });
-            com.position = hulls.Length > 0 ? go.transform.TransformPoint(hullBounds.center) : go.transform.position;
+            com.position = hulls.Length > 0 ? go.transform.TransformPoint(VolumeCentroid(hulls.Select(c => c.sharedMesh))) : go.transform.position;
             Prop(so, "centerOfMass").objectReferenceValue = com;
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // The volume centroid of closed meshes in one frame, each a solid of uniform density.
+        private static Vector3 VolumeCentroid(IEnumerable<Mesh> meshes)
+        {
+            var moment = Vector3.zero;
+            var volume = 0f;
+            foreach (var mesh in meshes)
+            {
+                var v = mesh.vertices;
+                var t = mesh.triangles;
+                var o = mesh.bounds.center;
+                for (var i = 0; i < t.Length; i += 3)
+                {
+                    var a = v[t[i]] - o;
+                    var c = v[t[i + 1]] - o;
+                    var d = v[t[i + 2]] - o;
+                    var w = Vector3.Dot(a, Vector3.Cross(c, d)) / 6f;
+                    volume += w;
+                    moment += w * ((a + c + d) / 4f + o);
+                }
+            }
+            return moment / volume;
         }
 
         private static void AddJoint(Build b, string name, string parent, IEnumerable<string> braces)
@@ -1498,17 +1610,32 @@ namespace Centurion.Editor
             b.Joints[name] = new[] { parent }.Concat(braces).ToList();
         }
 
-        // The joints' solver iterations (AeroPart.CreateJoints sets each part's Rigidbody to them; PhysX runs a jointed island
-        // at its bodies' highest). The part tree hangs heavy ends on light cut cores: fuselage_F (2.55 t) carries the nose,
-        // cockpit and panels (13.3 t) on fuselage_F2 (2.95 t), where the 39-part tree's fuselage_F weighed as much as the
-        // nose. The iterative solver's sag grows with that mass ratio: parked, fuselage_F sat 1.7 cm off fuselage_F2 at 12
-        // iterations, 0.6 cm at 30 and 0.4 cm at 40 (PartStructureCheck, 1 cm tolerance; the anchors made no difference).
-        private const int JointSolverIterations = 40;
+        // Serialized PartJoints: the first to the parent part (AeroPart.Awake reads joints[0]), then braces, all at the part's
+        // donor strength (DonorJointForce, CenturionAuthor.Damage.cs) with torque equal to force and the stock 6 solver
+        // iterations, as every Darkreach joint is; the game multiplies force and torque by 10 (AeroPart.CreateJoints,
+        // AeroPart.cs:355-372). No anchor: a joint holds its part at its origin, as the stock bombers' do (an anchor's
+        // world offset lands in the local Joint.anchor, AeroPart.cs:361-364, so it would sit right at one heading only).
+        // A brace lets go when the link between its two parts breaks (AeroPart.Part_OnTensorBreak): its tensor is the
+        // part's ancestor just under the two parts' common ancestor, the stock rule, the part itself where that is its own
+        // parent joint; a telescoping stage's is its slide parent.
+        // The tail from the rear fuselage aft holds its joints with 40 solver iterations, as 0.1.3 did, where the stock 6
+        // let the fins and ruddervators move on their fixed joints under load (a fixed joint has no stiffness of its own:
+        // what it gives under load is the solver's error, and the game writes this count to the owning body when it is
+        // not 6, AeroPart.cs:355-372). Break force and torque are unchanged, so the tail comes off as before.
+        private const int StiffSolverIterations = 40;
+        private static readonly HashSet<string> StiffJointParts = new HashSet<string>
+        {
+            "fuselage_R", "tailcone", "tail_end", "vtail_L", "vtail_R", "vtail_tip_L", "vtail_tip_R",
+            "ruddervator_L1", "ruddervator_L2", "ruddervator_R1", "ruddervator_R2",
+        };
 
-        // Serialized PartJoints: the first to the parent part (AeroPart.Awake reads joints[0]), then braces.
-        // Strength scales with the mass the joint carries, by the part's toughness (Toughness, CenturionAuthor.Damage.cs);
-        // the game multiplies it by 10 on the simulating peer. Each joint is pinned where its two parts meet (JointAnchor):
-        // a cut piece on its cut, a section on its section line, so a bending load is measured, and breaks it, there.
+        // A ruddervator's second load path, one part inward of its fin panel (Parts, "The tail's second load paths").
+        private static readonly Dictionary<string, string> SurfaceBraces = new Dictionary<string, string>
+        {
+            { "ruddervator_L1", "tailcone" }, { "ruddervator_R1", "tailcone" },
+            { "ruddervator_L2", "vtail_L" }, { "ruddervator_R2", "vtail_R" },
+        };
+
         private static void WriteJoints(Build b)
         {
             var aeroType = GameType("AeroPart");
@@ -1516,31 +1643,124 @@ namespace Centurion.Editor
             Object sound = null;
             if (breakSound.arraySize > 0)
                 sound = breakSound.GetArrayElementAtIndex(0).FindPropertyRelative("breakSound").objectReferenceValue;
-            Physics.SyncTransforms();
-            foreach (var go in b.Parts.Values)
+            var written = WrittenJoints(b);
+            foreach (var entry in b.Parts)
             {
-                var part = go.GetComponent(aeroType);
-                var so = new SerializedObject(part);
+                var so = new SerializedObject(entry.Value.GetComponent(aeroType));
                 var joints = Prop(so, "joints");
-                var name = b.Parts.First(p => p.Value == go).Key;
-                var list = b.Joints.TryGetValue(name, out var l) ? l : new List<string>();
+                var list = written.TryGetValue(entry.Key, out var l) ? l : new List<(string To, string Tensor)>();
                 joints.arraySize = list.Count;
-                var carried = go.GetComponentsInChildren(aeroType, true).Sum(p => new SerializedObject(p).FindProperty("mass").floatValue);
+                var force = list.Count > 0 ? DonorJointForce(b, entry.Key) : 0f;
                 for (var i = 0; i < list.Count; i++)
                 {
-                    var force = JointForce(name, carried);
                     var joint = joints.GetArrayElementAtIndex(i);
-                    joint.FindPropertyRelative("connectedPart").objectReferenceValue = b.Part(list[i]);
-                    joint.FindPropertyRelative("tensor").objectReferenceValue = null;
-                    joint.FindPropertyRelative("solverIterations").intValue = JointSolverIterations;
+                    joint.FindPropertyRelative("connectedPart").objectReferenceValue = b.Part(list[i].To);
+                    joint.FindPropertyRelative("tensor").objectReferenceValue = list[i].Tensor == null ? null : b.Part(list[i].Tensor);
+                    joint.FindPropertyRelative("solverIterations").intValue = StiffJointParts.Contains(entry.Key) ? StiffSolverIterations : 6;
                     joint.FindPropertyRelative("breakForce").floatValue = force;
-                    joint.FindPropertyRelative("breakTorque").floatValue = force * 5f;
-                    joint.FindPropertyRelative("anchor").objectReferenceValue = JointAnchor(go, b.Parts[list[i]]);
+                    joint.FindPropertyRelative("breakTorque").floatValue = force;
+                    joint.FindPropertyRelative("anchor").objectReferenceValue = null;
                     joint.FindPropertyRelative("breakSound").objectReferenceValue = sound;
                     joint.FindPropertyRelative("joint").objectReferenceValue = null;
                 }
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
+        }
+
+        // The parent part of a part in the tree, or null for the root.
+        private static string ParentPart(Build b, string part) => b.Joints.TryGetValue(part, out var list) ? list[0] : null;
+
+        private static List<string> Lineage(Build b, string part)
+        {
+            var chain = new List<string>();
+            for (var p = part; p != null; p = ParentPart(b, p))
+                chain.Add(p);
+            return chain;
+        }
+
+        // Each brace as written: the part that owns it, the part it holds, and its tensor. A brace lets go when its owner is
+        // destroyed (the stock rescale zeroes every joint a part owns, AeroPart.ApplyDamage) or when its tensor's joint breaks
+        // (AeroPart.Part_OnTensorBreak). Its tensor is the link just under the two parts' common ancestor on the side of the
+        // part it holds, so a brace into another assembly lets go when that assembly leaves; where the held part is that
+        // link itself, the brace stays on its owner and lets go when either end is destroyed; where the held part sits
+        // deeper, the brace is written on the held part instead, so it lets go when that part is destroyed or its assembly
+        // leaves. Where the held part is the root or on the owner's own chain, the owner's link, as stock; a stage's is its
+        // slide parent. With owner-side tensors a destroyed part stayed on: a wing whose root was gone hung from its inner
+        // strut's braces at 36.75 MN, a tail cone shot to 0 hp from the sponsons' braces, a rear fuselage at -146 hp from the
+        // wing roots' and sponsons', and a cockpit at -40 hp from bay_F's. A moved brace takes its new owner's strength, the
+        // same in every case here, since the tie groups already join both ends.
+        // A wing goes with its engine or its main-gear sponson, the parts an infrared missile from behind destroys: every
+        // such hit that took a wing left the nacelle 213 to 415 hp past zero or the sponson 121 to 263, while the wing root
+        // took a few hp. The wing root's own joint has the wing root itself as tensor, and the wing root holds one trip
+        // joint per trip part, with that part as tensor, to its own engine pylon (TripAnchor). A destroyed trip part's
+        // joints break (AeroPart.ApplyDamage), which zeroes its trip joint (AeroPart.Part_OnTensorBreak); that joint's break
+        // raises the wing root's own event, which zeroes the wing root's own joint and the body sections' braces into it.
+        // The trip joints go to the pylon, which leaves with the wing, because a trip joint still standing holds whatever it
+        // joins: one to the centre section would hold the wing on when the other trip fires. The nozzle is no trip: one
+        // 27 mm shell's blast destroys it outright (about 384 hp), so as a trip it let a cannon take a wing in under a
+        // second. The owner keeps the stock kill, the wing leaving, not a critical part (docs/DECISIONS.md, 2026-11-22).
+        private static readonly Dictionary<string, string[]> WingRootTrips = new Dictionary<string, string[]>
+        {
+            { "wing_root_L", new[] { "nacelle_1", "sponson_L" } }, { "wing_root_R", new[] { "nacelle_2", "sponson_R" } },
+        };
+
+        // The wing root a part trips, or null.
+        private static string TrippedWingRoot(string part) => WingRootTrips.Where(e => e.Value.Contains(part)).Select(e => e.Key).FirstOrDefault();
+
+        // Where a wing root's trip joints go: the part under the wing root that carries its engine (the pylon), which
+        // leaves with the wing.
+        private static string TripAnchor(Build b, string wingRoot)
+        {
+            var engine = Lineage(b, WingRootTrips[wingRoot][0]);
+            return engine[engine.IndexOf(wingRoot) - 1];
+        }
+
+        // Whether a tensor lies in a trip part's own wing: the wing root or anything under it.
+        private static bool InWing(Build b, string wingRoot, string tensor) => Lineage(b, tensor).Contains(wingRoot);
+
+        private static Dictionary<string, List<(string To, string Tensor)>> WrittenJoints(Build b)
+        {
+            var written = b.Joints.ToDictionary(e => e.Key,
+                e => new List<(string To, string Tensor)> { (e.Value[0], WingRootTrips.ContainsKey(e.Key) ? e.Key : null) });
+            foreach (var trip in WingRootTrips)
+                foreach (var part in trip.Value)
+                    written[trip.Key].Add((TripAnchor(b, trip.Key), part));
+            // A trip part raises its event whenever any joint on it breaks, so a brace it owns with a tensor outside its wing
+            // goes on the other end with the trip part as tensor: it still lets go when either end is destroyed, but another
+            // assembly's break no longer trips the wing. The sponsons' braces into fuselage_R move to fuselage_R, whose own
+            // joint can break on a touchdown hard enough to break a leg, and would otherwise take both wings with it.
+            void OnOwner(string owner, string held, string tensor)
+            {
+                var wingRoot = TrippedWingRoot(owner);
+                if (wingRoot != null && !InWing(b, wingRoot, tensor))
+                    written[held].Add((owner, owner));
+                else
+                    written[owner].Add((held, tensor));
+            }
+            foreach (var entry in b.Joints)
+                foreach (var other in entry.Value.Skip(1))
+                {
+                    var mine = Lineage(b, entry.Key);
+                    var theirs = Lineage(b, other);
+                    var common = mine.First(theirs.Contains);
+                    if (b.Blockout.Slide(entry.Key).HasValue || common == other)
+                        OnOwner(entry.Key, other, b.Blockout.Slide(entry.Key).HasValue ? ParentPart(b, entry.Key) : mine[mine.IndexOf(common) - 1]);
+                    else
+                    {
+                        var link = theirs[theirs.IndexOf(common) - 1];
+                        // A wing root's braces into the body sections sit on the body side with the wing root as tensor, so
+                        // they let go when the wing root's own joint breaks, whether it was destroyed or a trip zeroed it, as
+                        // well as when the body section is destroyed. On the wing root with the section as tensor they would
+                        // hold a wing whose trip had fired. Both ends are in one tie group, so the strength does not change.
+                        if (WingRootTrips.ContainsKey(entry.Key))
+                            written[other].Add((entry.Key, entry.Key));
+                        else if (link == other || common == entry.Key)
+                            OnOwner(entry.Key, other, link);
+                        else
+                            written[other].Add((entry.Key, link));
+                    }
+                }
+            return written;
         }
 
         // ---------- lift transforms and control surfaces ----------
@@ -1824,11 +2044,12 @@ namespace Centurion.Editor
                 var hingeAxis = authored ? b.Blockout.Rotation(spec.Name) * Vector3.right : hingeOut - hingeIn;
                 var hingePoint = authored ? b.Blockout.Local(spec.Name) : (hingeIn + hingeOut) / 2;
 
-                // Part at its pivot (identity rotation, so a blockout hull fits), hinge on the hinge line with
-                // local X along it; under the hinge, the streamwise lift transform and the visible mesh.
+                // Part at its origin inside its shape (the damage tree's, on the hinge empty; identity rotation), hinge on
+                // the hinge line with local X along it; under the hinge, the streamwise lift transform and the visible mesh.
                 var go = new GameObject(spec.Name) { layer = b.Root.layer };
                 go.transform.SetParent(host.transform, false);
-                go.transform.SetPositionAndRotation(hingePoint, Quaternion.identity);
+                go.transform.SetPositionAndRotation(authored && b.Blockout.Parts[spec.Name].Props.TryGetValue("part_origin", out var origin)
+                    ? BlenderPoint(b, (List<object>)origin) : hingePoint, Quaternion.identity);
                 var hinge = new GameObject(spec.Name + "_hinge") { layer = go.layer }.transform;
                 hinge.SetParent(go.transform, false);
                 hinge.SetPositionAndRotation(hingePoint, HingeFrame(hingeAxis, chord));
@@ -1862,15 +2083,35 @@ namespace Centurion.Editor
                     visible.transform.SetParent(upper, true);
                     if (spec.Split == SplitKind.Clamshell)
                     {
-                        var half = Object.Instantiate(visible, lower, true);
-                        half.name = visibleName + "_lower";
+                        // The art splits the surface on its chord plane into two closed halves; a blockout has one mesh
+                        // for both.
+                        var lowerName = visibleName + "_lower";
+                        GameObject half;
+                        if (authored && b.Blockout.HasMesh(lowerName))
+                        {
+                            half = new GameObject(lowerName) { layer = go.layer };
+                            half.transform.SetParent(lower, false);
+                            half.transform.SetPositionAndRotation(b.Blockout.Local(lowerName), b.Blockout.Rotation(lowerName));
+                            half.AddComponent<MeshFilter>().sharedMesh = b.Meshes[lowerName].Render;
+                            half.AddComponent<MeshRenderer>().sharedMaterials = b.MaterialsFor(lowerName);
+                            b.Visuals[lowerName] = half.transform;
+                        }
+                        else
+                        {
+                            half = Object.Instantiate(visible, lower, true);
+                            half.name = lowerName;
+                        }
                         lowerHalf = half.GetComponent<MeshRenderer>();
                     }
+                    else if (authored && spec.Split == SplitKind.Rise)
+                    {
+                        RigActuators(b, spec.Name, host.transform, upper, hinge);
+                    }
                 }
-                // The hull of the mesh at rest, on the part's own GameObject as stock surfaces have it: the game sizes a
-                // part from that collider, and without one drops its aero force (PartStructureCheck).
-                // The hull is the surface's shape (the blockout's), so a detailed surface collides as the blockout's did.
-                var rest = authored ? b.Meshes[visibleName].Shape : visible.GetComponent<MeshFilter>().sharedMesh;
+                // The shape at rest, on the part's own GameObject as stock surfaces have it: the game sizes a part from that
+                // collider, and without one drops its aero force (PartStructureCheck). An authored surface's is the damage
+                // tree's, inset in its skin and starting at its hinge line, under its visible mesh in the export.
+                var rest = authored ? b.Meshes[visibleName].Colliders.Single() : visible.GetComponent<MeshFilter>().sharedMesh;
                 var toPart = go.transform.worldToLocalMatrix * visible.transform.localToWorldMatrix;
                 var hullMesh = new Mesh { name = spec.Name + "_hull", vertices = rest.vertices.Select(v => toPart.MultiplyPoint3x4(v)).ToArray(), triangles = rest.triangles };
                 hullMesh.RecalculateBounds();
@@ -1889,7 +2130,7 @@ namespace Centurion.Editor
                 Prop(part, "liftNormal").objectReferenceValue = lift;
                 part.ApplyModifiedPropertiesWithoutUndo();
                 b.Parts[spec.Name] = go;
-                AddJoint(b, spec.Name, spec.Host, Array.Empty<string>());
+                AddJoint(b, spec.Name, spec.Host, SurfaceBraces.TryGetValue(spec.Name, out var brace) ? new[] { brace } : Array.Empty<string>());
 
                 var force = DeflectionForce(lift.rotation, hinge.right);
                 var torque = Vector3.Cross(lift.position - cg, force);
@@ -1933,7 +2174,54 @@ namespace Centurion.Editor
                 Prop(so, "splitSound").objectReferenceValue = null;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 b.Report.Add($"surface {spec.Name}: {spec.Area} m2, pitch {pitch}, roll {roll}, yaw {yaw}, flap {flap}, split {spec.Split} to {spec.MaxSplit} at {spec.SplitDrag}, hinge at {hingePoint} along {hinge.right}, |x| {spanIn:F1} to {spanOut:F1}{(authored ? ", blockout hinge and mesh" : ", slab mesh")}");
+                if (flap)
+                    AddFairings(b, spec.Name, go, hinge, surface, aeroType);
             }
+        }
+
+        // A flap's fairings whose rear halves turn on their own hinges (the export's <flap>_fairing<k>, passkit/fairing.py):
+        // each hinge at its exported pivot under the flap's part, beside the flap's hinge and with its axes, so the rear
+        // half turns through the flap's own angle about its lower pivot and its tail swings aft and down clear of the flap.
+        // A second ControlSurface on the flap's part drives it, a copy of the flap's (attachedSurface, flap, pitchRange,
+        // servoSpeed) with its own visibleMesh: the job only turns visibleMesh (ControlSurfaceJob_Math.cs:62-72) and the
+        // aero stays the flap's. The plugin's SurfaceRules registers every ControlSurface on the part, so it takes the
+        // flap's presets and stow.
+        private static void AddFairings(Build b, string flap, GameObject part, Transform flapHinge, Component flapSurface, Type aeroType)
+        {
+            var fairings = b.Blockout.Parts.Values
+                .Where(p => p.Props.TryGetValue("fairing_of", out var of) && of as string == flap && b.Blockout.HasMesh(p.Name + "_visible"))
+                .OrderBy(p => p.Name, StringComparer.Ordinal).ToArray();
+            if (fairings.Length == 0)
+                return;
+            var aero = new SerializedObject(part.GetComponent(aeroType));
+            var renderers = Prop(aero, "damageMaterial").FindPropertyRelative("renderers");
+            foreach (var fairing in fairings)
+            {
+                var hinge = new GameObject(fairing.Name) { layer = part.layer }.transform;
+                hinge.SetParent(part.transform, false);
+                hinge.SetPositionAndRotation(b.Blockout.Local(fairing.Name), flapHinge.rotation);
+                var visibleName = fairing.Name + "_visible";
+                var visible = new GameObject(visibleName) { layer = part.layer };
+                visible.transform.SetParent(hinge, false);
+                visible.transform.SetPositionAndRotation(b.Blockout.Local(visibleName), b.Blockout.Rotation(visibleName));
+                visible.AddComponent<MeshFilter>().sharedMesh = b.Meshes[visibleName].Render;
+                var renderer = visible.AddComponent<MeshRenderer>();
+                renderer.sharedMaterials = b.MaterialsFor(visibleName);
+                b.Visuals[fairing.Name] = hinge;
+                b.Visuals[visibleName] = visible.transform;
+                renderers.arraySize++;
+                renderers.GetArrayElementAtIndex(renderers.arraySize - 1).objectReferenceValue = renderer;
+
+                var surface = part.AddComponent(flapSurface.GetType());
+                EditorUtility.CopySerialized(flapSurface, surface);
+                var so = new SerializedObject(surface);
+                Prop(so, "visibleMesh").objectReferenceValue = hinge.gameObject;
+                Prop(so, "splitUpper").objectReferenceValue = null;
+                Prop(so, "splitLower").objectReferenceValue = null;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                b.Report.Add($"fairing {fairing.Name}: hinge at {hinge.position} along {hinge.right}, turned with {flap} by its own ControlSurface");
+            }
+            aero.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // The fly-by-wire pitch channel (ControlsFilter.FlyByWire.Filter) for this bomber; the rest stays the Alkyon's.
@@ -1978,11 +2266,10 @@ namespace Centurion.Editor
         // ---------- systems: cockpit, radar, cameras, engines, gear, bays ----------
 
         // The flare dispensers are cartridge plates a side in two places (owner: "not side by side, in different
-        // locations"): art/blender/m4/nose.py FLARES on fuselage_F's lower sides below the cheeks (stations 9.95 to 10.85,
-        // 121 to 135 deg from the crown), and fuselage_aft.py FLARES on fuselage_R above the sponsons' tails (32.0 to
-        // 32.9, 80 to 94 deg). Each point sits 5 cm off its plate's centre (FlarePlates: blockout station, x out and height)
-        // on a MainBox core: the forward plate is fuselage_F's own skin; the aft plate's skin is the fuselage_R_upper
-        // panel's, its points stay on fuselage_R, so a lost panel leaves them throwing from the hole. Owner,
+        // locations"): art/blender/m4/nose.py FLARES on the forward body's lower sides below the cheeks (stations 9.95 to
+        // 10.85, 121 to 135 deg from the crown), and fuselage_aft.py FLARES on the aft body above the sponsons' tails (32.0
+        // to 32.9, 80 to 94 deg). Each point sits 5 cm off its plate's centre (FlarePlates: blockout station, x out and
+        // height) on the part whose skin carries the plate: both plates are below the bay roof, on the bays. Owner,
         // 2026-10-19: "up the flares to 400 and add 2 more dispensers so they deploy 4 at a time": a release
         // (FlareEjector.Fire) ejects ejectionGrouping flares from successive points, so with four points and a grouping of
         // four each release throws one from every plate (FlareEjector.cs:110-137). The Alkyon's two points came along
@@ -1990,7 +2277,7 @@ namespace Centurion.Editor
         // FlareEjector.EjectFlare spawns each flare at its point and throws it along the point's +Z at 15 to 35 m/s plus
         // its part's velocity; from both plates that line clears every collider at both spans.
         private static readonly (string Part, float Station, float Out, float Height, string Suffix)[] FlarePlates =
-            { ("fuselage_F", 10.4f, 2.118f, 2.146f, "_fwd"), ("fuselage_R", 32.45f, 2.80f, 4.233f, "") };
+            { ("bay_F", 10.4f, 2.118f, 2.146f, "_fwd"), ("bay_A", 32.45f, 2.80f, 4.233f, "") };
         private const int FlareRounds = 400;
         private static readonly Vector3 FlareThrow = new Vector3(0.8f, -0.55f, -0.25f); // outboard (+X side), down, aft
 
@@ -2029,7 +2316,7 @@ namespace Centurion.Editor
 
         // The transonic vapour cone, VaporEffect's local-space emitter, which VaporEmitter.Emit turns into the airflow and
         // plays past an angle of attack that falls from 30 degrees 40 m/s under the speed of sound to 0 at it. It came at
-        // the Alkyon's spot (its fuselage_F joint, inside the Centurion's fuselage_M) and size, a cone of radius 1 m for the
+        // the Alkyon's spot (its fuselage_F joint, inside the Centurion's centre section) and size, a cone of radius 1 m for the
         // Alkyon's body of 1.23 m half-height (its fuselage_F mesh). It moves 40% back on the inner wing's root chord
         // (stations 14.69 to 24.44), where the body and the thickest part of the wing root meet, onto the body section's
         // centre there, and scales with that section's half-height.
@@ -2042,7 +2329,7 @@ namespace Centurion.Editor
             if (cone.GetComponent<ParticleSystem>().main.scalingMode != ParticleSystemScalingMode.Local)
                 throw new InvalidDataException("vaporCone's particle system no longer scales by its own transform");
             var z = OriginStation - VaporConeStation - b.Blockout.Origin.z;
-            var section = SectionAlongZ(b.Meshes["fuselage_M"].Shape, b.Parts["fuselage_M"].transform.position, z);
+            var section = SectionAlongZ(b.Meshes["Centurion"].Shape, b.Parts["Centurion"].transform.position, z);
             var top = section.Max(p => p.y);
             var bottom = section.Min(p => p.y);
             cone.position = new Vector3(0, (top + bottom) / 2, z);
@@ -2053,13 +2340,13 @@ namespace Centurion.Editor
         private static void PlaceSystems(Build b)
         {
             // The flight deck is BuildFlightDeck's. In cockpit view the camera turns exteriorRenderers off
-            // (CameraCockpitState.cs:68, Aircraft.SetCockpitRenderers): the nose skin and the radar fairing hide, the world
-            // shows through the interior's panes and its screen under them (docs/COCKPIT-DESIGN.md "Forward view").
-            var nose = b.Parts["nose"];
-            var noseBounds = ShapeBounds(b, "nose");
+            // (CameraCockpitState.cs:68, Aircraft.SetCockpitRenderers): the forward section's skin and the radome hide, the
+            // world shows through the interior's panes and its screen under them (docs/COCKPIT-DESIGN.md "Forward view").
+            var nose = b.Parts["cockpit"];
+            var noseBounds = ShapeBounds(b, "cockpit");
             var aircraft = new SerializedObject(b.Aircraft);
             var exterior = Prop(aircraft, "exteriorRenderers");
-            foreach (var part in new[] { "nose", "radar_F_fairing" })
+            foreach (var part in new[] { "cockpit", "radome" })
             {
                 exterior.arraySize++;
                 exterior.GetArrayElementAtIndex(exterior.arraySize - 1).objectReferenceValue = b.Parts[part].GetComponent<MeshRenderer>();
@@ -2067,16 +2354,16 @@ namespace Centurion.Editor
             aircraft.ApplyModifiedPropertiesWithoutUndo();
 
             // Radar under the nose cone; target cameras at both ends.
-            var radar = b.Parts["radar_F_fairing"].transform;
+            var radar = b.Parts["radome"].transform;
             var tip = noseBounds.max.z;
-            if (!b.Blockout.Has("radar_F_fairing"))
+            if (!b.Blockout.Has("radome"))
                 radar.position = new Vector3(0, nose.transform.position.y, tip - 1.2f);
             var targetCamF = radar.Find("targetCamPoint_F");
             // TargetCam uses a 2 m near plane and an unrestricted look rotation. Keep the ground-looking mounts low
             // and beyond the render hulls, including the radome and fixed laser dome that Shape omits.
             const float targetCamClearance = 2.5f;
             var chinHeight = 0.5f - b.Blockout.Origin.y;
-            targetCamF.position = new Vector3(0, chinHeight, radar.position.z + b.Meshes["radar_F_fairing"].Render.bounds.max.z + targetCamClearance);
+            targetCamF.position = new Vector3(0, chinHeight, radar.position.z + b.Meshes["radome"].Render.bounds.max.z + targetCamClearance);
             var tail = b.Parts["tailcone"].transform;
             var domeEnd = b.Blockout.Local("laser_turret").z + b.Meshes["laser_turret"].Render.bounds.min.z;
             tail.Find("targetCamPoint_R").position = new Vector3(0, chinHeight, domeEnd - targetCamClearance);
@@ -2085,11 +2372,11 @@ namespace Centurion.Editor
             // belly 3.4 m behind the bay, where the stock bombers carry it, with all twelve main wheels in its view.
             tail.Find("landingCam").localPosition = new Vector3(0f, -2.05f, -3f);
 
-            // Nav lights and vortex emitters at the raked tips, on the wingtip pieces: stage 2's vertices (with its tip's)
-            // outboard of the inner wing's end.
+            // Nav lights and vortex emitters at the raked tips, on stage 2: its vertices (with its tip's) outboard of the
+            // inner wing's end.
             foreach (var side in new[] { "L", "R" })
             {
-                var stage = b.Parts["wing_tip_" + side].transform;
+                var stage = b.Parts["wing_tele2_" + side].transform;
                 var inner = GroupShapeBounds(b, "wing_root_" + side);
                 var rootEnd = Mathf.Max(Mathf.Abs(inner.min.x), Mathf.Abs(inner.max.x));
                 var tipVerts = ShapeGroup("wing_tele2_" + side).SelectMany(n => b.Meshes[n].Shape.vertices.Select(b.Parts[n].transform.TransformPoint))
@@ -2227,6 +2514,17 @@ namespace Centurion.Editor
         // 32 t share of the empty mass (2 x sqrt(1.8e6 x 32 t) is 4.8e5): the step 6 wing touches down nearly flat, nose and
         // mains together, and at 1.5e5 a 7 m/s touchdown at 199 t pushed it past its 0.65 m maxCompression. The bump stop sits suspensionTravel
         // above the ground, so the free wheel touches it (LandingGear casts down suspensionTravel from it).
+        // The tyres' contact area is set so the Centurion fails on soft ground as the Darkreach does (owner, 2026-11-24:
+        // "Match the Darkreach's break"). The area decides only how far a wheel sinks off the pavement and the drag there,
+        // which breaks a leg when it passes the spring rate (LandingGear.FixedUpdate: drag goes with the fourth power of
+        // load over area). Driven onto grass at 23 kt at maximum weight, a Darkreach loses its nose leg after 0.90 s and
+        // keeps its mains. The Centurion's mains carry the Darkreach's static pressure (735 kN a leg at 199 t against
+        // 469 kN on 0.10 m2 at 115 t) and survive as its do; the nose, which sits 15 m ahead of the centre of gravity and
+        // takes a quarter of the weight, is sized by flight: 0.105 m2 broke after 0.38 s, 0.178 not in 10 s, and 0.145
+        // after 0.884, 0.900 and 0.883 s. On the Alkyon donor's 0.035 and 0.04 m2 it broke in 0.10 s, and an AI aircraft
+        // turning wide onto a taxiway shoulder was lost; the AI now taxis out slowly instead (AiAirfieldRules).
+        private const float MainContactAreaM2 = 0.157f, NoseContactAreaM2 = 0.145f;
+
         private static void BuildGear(Build b)
         {
             var ground = -b.Blockout.Origin.y;
@@ -2283,16 +2581,18 @@ namespace Centurion.Editor
                 Prop(so, "wheelRadius").floatValue = radius;
                 Prop(so, "springRate").floatValue = spring;
                 Prop(so, "dampingRate").floatValue = damping;
+                var contact = gearPath.EndsWith("gear_F", StringComparison.Ordinal) ? NoseContactAreaM2 : MainContactAreaM2;
+                Prop(so, "contactArea").floatValue = contact;
                 so.ApplyModifiedPropertiesWithoutUndo();
-                b.Report.Add($"gear {gear.name} on {part}: bump stop {bump.position}, travel {travel}, wheel radius {radius}, spring {spring:0}, damping {damping:0}");
+                b.Report.Add($"gear {gear.name} on {part}: bump stop {bump.position}, travel {travel}, wheel radius {radius}, spring {spring:0}, damping {damping:0}, contact area {contact}");
             }
 
-            var nose = b.Parts["nose"].transform;
+            var nose = b.Parts["cockpit"].transform;
             var noseHinge = b.Root.transform.Find("gearhinge_F");
             var armTarget = b.Root.transform.Find("gear_F_armtarget");
             noseHinge.SetParent(nose, true);
             armTarget.SetParent(noseHinge, true);
-            Gear("nose/gearhinge_F/gear_F", noseHinge, "gear_F", "wheel_F", "nose", 0.95f, 0.55f, 1.8e6f, 4.8e5f, "geardoor_FL", "geardoor_FR");
+            Gear("cockpit/gearhinge_F/gear_F", noseHinge, "gear_F", "wheel_F", "cockpit", 0.95f, 0.55f, 1.8e6f, 4.8e5f, "geardoor_FL", "geardoor_FR");
             Gear("gear_L", b.Parts["sponson_L"].transform.Find("gearMount_L"), "gear_LM", "wheel_LM", "sponson_L", 1.6f, 0.6f, 6e6f, 1.2e6f, "geardoor_LM");
             Gear("gear_R", b.Parts["sponson_R"].transform.Find("gearMount_R"), "gear_RM", "wheel_RM", "sponson_R", 1.6f, 0.6f, 6e6f, 1.2e6f, "geardoor_RM");
             FoldMainLegAsArt(b, "gear_L", "gear_LM", "wheel_LM");
@@ -2305,8 +2605,7 @@ namespace Centurion.Editor
         // about gear_LM's origin, a fore-and-aft axis), so the leg door the leg carries closes the well's outboard strip
         // the main door leaves. The donor's fold (88 degrees about its own mount, shifted by hingeFoldMotion) left that
         // strip open in flight. The hinge moves onto the art's pivot with the leg kept where it stands, so the rest pose and
-        // bump stop don't change. The game doesn't shorten the strut as the art does (MAIN_SHRINK), which only carries the
-        // bogie deeper inside the body.
+        // bump stop don't change. The strut closes as the art's does (MAIN_SHRINK) in ShrinkMainStrutAsArt.
         private const float MainRetractDeg = 120f; // art/blender/m4/gear.py MAIN_RETRACT_DEG
         private static void FoldMainLegAsArt(Build b, string gearName, string blockoutGear, string blockoutWheel)
         {
@@ -2329,6 +2628,10 @@ namespace Centurion.Editor
             b.Report.Add($"gear {gearName} folds {degrees} deg about {pivot} (the art's hinge)");
         }
 
+        // A Blender world point from the export (a custom property) in prefab space.
+        private static Vector3 BlenderPoint(Build b, List<object> p) =>
+            new Vector3(-Convert.ToSingle(p[0]), Convert.ToSingle(p[2]), -Convert.ToSingle(p[1])) - b.Blockout.Origin;
+
         // Visual-only child carrying a blockout mesh at its pivot (fans, gear struts, wheels). The suffix keeps
         // it apart from the Alkyon transform of the same name it often hangs under.
         private static void AddVisual(Build b, string blockoutName, Transform parent)
@@ -2339,6 +2642,38 @@ namespace Centurion.Editor
             go.AddComponent<MeshFilter>().sharedMesh = b.Meshes[blockoutName].Render;
             b.Visuals[blockoutName] = go.transform;
             go.AddComponent<MeshRenderer>().sharedMaterials = b.MaterialsFor(blockoutName);
+        }
+
+        // A spoiler's actuators (the art's spoiler well): each a cylinder on the wing and a rod on the rising panel, both
+        // with their origins at their eyes, each aimed at the other's eye so the pair stays pinned as the panel turns. Up is
+        // the hinge line, so neither rolls about its own axis.
+        private static void RigActuators(Build b, string spoiler, Transform wing, Transform panel, Transform hinge)
+        {
+            for (var k = 1; b.Blockout.HasMesh($"{spoiler}_cylinder_{k}"); k++)
+            {
+                AddVisual(b, $"{spoiler}_cylinder_{k}", wing);
+                AddVisual(b, $"{spoiler}_rod_{k}", panel);
+                var cylinder = b.Visuals[$"{spoiler}_cylinder_{k}"];
+                var rod = b.Visuals[$"{spoiler}_rod_{k}"];
+                AimAtEye(cylinder, rod, hinge);
+                AimAtEye(rod, cylinder, hinge);
+                b.Report.Add($"actuator {spoiler} {k}: eyes {(rod.position - cylinder.position).magnitude:F3} m apart at rest");
+            }
+        }
+
+        private static void AimAtEye(Transform piece, Transform eye, Transform hinge)
+        {
+            var aim = piece.gameObject.AddComponent<UnityEngine.Animations.AimConstraint>();
+            aim.AddSource(new UnityEngine.Animations.ConstraintSource { sourceTransform = eye, weight = 1f });
+            aim.aimVector = Quaternion.Inverse(piece.rotation) * (eye.position - piece.position).normalized;
+            aim.upVector = Quaternion.Inverse(piece.rotation) * hinge.right;
+            aim.worldUpType = UnityEngine.Animations.AimConstraint.WorldUpType.ObjectRotationUp;
+            aim.worldUpObject = hinge;
+            aim.worldUpVector = Vector3.right;
+            aim.rotationAtRest = piece.localEulerAngles;
+            aim.rotationOffset = Vector3.zero;
+            aim.locked = true;
+            aim.constraintActive = true;
         }
 
         // A door: mount on the hinge line with local Z along it (BayDoor and LandingGear.GearDoor both turn
@@ -2365,8 +2700,17 @@ namespace Centurion.Editor
             var vertices = mesh.vertices;
             var skin = mesh.GetTriangles(0);
             var normal = Vector3.zero;
+            var area = 0f;
             for (var i = 0; i < skin.Length; i += 3)
-                normal += Vector3.Cross(vertices[skin[i + 1]] - vertices[skin[i]], vertices[skin[i + 2]] - vertices[skin[i]]);
+            {
+                var face = Vector3.Cross(vertices[skin[i + 1]] - vertices[skin[i]], vertices[skin[i + 2]] - vertices[skin[i]]);
+                normal += face;
+                area += face.magnitude;
+            }
+            // A two-sided skin sums to nothing and leaves the swing to rounding: the door then shuts folded back beside
+            // its well, which stays open in flight. A one-sided door skin faces one way over 78% or more (its edges the rest).
+            if (normal.magnitude < 0.5f * area)
+                throw new InvalidDataException($"{panel.name}: its outer skin faces one way over {normal.magnitude / area:P0} of its area, so which way it shuts is unknown; a gear door's skin must be one-sided.");
             normal = panel.TransformDirection(normal);
             var shut = (Quaternion.AngleAxis(90f, hingeAxis) * normal).y < (Quaternion.AngleAxis(-90f, hingeAxis) * normal).y ? 90f : -90f;
             var swing = Quaternion.AngleAxis(shut, hingeAxis);
@@ -2374,13 +2718,15 @@ namespace Centurion.Editor
             return -shut;
         }
 
-        // Hardpoint sets per SPEC: forward bay, aft bay, dorsal, laser. Bays use the Alkyon's BayDoors, on the
-        // blockout's door hinges and panels when it has them, else on generated 8 m slabs.
+        // Hardpoint sets per SPEC: forward bay, aft bay, dorsal, laser. Each bay is its own part and carries its hardpoint
+        // and doors, so a bay that cooks off or is shot away takes its stores and doors with it. Bays use the Alkyon's
+        // BayDoors, on the blockout's door hinges and panels when it has them, else on generated 8 m slabs.
         private static void BuildBays(Build b)
         {
-            var fwd = b.Parts["fuselage_F"].transform;
-            var aft = b.Parts["fuselage_R"].transform;
-            var bottom = ShapeBounds(b, "fuselage_M").min.y - 0.03f;
+            var fwd = b.Parts["bay_F"].transform;
+            var aft = b.Parts["bay_A"].transform;
+            var spine = b.Parts["fuselage_R"].transform;
+            var bottom = ShapeBounds(b, "Centurion").min.y - 0.03f;
             float Station(float s) => OriginStation - s - b.Blockout.Origin.z;
             Component Door(string hingePath, string blockoutDoor, Transform parent, float x, float zCentre, int side)
             {
@@ -2428,15 +2774,15 @@ namespace Centurion.Editor
             // the bomber, and the dorsal mount goes on the crown at the forward lid's pivot, the mast sleeve's station, under
             // fuselage_R, which carries its mass and joint (docs/M3-DESIGN.md "Hardpoint"). AwacsBeam hides the lids when the
             // beam is fitted.
-            AddVisual(b, "spine_cover", aft);
-            AddVisual(b, "spine_cover_A", aft);
+            AddVisual(b, "spine_cover", spine);
+            AddVisual(b, "spine_cover_A", spine);
             var tail = b.Parts[CramHost].transform;
             AddVisual(b, "laser_turret", tail);
             var sets = new (string name, Transform point, string part, Component[] doors)[]
             {
-                ("Forward Bay", Point("hardpoint_bay_forward", fwd, new Vector3(0, -0.4f, fz)), "fuselage_F", forwardDoors),
-                ("Aft Bay", Point("hardpoint_bay_aft", aft, new Vector3(0, -0.4f, az)), "fuselage_R", aftDoors),
-                ("Dorsal", Point("hardpoint_dorsal", aft, b.Blockout.Local("spine_cover")), "fuselage_R", new Component[0]),
+                ("Forward Bay", Point("hardpoint_bay_forward", fwd, new Vector3(0, -0.4f, fz)), "bay_F", forwardDoors),
+                ("Aft Bay", Point("hardpoint_bay_aft", aft, new Vector3(0, -0.4f, az)), "bay_A", aftDoors),
+                ("Dorsal", Point("hardpoint_dorsal", spine, b.Blockout.Local("spine_cover")), "fuselage_R", new Component[0]),
                 ("Laser C-RAM", Point("hardpoint_laser", tail, b.Blockout.Local("laser_turret")), CramHost, new Component[0]),
             };
             var manager = b.Parts["cockpit"].GetComponent(GameType("WeaponManager"));
@@ -2538,8 +2884,7 @@ namespace Centurion.Editor
             }
         }
 
-        // Two levels as stock: the full meshes, then the LOD1 hulls down to 0.1% of the screen. The size is the extended
-        // span, so the switch distance doesn't move as the wing telescopes.
+        // Two levels as stock: the full meshes, then the LOD1 hulls down to 0.1% of the screen.
         private static void FinishRoot(Build b)
         {
             b.Root.GetComponent<Rigidbody>().mass = EmptyMass;
@@ -2549,8 +2894,7 @@ namespace Centurion.Editor
             var full = renderers.Except(hulls).ToArray();
             lod.SetLODs(new[] { new LOD(0.05f, full), new LOD(0.001f, hulls) });
             lod.RecalculateBounds();
-            lod.size = b.Blockout.ExtendedSpan();
-            b.Report.Add($"LODGroup: {full.Length} renderers to 5% of the screen, {hulls.Length} LOD1 hulls to 0.1%, size {lod.size:F2} m (extended span)");
+            b.Report.Add($"LODGroup: {full.Length} renderers to 5% of the screen, {hulls.Length} LOD1 hulls to 0.1%, size {lod.size:F2} m");
         }
 
         // ---------- validation and report ----------
@@ -2644,7 +2988,7 @@ namespace Centurion.Editor
         private static void CheckTargetCameraClearance(Build b)
         {
             const float clearance = 2.5f;
-            var cameras = new[] { b.Parts["radar_F_fairing"].transform.Find("targetCamPoint_F"), b.Parts["tailcone"].transform.Find("targetCamPoint_R") };
+            var cameras = new[] { b.Parts["radome"].transform.Find("targetCamPoint_F"), b.Parts["tailcone"].transform.Find("targetCamPoint_R") };
             if (cameras.Any(t => t == null)) throw new InvalidDataException("Target camera mount missing");
             var meshes = b.Root.GetComponentsInChildren<MeshFilter>(true).Where(f => f.sharedMesh != null)
                 .Select(f => (filter: f, vertices: f.sharedMesh.vertices)).Where(m => m.vertices.Length > 0).ToArray();
@@ -2719,6 +3063,8 @@ namespace Centurion.Editor
                 { SkinFolder + "/Centurion_gear.mat", "the gear legs and wheels" },
                 { SkinFolder + "/Centurion_structure.mat", "joint faces, cut-out walls, door inner faces and skin a neighbour hides" },
                 { SkinFolder + "/Centurion_airframe.mat", "the damage structure under the skin: frames, lining, members, break faces" },
+                { SlotMaterials["jet_mechanical"], "the structure under the skin: stations, lattice, trusses, dark bay backdrops, linings, spoiler actuators" },
+                { SkinFolder + "/Centurion_core.mat", "the control surfaces' honeycomb cores" },
                 { SlotMaterials["LOD"], "a LOD1 hull" },
                 { Stock + "Material/GroundSupportEquipment_PLACEHOLDER.mat", "the wheel chocks" },
             };
@@ -2734,9 +3080,9 @@ namespace Centurion.Editor
             {
                 var path = PathOf(renderer.transform, b.Root.transform);
                 var owner = renderer.GetComponentInParent(aeroType, true);
-                // The hatch liners ride on the nose's hatches so they leave with a jettisoned hatch; they are the flight
-                // deck's inner face, painted on its own materials.
-                if (owner == cockpit || renderer.name.StartsWith("hatch_liner_", StringComparison.Ordinal))
+                // The flight deck (what the cockpit section carries that wears no skin) and the hatch liners, which ride on
+                // the hatches so they leave with a jettisoned hatch, are painted on their own materials.
+                if (owner == cockpit && !renderer.sharedMaterials.Contains(b.Skin) || renderer.name.StartsWith("hatch_liner_", StringComparison.Ordinal))
                 {
                     b.Report.Add($"livery map: {path}: the flight deck, its own materials");
                     continue;

@@ -11,7 +11,8 @@ namespace Centurion;
 /// included). Every key is present on every call (the framework reads a key it doesn't get as missing); a value that
 /// can't be read, including every Centurion-only key until its system exists, holds <see cref="NotRead"/>, or
 /// <see cref="NoText"/> for a text key. The remote_* keys read the first Centurion another peer simulates, as this peer
-/// sees it (merged physics, G2.1).
+/// sees it (merged physics, G2.1). Only a dev build reads them; a release build keeps the not-read values, which the AI
+/// state uses as its own "none".
 /// </summary>
 public static class AircraftReadout
 {
@@ -21,6 +22,7 @@ public static class AircraftReadout
     /// <summary>Any text key that can't be read.</summary>
     public const string NoText = "none";
 
+#if CENTURION_DEV
     public static Dictionary<string, object> Read(bool enabled)
     {
         var state = new Dictionary<string, object>
@@ -49,6 +51,8 @@ public static class AircraftReadout
             ["stage1_angle_deg"] = NotRead,
             ["flex_pitch_deg"] = NotRead,
             ["flex_part"] = NoText,
+            ["tail_bend_deg"] = NotRead,
+            ["tail_bend_part"] = NoText,
             ["cg_y_m"] = NotRead,
             ["cg_z_m"] = NotRead,
             ["stage1_com_x_m"] = NotRead,
@@ -120,7 +124,6 @@ public static class AircraftReadout
         CenturionAi.AddDefaults(state);
         OwnerState.AddDefaults(state);
         BayCookoff.AddDefaults(state);
-        FireDamageDiagnostics.Read(state, enabled);
 
         if (!enabled)
         {
@@ -189,7 +192,7 @@ public static class AircraftReadout
 
         state["wing_area_m2"] = Round(wingArea);
         state["rcs"] = Round(aircraft.RCS);
-        FlapPreset.Read(aircraft, state);
+        SurfaceRules.Read(aircraft, state);
         state["detached_ratio"] = Round(aircraft.partDamageTracker.GetDetachedRatio());
 
         if (aircraft.TryGetComponent(out TelescopeController telescope))
@@ -206,6 +209,8 @@ public static class AircraftReadout
             state["stage1_angle_deg"] = Round(telescope.StageAngle(0));
             state["flex_pitch_deg"] = Round(telescope.FlexPitchDeg);
             state["flex_part"] = telescope.FlexPart;
+            state["tail_bend_deg"] = Round(telescope.TailBendDeg);
+            state["tail_bend_part"] = telescope.TailBendPart;
             state["cg_y_m"] = Round(telescope.CenterOfMassLocal.y);
             state["cg_z_m"] = Round(telescope.CenterOfMassLocal.z);
             state["stage1_com_x_m"] = Round(telescope.Stage1CenterOfMassLocal.x);
@@ -317,6 +322,7 @@ public static class AircraftReadout
     static readonly AccessTools.FieldRef<ControlSurface, NuclearOption.Jobs.PtrAllocation<NuclearOption.Jobs.ControlSurfaceFields>>? JobFields =
         AccessTools.Field(typeof(ControlSurface), "JobFields") == null ? null
             : AccessTools.FieldRefAccess<ControlSurface, NuclearOption.Jobs.PtrAllocation<NuclearOption.Jobs.ControlSurfaceFields>>("JobFields");
+#endif
 
     internal static double Round(float value) => Math.Round(value, 3);
 }

@@ -4,9 +4,11 @@
     <!-- The Unity authoring project references prefab components by assembly name, so this must stay "Centurion". -->
     <AssemblyName>Centurion</AssemblyName>
     <RootNamespace>Centurion</RootNamespace>
-    <Version>0.1.3</Version>
+    <Version>0.2.0</Version>
     <Authors>baanish</Authors>
     <LangVersion>latest</LangVersion>
+    <!-- A dev build (tools/Build-Centurion.ps1 -Dev) adds the diagnostics, AgenticState() and the Debug.* and Capture.* test hooks. -->
+    <DefineConstants Condition="'$(CenturionDev)' == 'true'">$(DefineConstants);CENTURION_DEV</DefineConstants>
     <Nullable>enable</Nullable>
     <!-- TelescopeController reads AeroPart's job fields through their native pointer (diagnostics). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

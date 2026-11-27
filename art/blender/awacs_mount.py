@@ -366,12 +366,11 @@ def main():
     for o in subs["Colliders"].objects:
         o.display_type = "WIRE"
     # The detail pass (group 8): the colliders and LOD1 hulls above came from the graybox meshes, which each part keeps
-    # as its _blockout_mesh. Baked deployed, so no end section bakes inside the beam.
+    # as its _blockout_mesh.
     tris = detail.swap_detail(objs, MOUNT, geo, mats)
     meshes = [o for o in objs.values() if o.type == "MESH"]
     px_per_m, skin_m2 = detail.unwrap(meshes)
-    pose(objs, rest, 1.0)
-    maps, texels = detail.bake_and_paint(meshes, MOUNT, out / "textures", px_per_m)
+    maps, texels = detail.bake_and_paint(meshes, MOUNT, out / "textures", px_per_m, lambda deploy: pose(objs, rest, deploy))
     pose(objs, rest, 0.0)
     detail_parts, detail_checks = detail.checks(objs, tris)
     detail_checks["texel_density"] = {"value": px_per_m, "limit": detail.TEXEL_MIN, "pass": px_per_m >= detail.TEXEL_MIN}
@@ -404,6 +403,9 @@ def main():
     y0 = -min((o.matrix_world @ p.co).y for o in bpy.data.collections["Centurion"].objects if o.type == "MESH" for p in o.data.vertices)
     report["airframe"] = str(args["airframe"])
     report["hardpoint_dorsal"] = {"x": round(hardpoint.x, 3), "station": round(hardpoint.y + y0, 3), "z": round(hardpoint.z, 3)}
+    if abs(hardpoint.y + y0 - detail.HARDPOINT_STATION) > 0.01:
+        raise SystemExit(f"hardpoint_dorsal is at station {hardpoint.y + y0:.3f}, not awacs_mount_detail.HARDPOINT_STATION "
+                         f"{detail.HARDPOINT_STATION}: the beam's joints would miss the crown's")
     rise1, rise2, length = blade_geometry(MOUNT)
     report["blade"] = {"rise_m": {"lower": round(rise1, 3), "upper": round(rise2, 3)}, "length_m": round(length, 3),
                        "thickness_m": {"sleeve": MOUNT["mast_t"] + 2 * MOUNT["stage_inset"], "lower": MOUNT["mast_t"],

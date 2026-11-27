@@ -1,0 +1,364 @@
+{
+ "parts": {
+  "aileron_L_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.18,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 16.26
+  },
+  "aileron_R_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.18,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 16.26
+  },
+  "bay_A": {
+   "mean_px_per_m": 64.66,
+   "p5_least_axis": 60.41,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 170.09
+  },
+  "bay_F": {
+   "mean_px_per_m": 64.6,
+   "p5_least_axis": 59.61,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 142.43
+  },
+  "baydoor_AL_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 62.49,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 17.36
+  },
+  "baydoor_AR_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 62.49,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 17.36
+  },
+  "baydoor_FL_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 63.44,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 16.88
+  },
+  "baydoor_FR_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 63.44,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 16.88
+  },
+  "Centurion": {
+   "mean_px_per_m": 64.51,
+   "p5_least_axis": 56.56,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 285.84
+  },
+  "cockpit": {
+   "mean_px_per_m": 64.59,
+   "p5_least_axis": 1.9,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 75.55
+  },
+  "flap_L1_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 58.13,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 21.16
+  },
+  "flap_L2_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 57.56,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 25.27
+  },
+  "flap_R1_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 58.19,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 21.16
+  },
+  "flap_R2_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 57.56,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 25.27
+  },
+  "fuselage_F": {
+   "mean_px_per_m": 64.53,
+   "p5_least_axis": 58.73,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 125.16
+  },
+  "fuselage_R": {
+   "mean_px_per_m": 64.59,
+   "p5_least_axis": 64.28,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 108.49
+  },
+  "gear_LM": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 54.47,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 7.1
+  },
+  "gear_RM": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 54.47,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 7.1
+  },
+  "geardoor_FL_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.51,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 2.31
+  },
+  "geardoor_FR_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.51,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 2.31
+  },
+  "geardoor_LM_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.48,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 3.66
+  },
+  "geardoor_RM_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.48,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 3.66
+  },
+  "nacelle_1": {
+   "mean_px_per_m": 64.65,
+   "p5_least_axis": 60.93,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 135.11
+  },
+  "nacelle_2": {
+   "mean_px_per_m": 64.65,
+   "p5_least_axis": 60.93,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 135.11
+  },
+  "nose_door_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.44,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 2.01
+  },
+  "nose_hatch_L": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.54,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 0.91
+  },
+  "nose_hatch_R": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.54,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 0.91
+  },
+  "nozzle_1": {
+   "mean_px_per_m": 62.94,
+   "p5_least_axis": 59.37,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 13.03
+  },
+  "nozzle_2": {
+   "mean_px_per_m": 62.94,
+   "p5_least_axis": 59.37,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 13.03
+  },
+  "pylon_1": {
+   "mean_px_per_m": 66.62,
+   "p5_least_axis": 60.47,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 4.27
+  },
+  "pylon_2": {
+   "mean_px_per_m": 66.62,
+   "p5_least_axis": 60.48,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 4.27
+  },
+  "radome": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 59.07,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 24.62
+  },
+  "ruddervator_L1_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 63.29,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 10.77
+  },
+  "ruddervator_L2_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 61.35,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 20.03
+  },
+  "ruddervator_R1_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 63.29,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 10.77
+  },
+  "ruddervator_R2_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 61.35,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 20.03
+  },
+  "spine_cover": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 62.71,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 5.33
+  },
+  "spine_cover_A": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 62.79,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 5.29
+  },
+  "spoiler_L_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.1,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 11.78
+  },
+  "spoiler_R_visible": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 64.1,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 11.78
+  },
+  "sponson_L": {
+   "mean_px_per_m": 64.49,
+   "p5_least_axis": 54.44,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 43.24
+  },
+  "sponson_R": {
+   "mean_px_per_m": 64.49,
+   "p5_least_axis": 54.44,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 43.24
+  },
+  "strut_inner_L": {
+   "mean_px_per_m": 64.5,
+   "p5_least_axis": 61.95,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 12.83
+  },
+  "strut_inner_R": {
+   "mean_px_per_m": 64.5,
+   "p5_least_axis": 61.95,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 12.83
+  },
+  "strut_outer_L": {
+   "mean_px_per_m": 64.49,
+   "p5_least_axis": 57.98,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 48.73
+  },
+  "strut_outer_R": {
+   "mean_px_per_m": 64.49,
+   "p5_least_axis": 57.98,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 48.73
+  },
+  "tail_end": {
+   "mean_px_per_m": 64.57,
+   "p5_least_axis": 55.16,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 76.26
+  },
+  "tailcone": {
+   "mean_px_per_m": 64.54,
+   "p5_least_axis": 61.75,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 125.21
+  },
+  "vtail_L": {
+   "mean_px_per_m": 64.59,
+   "p5_least_axis": 61.24,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 19.68
+  },
+  "vtail_R": {
+   "mean_px_per_m": 64.62,
+   "p5_least_axis": 61.63,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 19.68
+  },
+  "vtail_tip_L": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 60.52,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 33.37
+  },
+  "vtail_tip_R": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 60.39,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 33.37
+  },
+  "wing_outer_L": {
+   "mean_px_per_m": 64.61,
+   "p5_least_axis": 49.37,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 65.14
+  },
+  "wing_outer_R": {
+   "mean_px_per_m": 64.61,
+   "p5_least_axis": 49.48,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 65.14
+  },
+  "wing_root_L": {
+   "mean_px_per_m": 64.55,
+   "p5_least_axis": 55.39,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 118.69
+  },
+  "wing_root_R": {
+   "mean_px_per_m": 64.55,
+   "p5_least_axis": 55.4,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 118.69
+  },
+  "wing_tele1_L": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 55.95,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 77.99
+  },
+  "wing_tele1_R": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 55.95,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 77.99
+  },
+  "wing_tele2_L": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 54.67,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 84.08
+  },
+  "wing_tele2_R": {
+   "mean_px_per_m": 64.56,
+   "p5_least_axis": 54.66,
+   "collapsed_over_0_01m2": 0,
+   "skin_m2": 84.08
+  }
+ }
+}

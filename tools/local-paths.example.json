@@ -1,0 +1,15 @@
+{
+  "blender": "",
+  "unity": "",
+  "game": "",
+  "game_export": "",
+  "remote": {
+    "host": "build-host",
+    "clone": "C:/Build/Centurion",
+    "worktrees": "C:/Build/Centurion-worktrees",
+    "runs": "C:/Build/Centurion-runs",
+    "blender": "",
+    "unity": "",
+    "game": ""
+  }
+}

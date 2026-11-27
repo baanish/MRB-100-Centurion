@@ -213,20 +213,23 @@ namespace Centurion.Editor
                 var key = so.FindProperty("jsonKey").stringValue;
                 var part = new SerializedObject(prefab.GetComponent(aeroType));
                 var joints = part.FindProperty("joints").arraySize;
-                var colliders = prefab.GetComponents<Collider>().Count(c => !c.isTrigger);
+                // The mount's hulls sit on child objects on the no-collision layer (CenturionAuthor.Awacs.cs), so the stowed
+                // mount never pushes on the airframe it lies in. The game resolves a hit on the collider's own GameObject,
+                // so those hulls stop a round but pass no damage to the mount: it is lost only with the section carrying it.
+                var colliders = prefab.GetComponentsInChildren<Collider>(true).Count(c => !c.isTrigger);
                 var mass = part.FindProperty("mass").floatValue;
                 var weapons = prefab.GetComponentsInChildren(GameType("Weapon"), true).Length;
                 if (joints != 1)
                     problems.Add($"radar mount {key}: {joints} PartJoints on its root part; it needs exactly one, or its rigidbody drifts off the hardpoint and detaches");
                 if (colliders == 0)
-                    problems.Add($"radar mount {key}: no collider on its root part's own GameObject");
+                    problems.Add($"radar mount {key}: no hull collider anywhere on the mount");
                 if (mass <= 0)
                     problems.Add($"radar mount {key}: root part mass {mass}; at 0 CreateRB sets the aircraft's rigidbody mass to 0");
                 if (part.FindProperty("parentUnit").objectReferenceValue != null)
                     problems.Add($"radar mount {key}: its root part names a parentUnit; UnitPart.Awake must take the hardpoint's part");
                 if (weapons > 0)
                     problems.Add($"radar mount {key}: {weapons} Weapon components, which would make it a weapon station");
-                notes.Add($"radar mount {key}: {joints} PartJoint, {colliders} root colliders, {mass:0} kg, {weapons} Weapon components");
+                notes.Add($"radar mount {key}: {joints} PartJoint, {colliders} hull colliders, {mass:0} kg, {weapons} Weapon components");
             }
             return problems;
         }

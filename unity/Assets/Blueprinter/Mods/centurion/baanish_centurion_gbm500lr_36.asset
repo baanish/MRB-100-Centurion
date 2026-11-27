@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 1237317488228094084, guid: 4ca5a2b5d0a7083429b7d182a5311071, type: 3}
   jsonKey: baanish_centurion_gbm500lr_36
   info: {fileID: 11400000, guid: 0d828f3fa6f8c6c418336d97bd869dda, type: 2}
-  mountName: GBM-500LR x36
-  ammo: 36
+  mountName: GBM-500LR x30
+  ammo: 30
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 18000
+  mass: 15000
   drag: 0
   emptyDrag: 0
   RCS: 0

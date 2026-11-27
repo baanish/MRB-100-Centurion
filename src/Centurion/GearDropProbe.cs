@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -243,3 +244,4 @@ static class GearDropProbe
         ScenarioHooks.Log.Info(Invariant($"gear-drop joint {part.name} hp={part.hitPoints:0.0}"));
     }
 }
+#endif
