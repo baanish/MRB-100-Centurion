@@ -17,7 +17,7 @@ namespace Centurion;
 sealed class AwacsBeam : MonoBehaviour
 {
     /// <summary>WeaponMount.jsonKey of the beam mount (CenturionAuthor.AwacsKey).</summary>
-    const string AwacsKey = "baanish_centurion_awacs";
+    internal const string AwacsKey = "baanish_centurion_awacs";
     const int AwacsSet = 2;
     /// <summary>
     /// The mount's root part, found in partLookup since the simulating peer's CreateRB unparents it from the hardpoint
@@ -41,15 +41,18 @@ sealed class AwacsBeam : MonoBehaviour
     /// <summary>Increment over the mount's 1.0 stowed drag: 5.2 game drag units deployed, or 2.6 m2 CdA
     /// on the healthy carrier (AeroJob_Math.cs:94-98). Cruise estimate and allowances: docs/M3-DESIGN.md, Drag.</summary>
     const float DeployedDragM2 = 4.2f;
+#if CENTURION_DEV
     // hangar_med's door plane stands this far ahead of its spawn point along the spawn's forward (hangar_med.prefab:1137-1138).
     const float DoorAheadM = 22.8f;
     // A mission-placed aircraft's spawn hangar is the medium hangar whose spawn point it stands within this of.
     const float SpawnMatchM = 10f;
+#endif
 
-    /// <summary>Every live Centurion's beam, local and remote.</summary>
+#if CENTURION_DEV
+    /// <summary>Every live Centurion's beam, local and remote, for the readout.</summary>
     internal static readonly List<AwacsBeam> All = new();
-
     internal static ConfigEntry<float> DebugAwacsCommand = null!;
+#endif
 
     /// <summary>A moving piece of the mount: a mast stage or an end section, from its authored (stowed) local position to its marker's.</summary>
     sealed class Slide
@@ -60,6 +63,7 @@ sealed class AwacsBeam : MonoBehaviour
     }
 
     Aircraft aircraft = null!;
+    CenturionSystems? systems;
     HangarGuard hangarGuard = null!;
     readonly List<Slide> slides = new();
     UnitPart? root;
@@ -67,22 +71,28 @@ sealed class AwacsBeam : MonoBehaviour
     Transform? hardpoint;
     Radar? radar;
     Renderer[] cover = System.Array.Empty<Renderer>();
+#if CENTURION_DEV
     /// <summary>The spawn point of the hangar the aircraft started in, which the door readouts measure against; null for
     /// an airborne start. <see cref="HangarGuard.Spawn"/> is the nearest hangar, which changes as the aircraft taxis.</summary>
     Transform? spawnHangar;
     Vector3 mast2InRoot;
+#endif
     float deploy, target, appliedDrag, stowedDrag, snapUntil;
     bool fitted, lost, guard, ownerSnapped;
     string state = "none";
 
+#if CENTURION_DEV
     /// <summary>True when the beam mount is on hardpoint set 2.</summary>
     public bool Fitted => fitted;
+#endif
 
     /// <summary>Fitted, not lost, and fully deployed (<see cref="Deploy"/> is 1).</summary>
     public bool Deployed => fitted && !lost && slides.Count > 0 && deploy >= 1f;
 
+#if CENTURION_DEV
     /// <summary>The deployment fraction, 0 stowed to 1 deployed.</summary>
     public float Deploy => deploy;
+#endif
 
     /// <summary>The beam is heading for deployed (<see cref="OwnerState"/> sends it).</summary>
     public bool TargetUp => target >= 1f;
@@ -95,12 +105,15 @@ sealed class AwacsBeam : MonoBehaviour
 
     internal static void Install(ConfigFile config, CenturionLog log)
     {
+#if CENTURION_DEV
         DebugAwacsCommand = config.Bind("Debug", "AwacsCommand", -1f, new ConfigDescription(
             "0 or 1 is the local player aircraft's beam target in place of the automatic rule (scenarios); radar master off, the hangar guard and a lost mount still hold it at 0; below 0 is off",
             new AcceptableValueRange<float>(-1f, 1f)));
         DebugAwacsCommand.SettingChanged += (_, _) => log.Info(Invariant($"config Debug.AwacsCommand = {DebugAwacsCommand.Value}"));
+#endif
     }
 
+#if CENTURION_DEV
     internal static void AddDefaults(Dictionary<string, object> state)
     {
         state["awacs_fitted"] = AircraftReadout.NotRead;
@@ -194,19 +207,24 @@ sealed class AwacsBeam : MonoBehaviour
             }
         }
     }
+#endif
 
     void Awake()
     {
         aircraft = GetComponent<Aircraft>();
         hangarGuard = new HangarGuard(aircraft);
+#if CENTURION_DEV
         All.Add(this);
+#endif
         aircraft.weaponManager.OnWeaponsLoaded += Bind;
         Bind();
     }
 
     void OnDestroy()
     {
+#if CENTURION_DEV
         All.Remove(this);
+#endif
         if (aircraft != null && aircraft.weaponManager != null)
         {
             aircraft.weaponManager.OnWeaponsLoaded -= Bind;
@@ -231,10 +249,12 @@ sealed class AwacsBeam : MonoBehaviour
             return;
         }
 
+#if CENTURION_DEV
         if (spawnHangar == null)
         {
             spawnHangar = FindSpawnHangar();
         }
+#endif
 
         Hardpoint point = sets[AwacsSet].hardpoints[0];
         cover = FindCover(point.part);
@@ -278,7 +298,9 @@ sealed class AwacsBeam : MonoBehaviour
         }
 
         slides.AddRange(new[] { mast1, mast2, endF, endR });
+#if CENTURION_DEV
         mast2InRoot = rootTransform.InverseTransformPoint(mast2.Part.position);
+#endif
         root.onPartDetached += OnMountDetached;
         root.onParentDetached += OnMountDetached;
         lost = root.IsDetached();
@@ -319,6 +341,7 @@ sealed class AwacsBeam : MonoBehaviour
         return part == null || mark == null ? null : new Slide { Part = part, Marker = mark, Home = part.localPosition, End = end };
     }
 
+#if CENTURION_DEV
     /// <summary>The spawning hangar's spawn point, or for a mission-placed aircraft the nearest medium hangar's while it
     /// stands within <see cref="SpawnMatchM"/> of it (at the first bind, still on its start pose); else null.</summary>
     Transform? FindSpawnHangar()
@@ -331,6 +354,7 @@ sealed class AwacsBeam : MonoBehaviour
         Transform? nearest = hangarGuard.Spawn;
         return nearest != null && Vector3.ProjectOnPlane(nearest.position - aircraft.transform.position, Vector3.up).magnitude < SpawnMatchM ? nearest : null;
     }
+#endif
 
     static Renderer[] FindCover(UnitPart? carrierPart) =>
         carrierPart == null ? System.Array.Empty<Renderer>()
@@ -350,9 +374,8 @@ sealed class AwacsBeam : MonoBehaviour
         }
 
         guard = hangarGuard.Holds(GuardM);
-        float command = DebugAwacsCommand.Value;
         float was = deploy;
-        if (!Simulated && aircraft.TryGetComponent(out OwnerState owner) && owner.Received)
+        if (!Simulated && Systems?.Owner is { Received: true } owner)
         {
             // An observer takes the owner's target, and on the first word its fraction too: the snap rule reads radar altitude,
             // which this copy may not have yet (Aircraft.cs:1206-1209), and on the ground outside the guard it reads stowed
@@ -364,7 +387,9 @@ sealed class AwacsBeam : MonoBehaviour
         else
         {
             target = lost || guard || !RadarMaster ? 0f
-                : command >= 0f && ScenarioHooks.Diagnostics.Value && IsLocalPlayer ? (command >= 0.5f ? 1f : 0f)
+#if CENTURION_DEV
+                : DebugAwacsCommand.Value >= 0f && ScenarioHooks.Diagnostics.Value && IsLocalPlayer ? (DebugAwacsCommand.Value >= 0.5f ? 1f : 0f)
+#endif
                 : 1f;
             deploy = Time.fixedTime < snapUntil ? Snap() : Mathf.MoveTowards(deploy, target, Time.fixedDeltaTime / TravelS);
         }
@@ -377,7 +402,9 @@ sealed class AwacsBeam : MonoBehaviour
         Apply();
     }
 
-    bool RadarMaster => !aircraft.TryGetComponent(out RadarSuite suite) || suite.Master;
+    /// <summary>The record, found once first sight has finished (this is added during it); the master starts on, as every stock radar does.</summary>
+    CenturionSystems? Systems => systems ??= CenturionSystems.Of(aircraft);
+    bool RadarMaster => Systems?.Radar.Master ?? true;
 
     float Snap() => !lost && RadarMaster && aircraft.radarAlt > SnapAltM && !hangarGuard.Holds(GuardM) ? 1f : 0f;
 
@@ -464,6 +491,7 @@ sealed class AwacsBeam : MonoBehaviour
         }
     }
 
+#if CENTURION_DEV
     /// <summary>
     /// How far the aft-most point of any attached part's collider, the mount's included, stands past the spawn hangar's
     /// door plane, m; negative while anything is inside. Each collider counts by its world bounds, so this reads a little
@@ -496,4 +524,5 @@ sealed class AwacsBeam : MonoBehaviour
 
         return aft;
     }
+#endif
 }

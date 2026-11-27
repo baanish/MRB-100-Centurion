@@ -8,21 +8,29 @@ using UnityEngine;
 namespace Centurion;
 
 /// <summary>
-/// The laser C-RAM on hardpoint set 3: keeps the turret automatic, strips any non-missile target, counts acquisitions, shots
-/// and kills (docs/M3-DESIGN.md, "CramGuard contract" and "C-RAM readout"). Added to each Centurion by
+/// The laser C-RAM on hardpoint set 3: keeps the turret automatic, strips any non-missile target and, in a dev build, counts
+/// acquisitions, shots and kills (docs/M3-DESIGN.md, "CramGuard contract" and "C-RAM readout"). Added to each Centurion by
 /// <see cref="CenturionSystems"/>; runs before Turret and Laser in the same physics step.
 /// </summary>
 [DefaultExecutionOrder(-10)]
 sealed class CramGuard : MonoBehaviour
 {
-    /// <summary>Every live Centurion's guard, local and remote.</summary>
+#if CENTURION_DEV
+    /// <summary>Every live Centurion's guard, local and remote, for the readout.</summary>
     internal static readonly List<CramGuard> All = new();
+#endif
 
     /// <summary>The aircraft whose turret is a bound C-RAM, for <see cref="CramPatches"/>.</summary>
     internal static readonly HashSet<Unit> Carriers = new();
 
+    /// <summary>Each Centurion's C-RAM laser and its guard: the laser hooks run for every laser in the game, so one lookup
+    /// tells a C-RAM from a Medusa's.</summary>
+    static readonly Dictionary<Laser, CramGuard> Lasers = new();
+
     internal static ConfigEntry<bool> CoverEscorts = null!;
+#if CENTURION_DEV
     internal static ConfigEntry<bool> DebugCramFire = null!;
+#endif
 
     Aircraft aircraft = null!;
     WeaponStation? station;
@@ -30,12 +38,15 @@ sealed class CramGuard : MonoBehaviour
     Laser? laser;
     Transform? cone;
     static readonly FieldInfo? ManualField = AccessTools.Field(typeof(Turret), "manual");
+    /// <summary>The last frame the player's trigger called WeaponManager.Fire on this aircraft (<see cref="CramPatches"/>).</summary>
+    internal int TriggerFrame = int.MinValue;
     static readonly AccessTools.FieldRef<Turret, FiringCone[]>? FiringCones =
         AccessTools.Field(typeof(Turret), "firingCones") == null ? null : AccessTools.FieldRefAccess<Turret, FiringCone[]>("firingCones");
     // Under 5% the capacitor reads as run out (docs/M3-DESIGN.md, G3.7): each draw scales with the stock supply curve, which
     // tends to 0 with the charge, so the laser there barely burns.
     const float CapacitorEmpty = 0.05f;
     internal readonly List<WeaponStation> AiStations = new();
+#if CENTURION_DEV
     enum MissileClass { Self, Escort, Untargeted, Other }
     sealed class Acquisition
     {
@@ -52,9 +63,10 @@ sealed class CramGuard : MonoBehaviour
     readonly int[] kills = new int[4];
     int shots, strips, coneMissiles, coneAir, coneGround, unmirroredFires;
     float lastObservedFire = float.NegativeInfinity, nonMissileFireS, bothSince = float.PositiveInfinity, nextConeCheck, mirroredAt = float.NegativeInfinity;
-    bool boundWarning;
     string? repeatKey;
     string RepeatKey => repeatKey ??= "cram-remote-" + aircraft.persistentID.Id;
+#endif
+    bool boundWarning;
 
     public bool IsLocalPlayer => GameManager.GetLocalAircraft(out Aircraft local) && local == aircraft;
     public bool Simulated => aircraft.LocalSim;
@@ -63,14 +75,19 @@ sealed class CramGuard : MonoBehaviour
     {
         CoverEscorts = config.Bind("Cram", "CoverEscorts", true,
             "Missiles aimed at another unit (an escort or any friendly) are C-RAM targets; false leaves the C-RAM to missiles aimed at this aircraft and untargeted ones. The server and the owning client both choose turret targets, so peers should match");
+        CoverEscorts.SettingChanged += (_, _) => log.Info($"config Cram.CoverEscorts = {CoverEscorts.Value}");
+#if CENTURION_DEV
         DebugCramFire = config.Bind("Debug", "CramFire", false,
             "While true, fires the local player aircraft's C-RAM every physics step, the stock path the trigger reaches (scenarios)");
-        CoverEscorts.SettingChanged += (_, _) => log.Info($"config Cram.CoverEscorts = {CoverEscorts.Value}");
         DebugCramFire.SettingChanged += (_, _) => log.Info($"config Debug.CramFire = {DebugCramFire.Value}");
         log.Info($"config Cram.CoverEscorts = {CoverEscorts.Value}; Debug.CramFire = {DebugCramFire.Value}");
         if (ManualField == null) log.Warning("C-RAM: Turret.manual missing; laser_auto unreadable");
+#else
+        log.Info($"config Cram.CoverEscorts = {CoverEscorts.Value}");
+#endif
     }
 
+#if CENTURION_DEV
     internal static void AddDefaults(Dictionary<string, object> state)
     {
         foreach (string key in new[]
@@ -105,13 +122,14 @@ sealed class CramGuard : MonoBehaviour
             break;
         }
     }
+#endif
 
-    internal static CramGuard? ForLaser(Laser weapon) => weapon.attachedUnit != null
-        && weapon.attachedUnit.TryGetComponent<CramGuard>(out var guard) && guard.laser == weapon ? guard : null;
+    internal static CramGuard? ForLaser(Laser weapon) => Lasers.Count != 0 && Lasers.TryGetValue(weapon, out var guard) ? guard : null;
 
     internal bool WithinLaserCone(Vector3 direction) => cone != null && !aircraft.disabled
         && Vector3.Angle(cone.forward, direction) <= 80f;
 
+#if CENTURION_DEV
     bool Firing => station != null && lastObservedFire > float.NegativeInfinity
         && Time.timeSinceLevelLoad - station.LastFiredTime < 0.25f;
 
@@ -145,26 +163,32 @@ sealed class CramGuard : MonoBehaviour
         state["laser_cone_ground"] = coneGround;
         state["laser_cone_both_streak_s"] = Math.Round(Mathf.Max(0, Time.timeSinceLevelLoad - bothSince), 3);
     }
+#endif
 
     void Awake()
     {
         aircraft = GetComponent<Aircraft>();
+#if CENTURION_DEV
         All.Add(this);
+#endif
         aircraft.weaponManager.OnWeaponsLoaded += Bind;
     }
 
     void Bind()
     {
         Carriers.Remove(aircraft);
+        if (laser is not null) Lasers.Remove(laser);
         station = null;
         turret = null;
         laser = null;
         cone = null;
         AiStations.Clear();
         AiStations.AddRange(aircraft.weaponStations);
+#if CENTURION_DEV
         coneMissiles = coneAir = coneGround = 0;
         bothSince = float.PositiveInfinity;
         lastObservedFire = float.NegativeInfinity;
+#endif
         var sets = aircraft.weaponManager.hardpointSets;
         if (sets.Length <= 3 || sets[3].weaponMount == null || sets[3].weaponMount.jsonKey != "baanish_centurion_cram") return;
         foreach (var candidate in aircraft.weaponStations)
@@ -177,6 +201,8 @@ sealed class CramGuard : MonoBehaviour
             if (laser != null && CenturionPlugin.FeaturesOff.Contains("cram-emission")) laser.enabled = false;
             if (turret != null) cone = turret.transform.parent.Find("cram_cone_aft");
         }
+        // A laser bound without its cone stays in, so the emission gate holds it silent (WithinLaserCone).
+        if (laser != null) Lasers[laser] = this;
         if (turret == null || laser == null || cone == null)
         {
             if (!boundWarning) CenturionPlugin.Log.Warning("C-RAM: missing station, turret, laser or cram_cone_aft; guard off");
@@ -196,19 +222,37 @@ sealed class CramGuard : MonoBehaviour
             Carriers.Remove(aircraft);
             return;
         }
-        float now = Time.timeSinceLevelLoad;
         // A player who selects the C-RAM aims it, as stock turrets do (WeaponStation.SetStationActive sets the turret manual,
         // WeaponStation.cs:62-86): with the view, or at a designated target of any kind. Any other station hands it back
         // to automatic missile defence (owner, 2026-10-17). AI pilots never select it (CramPatches).
         bool pilotAiming = aircraft.Player != null && aircraft.weaponManager.currentWeaponStation == station;
+        // With both bays empty the laser is the only station and can't be deselected (WeaponManager.cs:464-468, 516-543), so
+        // it is the pilot's only while the trigger is held. Only the simulating peer sees the trigger; a dedicated server,
+        // whose copy can't follow the owner's aim anyway (Aircraft.cs:2691-2748), keeps it automatic.
+        if (pilotAiming && aircraft.weaponStations.Count == 1 && (Simulated || aircraft.IsServer && !aircraft.IsClient))
+        {
+            pilotAiming = Simulated && TriggerFrame >= Time.frameCount - 1;
+            if (ManualField?.GetValue(turret) is bool manual && manual != pilotAiming)
+            {
+                if (!pilotAiming) station.SetStationActive(aircraft, false);
+                else
+                {
+                    // Stock selection, with the designated targets sent on so the server's copy aims at them too.
+                    aircraft.weaponManager.SetActiveStation(station.Number);
+                    aircraft.weaponManager.TargetListChanged();
+                }
+            }
+        }
         Unit laserTarget = laser.GetTarget();
+        Unit target = turret.GetTarget();
+#if CENTURION_DEV
+        float now = Time.timeSinceLevelLoad;
         // LastFiredTime starts at zero on an unused station; only a positive, advancing stamp starts a burst.
         if (station.LastFiredTime > 0f && station.LastFiredTime > lastObservedFire)
         {
             if (station.LastFiredTime - lastObservedFire > 0.25f) shots++;
             lastObservedFire = station.LastFiredTime;
         }
-        Unit target = turret.GetTarget();
         if (Simulated && target is Missile missile && !missile.disabled && !acquired.ContainsKey(missile.persistentID))
         {
             MissileClass kind = Classify(missile);
@@ -227,24 +271,31 @@ sealed class CramGuard : MonoBehaviour
                 nonMissileFireS += Time.fixedDeltaTime;
         }
         if (!Simulated) CountUnmirrored(now);
+#endif
         if (!Simulated && aircraft.IsServer && !aircraft.IsClient) MirrorOnDedicatedServer();
         if (!pilotAiming && target != null && !target.disabled && target is not Missile)
         {
             turret.SetTarget(PersistentID.None, station.Number);
             laser.SetTarget(null);
+#if CENTURION_DEV
             strips++;
+#endif
         }
         else if (!pilotAiming && laserTarget != null && !laserTarget.disabled && laserTarget is not Missile)
         {
             laser.SetTarget(null);
+#if CENTURION_DEV
             strips++;
+#endif
         }
+#if CENTURION_DEV
         if (IsLocalPlayer && TelescopeController.Diagnostics.Value && DebugCramFire.Value) station.Fire(aircraft, null);
         if (now >= nextConeCheck)
         {
             nextConeCheck = now + 1f;
             CountCone(now);
         }
+#endif
     }
 
     /// <summary>
@@ -270,20 +321,16 @@ sealed class CramGuard : MonoBehaviour
     /// Whether this C-RAM can take a missile, by the stock turret's own tests (Turret.AssessTargetPriority, Turret.cs:459-468): the
     /// missile inside the turret's firing cone from the turret (CenturionAuthor.Cram's CramConeAngle) and tracked by the HQ, which
     /// the turret's acquisition needs; and the capacitor above <see cref="CapacitorEmpty"/>. Range is left out on purpose: a
-    /// missile aimed at this aircraft comes inside the laser's range before it arrives. <see cref="AiCramHold"/> reads it; why
-    /// not, for its log, when false.
+    /// missile aimed at this aircraft comes inside the laser's range before it arrives. <see cref="AiCramHold"/> reads it.
     /// </summary>
-    internal bool CanEngage(Missile missile, out string why)
-    {
-        why = CenturionPlugin.FeaturesOff.Contains("cram-emission") ? "C-RAM emission disabled"
-            : turret == null || laser == null || station == null || aircraft.disabled || FiringCones == null ? "no C-RAM fitted"
-            : aircraft.GetPowerSupply() is not { } power || power.GetCharge() < CapacitorEmpty ? "capacitor empty"
-            : !FiringConeChecker.VectorWithinFiringCones(FiringCones(turret), missile.transform.position - turret.transform.position, out _) ? "outside the C-RAM cone"
-            : aircraft.NetworkHQ == null || aircraft.NetworkHQ.GetTrackingData(missile.persistentID) == null ? "not tracked"
-            : "";
-        return why.Length == 0;
-    }
+    internal bool CanEngage(Missile missile) =>
+        !CenturionPlugin.FeaturesOff.Contains("cram-emission")
+        && turret != null && laser != null && station != null && !aircraft.disabled && FiringCones != null
+        && aircraft.GetPowerSupply() is { } power && power.GetCharge() >= CapacitorEmpty
+        && FiringConeChecker.VectorWithinFiringCones(FiringCones(turret), missile.transform.position - turret.transform.position, out _)
+        && aircraft.NetworkHQ != null && aircraft.NetworkHQ.GetTrackingData(missile.persistentID) != null;
 
+#if CENTURION_DEV
     MissileClass Classify(Missile missile)
     {
         if (missile.targetID == aircraft.persistentID) return MissileClass.Self;
@@ -361,13 +408,17 @@ sealed class CramGuard : MonoBehaviour
         if (coneAir == 0 || coneGround == 0) bothSince = float.PositiveInfinity;
         else if (float.IsPositiveInfinity(bothSince)) bothSince = now;
     }
+#endif
 
     void OnDestroy()
     {
-        All.Remove(this);
         Carriers.Remove(aircraft);
+        if (laser is not null) Lasers.Remove(laser);
         aircraft.weaponManager.OnWeaponsLoaded -= Bind;
+#if CENTURION_DEV
+        All.Remove(this);
         foreach (var acquisition in acquired.Values)
             if (acquisition.Missile != null) acquisition.Missile.onDisableUnit -= OnMissileDisabled;
+#endif
     }
 }

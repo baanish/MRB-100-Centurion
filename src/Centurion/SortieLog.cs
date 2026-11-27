@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -20,7 +21,7 @@ namespace Centurion;
 static class SortieLog
 {
     /// <summary>AircraftDefinition.jsonKey of the Centurion (CenturionAuthor.JsonKey).</summary>
-    const string CenturionKey = "baanish_centurion";
+    const string CenturionKey = CenturionPlugin.JsonKey;
     const float PollS = 1f, SnapshotS = 60f, LossGraceS = 3f, DamageStep = 0.1f;
     const float FtPerM = 3.28084f, KtPerMps = 1.943844f, MPerNm = 1852f;
 
@@ -42,6 +43,18 @@ static class SortieLog
 
     static void Line(string who, string text) => CenturionPlugin.Log.Info(Invariant($"sortie: t={Now:0} {who} {text}"));
 
+    internal static void LoadoutDraw(FactionHQ hq, string loadout, string draw, int livingSams) =>
+        Line($"{hq.faction.factionName} HQ", $"loadout {loadout}, {draw}; living hostile long-range SAM units {livingSams}");
+
+    internal static void SamInventory(string counts) => Line("SAM inventory", counts);
+
+    internal static void TargetLock(Aircraft aircraft, PersistentID target, PersistentID previous, string? release)
+    {
+        if (!Sorties.TryGetValue(aircraft.persistentID, out Sortie sortie)) return;
+        if (target.IsValid) Line(sortie.Who, $"target lock {Describe(target)}");
+        else if (previous.IsValid) Line(sortie.Who, $"target lock released {Describe(previous)}, {release}");
+    }
+
     internal static Sortie Begin(Aircraft aircraft, CenturionAwacsState awacs, string loadout, string spawnAirbase)
     {
         if (Sorties.Count > 0 && !ReferenceEquals(mission, MissionManager.CurrentMission)) Summarize();
@@ -55,6 +68,7 @@ static class SortieLog
     /// <summary>Every frame: writes despawns while the mission runs, and the summary once it stops or changes.</summary>
     internal static void Update()
     {
+        AiSamLoadout.LogInventory();
         if (Sorties.Count == 0) return;
         if (!MissionManager.IsRunning || !ReferenceEquals(mission, MissionManager.CurrentMission))
         {
@@ -127,6 +141,10 @@ static class SortieLog
         PersistentID target;
         string state = "", awacsPhase = "", awacsHome = "", awacsAnchor = "", fate = "alive", despawnNear = "";
         float nextPollAt, nextSnapshotAt, disabledAt, awacsStandoffM, hpLogged = 1f;
+        // On the ground: the cockpit's largest lean, and when it last passed the 2.87 deg at which the stock taxi state
+        // puts the crew out of a healthy aircraft (AIPilotTaxiState's five-second tilt check).
+        const float TaxiAbortLeanDeg = 2.87f;
+        float leanPeakDeg, leanOverAt = float.NegativeInfinity;
         int partCount, damageEventsSeen, takeoffs, released;
         bool airborne, ejected, torn, locked, disabled, ended;
 
@@ -154,6 +172,7 @@ static class SortieLog
             SyncAmmo();
             nextSnapshotAt = Time.timeSinceLevelLoad + SnapshotS;
             Line(Who, Invariant($"spawn {Faction}, {(player ? "player" : "AI")}, loadout {loadout}, from {spawnAirbase}, {AltFt:0} ft, {(airborne ? "airborne" : "on ground")}, {Rounds()} rounds"));
+            if (!player) Line(Who, AiSamLoadout.Describe(aircraft));
         }
 
         // A wreck bounces: once disabled, its radar-altitude flips are wreck motion, not a sortie (run 20261016-004122 logged
@@ -177,6 +196,12 @@ static class SortieLog
         internal void Poll(int damageEvents)
         {
             float now = Time.timeSinceLevelLoad;
+            if (!airborne && !ejected)
+            {
+                float lean = Mathf.Abs(Mathf.Asin(Mathf.Clamp(Vector3.Dot(aircraft.CockpitRB().transform.right, Vector3.up), -1f, 1f))) * Mathf.Rad2Deg;
+                leanPeakDeg = Mathf.Max(leanPeakDeg, lean);
+                if (lean > TaxiAbortLeanDeg) leanOverAt = now;
+            }
             if (now < nextPollAt) return;
             nextPollAt = now + PollS;
             Pilot? pilot = Pilot;
@@ -184,7 +209,11 @@ static class SortieLog
             if (!ejected && pilot != null && pilot.ejected)
             {
                 ejected = true;
-                Line(Who, Invariant($"ejected, {AltFt:0} ft, {SpeedKt:0} kt, hp {Hp() * 100f:0}%"));
+                string ground = airborne ? "" : Invariant($", on the ground: peak lean {leanPeakDeg:0.0} deg, ")
+                    + (float.IsNegativeInfinity(leanOverAt) ? Invariant($"never over {TaxiAbortLeanDeg} deg")
+                        : Invariant($"last over {TaxiAbortLeanDeg} deg {now - leanOverAt:0} s ago"))
+                    + Invariant($", {aircraft.CockpitRB().velocity.magnitude * 1.94384f:0} kt over the ground");
+                Line(Who, Invariant($"ejected, {AltFt:0} ft, {SpeedKt:0} kt, hp {Hp() * 100f:0}%") + ground);
             }
             if (ended) return;
             if (pilot != null && !player) PilotState(pilot);
@@ -440,3 +469,4 @@ static class SortieLog
         }
     }
 }
+#endif

@@ -14,8 +14,8 @@ sealed class CenturionAwacsState : PilotBaseState
     // The measured GE.1 loiter point. Idle opens the airbrakes, so recovery and orbit keep at least 0.05.
     const float OrbitHeight = 15000f, OrbitSpeed = 200f, OrbitEntryHeight = 14700f;
     internal const float ThrottleFloor = 0.05f;
-    // Under TelescopeController's extend-below Mach 0.70, so the AI span schedule keeps the wing out: retracted at full fuel
-    // with the beam, the sortie run topped out near 13.9 km and never reached the orbit.
+    // Under the extended wing's drag rise at Mach 0.76. The wing has to stay out: retracted at full fuel with the beam,
+    // the sortie run topped out near 13.9 km and never reached the orbit.
     const float TransitMach = 0.68f;
     // Speed on pitch: the climb's height 8 km ahead rises 150 m per m/s over V_transit, up to 3,000 m (about 20 deg). At
     // 40 m per m/s and 800 m the sortie runs overspeeded to Mach 0.86 between 5 and 10 km and retracted.
@@ -39,10 +39,12 @@ sealed class CenturionAwacsState : PilotBaseState
     public string HomeName { get; private set; } = AircraftReadout.NoText;
     public string AnchorName { get; private set; } = AircraftReadout.NoText;
     public float StandoffM { get; private set; } = (float)AircraftReadout.NotRead;
+#if CENTURION_DEV
     public float AnchorDistM { get; private set; } = (float)AircraftReadout.NotRead;
     public int AnchorChanges { get; private set; }
     public float OrbitS { get; private set; }
     public float RecoveryFuelFrac { get; private set; } = (float)AircraftReadout.NotRead;
+#endif
     internal AwacsArad Arad { get; } = new();
 
     static readonly System.Reflection.MethodInfo? CombatMissileAlert = AccessTools.Method(typeof(AIPilotCombatModes), "AICombat_OnMissileAlert");
@@ -50,18 +52,17 @@ sealed class CenturionAwacsState : PilotBaseState
     // Pilot.cs:185-193 ignores repeated redirects to this aircraft's existing instance.
     static void BeforeSwitchState(Pilot __instance, ref PilotBaseState state)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-awacs")) return;
         if (state is not AIPilotCombatModes) return;
         Aircraft aircraft = __instance.aircraft;
         if (aircraft != null && aircraft.IsServer && aircraft.LocalSim && aircraft.Player == null
-            && aircraft.TryGetComponent<CenturionAi>(out var ai) && ai.IsAwacs)
+            && CenturionSystems.Of(aircraft) is { IsAwacs: true } systems)
         {
             // The stock combat state subscribes its missile alert in its constructor and drops it only in LeaveState,
             // which an instance replaced here never reaches (AIPilotCombatModes.cs:128, 255).
             if (CombatMissileAlert != null)
                 aircraft.GetMissileWarningSystem().onMissileWarning -=
                     AccessTools.MethodDelegate<System.Action<MissileWarning.OnMissileWarning>>(CombatMissileAlert, state);
-            state = ai.AwacsState;
+            state = systems.AwacsState;
         }
     }
 
@@ -123,7 +124,9 @@ sealed class CenturionAwacsState : PilotBaseState
             AnchorName = anchor != null ? MissionGeometryLog.AirbaseName(anchor) : AircraftReadout.NoText;
             if (planned)
             {
+#if CENTURION_DEV
                 AnchorChanges++;
+#endif
                 trackDirection = 0;
                 CenturionPlugin.Log.Info($"AWACS anchor: {previousName} -> {AnchorName}");
             }
@@ -161,8 +164,10 @@ sealed class CenturionAwacsState : PilotBaseState
     {
         if (Phase == phase) return;
         Phase = phase;
+#if CENTURION_DEV
         OrbitS = 0f;
         if (phase == "recovery") RecoveryFuelFrac = aircraft.GetFuelLevel();
+#endif
         stateDisplayName = "AWACS " + phase;
     }
 
@@ -231,8 +236,10 @@ sealed class CenturionAwacsState : PilotBaseState
         if (Phase == "orbit") Arad.TurnAim(aircraft, position, height, ref destination);
         aircraft.autopilot.AutoAim(destination, aimVelocity: true, ignoreCollisions: false, runwayAlign: false,
             0.5f, 40f, followTerrain: false, 0f, Vector3.zero);
+#if CENTURION_DEV
         AnchorDistM = anchor != null ? AwacsOrbit.LevelDistance(position, anchor.center.GlobalPosition()) : (float)AircraftReadout.NotRead;
         if (Phase == "orbit") OrbitS += Time.fixedDeltaTime;
+#endif
     }
 
     // Same crippled-aircraft policy as AIPilotCombatModes.cs:1230-1249.
@@ -252,6 +259,8 @@ sealed class CenturionAwacsState : PilotBaseState
         Arad.Unbind(aircraft);
         aircraft.Countermeasures(false, aircraft.countermeasureManager.activeIndex);
         Phase = AircraftReadout.NoText;
+#if CENTURION_DEV
         OrbitS = 0f;
+#endif
     }
 }

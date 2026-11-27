@@ -309,7 +309,14 @@ def mech_trim(bl, objs, folder, slot_order):
                 counts[role] += 1
         stray += sum(1 for p in me.polygons if p.material_index in mech
                      and any((uv[li].uv - Vector(centre[mech_role(name, p.center, p.index in duct)])).length > 1e-6 for li in p.loop_indices))
-    S = MECH_SWATCH_PX
+    mech_sheet(folder)
+    return {"value": counts, "limit": "every jet_mechanical face on a swatch centre", "pass": stray == 0}
+
+
+def mech_sheet(folder):
+    """The MECH_SWATCHES sheet's albedo and metal-smoothness PNGs (mech_trim_b.png, mech_trim_m.png) written into
+    folder: 4 swatches across, 2 up."""
+    cols, rows, S = 4, 2, MECH_SWATCH_PX
     alb, ms = np.zeros((rows * S, cols * S, 3)), np.zeros((rows * S, cols * S, 4))
     for i, (rgb, metal, smooth) in enumerate(MECH_SWATCHES.values()):
         rows_, cols_ = slice((i // cols) * S, (i // cols + 1) * S), slice((i % cols) * S, (i % cols + 1) * S)
@@ -318,7 +325,6 @@ def mech_trim(bl, objs, folder, slot_order):
     folder.mkdir(parents=True, exist_ok=True)
     texture.save_image(alb, folder / "mech_trim_b.png", srgb=True)
     texture.save_image(ms, folder / "mech_trim_m.png")
-    return {"value": counts, "limit": "every jet_mechanical face on a swatch centre", "pass": stray == 0}
 
 
 def airframe_trim(objs, folder):
@@ -617,6 +623,61 @@ def moves_with_stages(obj):
     return False
 
 
+BLEED_TEXELS = 4  # past the island edge: the pack's gutter is 6 px, and filtering and the mips read past the edge
+
+
+def bleed(img, valid, xp):
+    """img with every texel within BLEED_TEXELS of an island taking its baked neighbours' mean: left black, the gutter
+    filtered into every island edge, a dark saw-tooth along each diagonal border (the ruddervators' hinge lines)."""
+    img, have = img.copy(), valid.copy()
+    for _ in range(BLEED_TEXELS):
+        acc, n = xp.zeros_like(img), xp.zeros(have.shape)
+        for shift in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            acc += xp.roll(img * have[..., None], shift, (0, 1))
+            n += xp.roll(have, shift, (0, 1))
+        grow = ~have & (n > 0)
+        img[grow] = acc[grow] / n[grow][:, None]
+        have |= grow
+    return img
+
+
+LAP_AO_REACH, LAP_AO_FLOOR = 0.03, 0.55  # metres either side of the fairing's lap edge; AO there at least this (0.62 in the map)
+
+
+def lap_edge_ao(buf):
+    """The wing fairing's lap edge (where its texels meet the hull's) occluded to AO 0.15 over three or four texels,
+    against 0.92 to 1.0 under every other seam near it, and with the grime the paint draws from AO it read as a heavy
+    black crack ahead of the wing (audit of build 49, finding 31). Hull and fairing texels within LAP_AO_REACH of the
+    other class take at least LAP_AO_FLOOR: the lap stays a dark seam without drawing the crack."""
+    from mathutils.kdtree import KDTree
+    from m4 import fuselage_aft
+    valid, cls, pos = buf["valid"], buf["cls"], buf["pos"]
+    sides = {"fairing": valid & (cls == fuselage_aft.FAIRING), "hull": valid & (cls == surface.HULL)}
+    if not sides["fairing"].any():
+        return
+    lo = pos[sides["fairing"]].min(axis=0) - 0.1
+    hi = pos[sides["fairing"]].max(axis=0) + 0.1
+    near_box = np.all((pos >= lo) & (pos <= hi), axis=-1)
+    trees = {}
+    for k, m in sides.items():
+        pts = pos[m & near_box]
+        if not len(pts):
+            return
+        t = KDTree(len(pts))
+        for i, q in enumerate(pts):
+            t.insert(q, i)
+        t.balance()
+        trees[k] = t
+    floored = 0
+    for k, other in (("hull", "fairing"), ("fairing", "hull")):
+        idx = np.argwhere(sides[k] & near_box)
+        for r, c in idx:
+            if trees[other].find(pos[r, c])[2] < LAP_AO_REACH and buf["ao"][r, c] < LAP_AO_FLOOR:
+                buf["ao"][r, c] = LAP_AO_FLOOR
+                floored += 1
+    print("DETAIL fairing lap edge AO floored on", floored, "texels", flush=True)
+
+
 def texture_atlas(bl, built, atlas, density, extension, out, stem):
     """Bake one proxy of every built group onto the atlas and run each group's paint over the texels its parts own.
     The touching blockout parts occlude the AO without taking texels, and the parts that slide with the stages take
@@ -663,6 +724,7 @@ def texture_atlas(bl, built, atlas, density, extension, out, stem):
                 bpy.data.objects.remove(p)
             sel = (buf["group"] == k + 1) & np.isin(buf["cls"], group.STOWED_AO_CLASSES)
             buf["ao"] = np.where(sel, np.maximum(buf["ao"], ao_stowed), buf["ao"])
+    lap_edge_ao(buf)
     t_bake = time.time() - t0
     for o in every:
         o.hide_render = False
@@ -682,20 +744,37 @@ def texture_atlas(bl, built, atlas, density, extension, out, stem):
             masks[body] = xp.asarray(texture.text_mask(body))
         return masks[body]
 
+    # The livery kit's layers (composite atlas only): each group painted again without its panel lines, and again
+    # without lines or markings; stage 6 splits each livery into base, markings and panel lines from them
+    layered = atlas == COMPOSITE_ATLAS
+    if layered:
+        albedo_nolines, albedo_clean, mark_alpha = xp.zeros((H, W, 3)), xp.zeros((H, W, 3)), xp.zeros((H, W))
     for k, (group, _, _) in enumerate(built):
         sel = valid & (buf["group"] == k + 1)
         texels[group.GROUP] = int(sel.sum())
         if not sel.any():
             continue
         flat = {key: buf[key][sel] for key in ("pos", "nrm", "cls", "ao", "curv")}
-        cv = paint.Canvas(flat, coords, 1.0 / density)
-        cv.surf = surf
-        group.paint(cv, text_mask)
-        cv.finish(flat["ao"], flat["curv"])
-        albedo[sel] = cv.albedo
-        ms[sel, 0:3] = cv.metal[:, None]
-        ms[sel, 3] = cv.smooth
-        height[sel] = cv.height
+        flat["yx"] = xp.stack(xp.nonzero(sel), axis=1)  # atlas row and column, in the order sel picks texels
+        for skip in ((), ("lines",), ("lines", "marks")) if layered else ((),):
+            decals = len(paint.DECALS)
+            cv = paint.Canvas(flat, coords, 1.0 / density)
+            cv.surf = surf
+            cv.skip = set(skip)
+            group.paint(cv, text_mask)
+            cv.finish(flat["ao"], flat["curv"])
+            if not skip:
+                albedo[sel] = cv.albedo
+                ms[sel, 0:3] = cv.metal[:, None]
+                ms[sel, 3] = cv.smooth
+                height[sel] = cv.height
+                continue
+            del paint.DECALS[decals:]  # the stencil record is the full paint's
+            if "marks" in skip:
+                albedo_clean[sel] = cv.albedo
+            else:
+                albedo_nolines[sel] = cv.albedo
+                mark_alpha[sel] = cv.mark_alpha
     normal = paint.normal_from_height(height, valid, density)
     ao = xp.ones((H, W, 3))
     ao[valid] = xp.clip(0.15 + 0.85 * buf["ao"][valid], 0, 1)[:, None]
@@ -707,18 +786,28 @@ def texture_atlas(bl, built, atlas, density, extension, out, stem):
     dented[valid] += dmg_h
     tex = out / "textures"
     tex.mkdir(parents=True, exist_ok=True)
-    maps = {"albedo": texture.save_image(albedo, tex / f"{stem}_b.png", srgb=True),
-            "metal_smooth": texture.save_image(ms, tex / f"{stem}_m.png"),
-            "normal": texture.save_image(normal, tex / f"{stem}_n.png"),
-            "ao": texture.save_image(ao, tex / f"{stem}_ao.png"),
-            "damage": texture.save_image(damaged, tex / f"{stem}_dmg_b.png", srgb=True),
-            "damage_normal": texture.save_image(paint.normal_from_height(dented, valid, density), tex / f"{stem}_dmg_n.png")}
+    maps = {"albedo": texture.save_image(bleed(albedo, valid, xp), tex / f"{stem}_b.png", srgb=True),
+            "metal_smooth": texture.save_image(bleed(ms, valid, xp), tex / f"{stem}_m.png"),
+            "normal": texture.save_image(bleed(normal, valid, xp), tex / f"{stem}_n.png"),
+            "ao": texture.save_image(bleed(ao, valid, xp), tex / f"{stem}_ao.png"),
+            "damage": texture.save_image(bleed(damaged, valid, xp), tex / f"{stem}_dmg_b.png", srgb=True),
+            "damage_normal": texture.save_image(bleed(paint.normal_from_height(dented, valid, density), valid, xp), tex / f"{stem}_dmg_n.png")}
     if atlas == COMPOSITE_ATLAS:  # the liveries are albedos on the shared atlas the export carries
         flat = {key: buf[key][valid] for key in ("pos", "nrm", "cls", "group", "moving")}
         repainted = albedo.copy()
-        for key, rgb in livery.paint_liveries(coords, flat, albedo[valid], ms[valid, 0], [g.GROUP for g, _, _ in built], 1.0 / density).items():
+        groups = [g.GROUP for g, _, _ in built]
+        for key, rgb in livery.paint_liveries(coords, flat, albedo[valid], ms[valid, 0], groups, 1.0 / density).items():
             repainted[valid] = rgb
-            texture.save_image(repainted, tex / f"{stem}_livery_{key}.png", srgb=True)
+            texture.save_image(bleed(repainted, valid, xp), tex / f"{stem}_livery_{key}.png", srgb=True)
+        # the kit's sources: each livery from the paint without lines, and without lines or markings, and the markings'
+        # coverage (livery_layers.py splits the shipped livery with them)
+        src = tex / "livery_layer_sources"
+        src.mkdir(exist_ok=True)
+        for name, variant in (("nolines", albedo_nolines), ("clean", albedo_clean)):
+            for key, rgb in livery.paint_liveries(coords, flat, variant[valid], ms[valid, 0], groups, 1.0 / density).items():
+                repainted[valid] = rgb
+                texture.save_image(bleed(repainted, valid, xp), src / f"{key}_{name}.png", srgb=True)
+        texture.save_image(bleed(xp.repeat(mark_alpha[..., None], 3, axis=2), valid, xp), src / "marks_alpha.png")
     shrink = atlas // ATLAS
     sheet = texture_sheet(bl, paint.to_host(buf["island"]), [paint.to_host(layer) for layer in
                           [albedo, normal, ao, xp.repeat(ms[..., 3:4], 3, axis=2)]], tex / f"{stem}_sheet.png", shrink)

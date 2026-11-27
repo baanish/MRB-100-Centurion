@@ -27,7 +27,6 @@ namespace Centurion;
 /// </summary>
 static class BombRelease
 {
-    const string CenturionKey = "baanish_centurion";
     // Stock spaces a salvo's releases this many fireIntervals apart (WeaponManager.cs:581).
     const float SalvoSpacing = 1.1f;
 
@@ -44,27 +43,25 @@ static class BombRelease
             prefix: AccessTools.Method(typeof(BombRelease), nameof(BeforeFire))),
     };
 
-    sealed class Trigger
+    /// <summary>A Centurion's trigger press (<see cref="CenturionSystems.Trigger"/>).</summary>
+    internal sealed class Trigger
     {
         public int LastFrame = int.MinValue;
         public float PressedAt;
         public WeaponStation? Station;
     }
 
-    static readonly ConditionalWeakTable<WeaponManager, Trigger> Triggers = new();
-
+#if CENTURION_DEV
     /// <summary>The stores left in the aircraft's bomb stations as this peer has them, for comparing an owner with its copies.</summary>
-    internal static int BayBombAmmo(Aircraft aircraft) => aircraft.weaponStations.Where(s => IsBayBomb(aircraft, s)).Sum(s => s.Ammo);
+    internal static int BayBombAmmo(Aircraft aircraft) => aircraft.weaponStations.Where(s => IsBayBomb(s)).Sum(s => s.Ammo);
+#endif
 
-    static bool IsBayBomb(Aircraft aircraft, WeaponStation station) =>
-        aircraft != null && aircraft.definition != null && aircraft.definition.jsonKey == CenturionKey
-        && station.WeaponInfo != null && (station.WeaponInfo.bomb || station.WeaponInfo.glideBomb);
+    static bool IsBayBomb(WeaponStation station) => station.WeaponInfo != null && (station.WeaponInfo.bomb || station.WeaponInfo.glideBomb);
 
     /// <summary>The bays' stores, each bay in its stock order, taken one from each bay in turn.</summary>
     static void AfterSortWeapons(WeaponStation __instance, Aircraft aircraft)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("bomb-release")) return;
-        if (HardpointOf == null || !IsBayBomb(aircraft, __instance))
+        if (HardpointOf == null || CenturionSystems.Of(aircraft) == null || !IsBayBomb(__instance))
         {
             return;
         }
@@ -90,14 +87,13 @@ static class BombRelease
 
     static bool BeforeFire(WeaponManager __instance, Aircraft ___aircraft, List<Unit> ___targetList)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("bomb-release")) return true;
         WeaponStation station = __instance.currentWeaponStation;
-        if (station == null || WeaponIndex == null || HardpointOf == null || !IsBayBomb(___aircraft, station))
+        if (station == null || WeaponIndex == null || HardpointOf == null || CenturionSystems.Of(___aircraft) is not { } systems || !IsBayBomb(station))
         {
             return true;
         }
 
-        bool held = Held(__instance, station);
+        bool held = Held(systems.Trigger, station);
         // Stock's own gates (WeaponManager.cs:562, 572); anything they stop, stock stops too.
         if (station.SafetyIsOn(___aircraft) || ___aircraft.remoteSim || !station.Ready() || station.SalvoInProgress)
         {
@@ -125,7 +121,6 @@ static class BombRelease
             station.LaunchMount(___aircraft, target, aimpoint);
         }
 
-        CenturionPlugin.Log.Stage("bomb-ripple", Invariant($"{___aircraft.name}: trigger held, {(pair ? 2 : 1)} {station.WeaponInfo.weaponName}, {station.Ammo} left"));
         return false;
     }
 
@@ -133,9 +128,8 @@ static class BombRelease
     /// Counts this Fire call into the current press and says whether the trigger has been held for one interval. The player's
     /// trigger calls Fire every frame it is down; a gap of a frame, or another station, starts a new press.
     /// </summary>
-    static bool Held(WeaponManager manager, WeaponStation station)
+    static bool Held(Trigger trigger, WeaponStation station)
     {
-        Trigger trigger = Triggers.GetOrCreateValue(manager);
         float now = Time.timeSinceLevelLoad;
         if (Time.frameCount - trigger.LastFrame > 1 || trigger.Station != station)
         {
@@ -175,7 +169,6 @@ static class BombRelease
                 }
             }
 
-            CenturionPlugin.Log.Stage("bomb-salvo", Invariant($"{aircraft.name}: salvo step, {released} {station.WeaponInfo.weaponName} on {released} targets, {targets.Count - i} targets to go"));
             yield return interval;
         }
 

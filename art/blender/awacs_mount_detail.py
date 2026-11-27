@@ -22,9 +22,22 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
-from m4 import paint, texture
+from m4 import fuselage_aft, paint, texture
 
 BUDGET_TRIS = 4000  # docs/M4-ART-PLAN.md, group 8
+# hardpoint_dorsal's station, the well's middle, where the beam's y is 0: awacs_mount.py stops when the airframe's
+# differs, since the beam's joints are laid at the crown's stations from it.
+HARDPOINT_STATION = 29.786
+RAISED_DEPLOY = 2 / 3  # awacs_mount.pose: the mast is fully up and the end sections have not begun to run out
+# The crown's full-girth skin joints (fuselage_aft.py's BUTT_JOINTS): stowed, the beam's cap lies in the crown, so its
+# joints are these lines carried across the well (tests/test_awacs_joints.py holds the export to them).
+CROWN_JOINTS = tuple(sorted(fuselage_aft.BUTT_JOINTS))
+
+
+def beam_joints(M):
+    """The crown's joint stations the beam carries (clear of its ends' seal rings), and the station span looked in."""
+    span = (HARDPOINT_STATION - M["fin_len"] / 2 + 0.3, HARDPOINT_STATION + M["fin_len"] / 2 - 0.3)
+    return [s for s in CROWN_JOINTS if span[0] < s < span[1]], span
 ATLAS = 2048
 TEXEL_MIN = 50.0  # px/m the pack must reach on the painted skin
 PAINTED, DIELECTRIC, SEAL, INTERIOR = 1, 11, 12, paint.INTERIOR  # the bake's paint classes
@@ -212,6 +225,8 @@ def swap_detail(objs, M, geo, mats):
         o["_blockout_mesh"] = o.data
         o.data = me
         tris[name] = sum(len(p.vertices) - 2 for p in me.polygons)
+    # Into blockout.json, where tests/test_awacs_joints.py holds the export to the crown's current joints.
+    objs["awacs_beam"]["crown_joints"], objs["awacs_beam"]["crown_span"] = beam_joints(M)
     return tris
 
 
@@ -284,21 +299,32 @@ def unwrap(meshes):
     return round(ATLAS * math.sqrt(uv_a / world_a), 1), round(world_a, 2)
 
 
-def bake_and_paint(meshes, M, folder, density):
-    """Bake the mount (posed as the caller left it: deployed, so no end section bakes inside the beam) and paint it in
-    each part's own frame. Writes the five maps into folder; returns their names."""
+def bake_and_paint(meshes, M, folder, density, pose_at):
+    """Bake the mount and paint it in each part's own frame; pose_at(deploy) poses it (awacs_mount.pose). The AO bakes
+    in two poses and each texel takes the lighter: deployed, and at RAISED_DEPLOY with the end sections still in the
+    beam. Deployed, the end sections pass through the beam's end caps, so the caps bake enclosed (AO 0.19), yet they are
+    the beam's ends in the air until the sections run out; raised, the sections' outer run bakes inside the beam.
+    Writes the five maps into folder; returns their names."""
     scene = bpy.context.scene
     if scene.world is None:
         scene.world = bpy.data.worlds.new("World")
     names = [o.name for o in meshes]
     group_of = {n: k + 1 for k, n in enumerate(names)}
-    proxy = texture.make_proxy(meshes, "Centurion_skin", {}, group_of, ())
-    for o in meshes:
-        o.hide_render = True
-    buf = texture.bake_buffers(proxy, ATLAS)
-    bpy.data.objects.remove(proxy)
-    for o in meshes:
-        o.hide_render = False
+
+    def bake(fn, deploy):
+        pose_at(deploy)
+        proxy = texture.make_proxy(meshes, "Centurion_skin", {}, group_of, ())
+        for o in meshes:
+            o.hide_render = True
+        out = fn(proxy, ATLAS)
+        bpy.data.objects.remove(proxy)
+        for o in meshes:
+            o.hide_render = False
+        return out
+
+    ao_raised = bake(texture.bake_ao, RAISED_DEPLOY)
+    buf = bake(texture.bake_buffers, 1.0)
+    buf["ao"] = np.maximum(buf["ao"], ao_raised)
     valid = buf["valid"]
     pos, cls, part, ao = buf["pos"][valid], buf["cls"][valid], buf["group"][valid], buf["ao"][valid]
     local = np.zeros_like(pos)
@@ -336,7 +362,7 @@ def smoothstep_np(e0, e1, x):
 
 def paint_mount(M, names, local, cls, part, px):
     """Per texel in part-local metres: albedo (sRGB), livery mask, height and smoothness. Panel joints on the beam
-    every 2 m and round the dielectric array on each flank, fastener rows on them; the end sections' and blades' joints
+    at the crown's joint stations and round the dielectric array on each flank, fastener rows on them; the end sections' and blades' joints
     and a livery-coloured satin leading edge on the blade."""
     n = len(cls)
     albedo = np.tile(np.array(PAINT_BASE), (n, 1))
@@ -368,8 +394,8 @@ def paint_mount(M, names, local, cls, part, px):
     smooth[dielectric] = 0.36
     beam = on("awacs_beam")
     skin = (cls == PAINTED) | dielectric
-    # beam: full-girth joints every 2 m, the array panel's outline, a lap joint along each cap edge
-    for yj in (-4.0, -2.0, 0.0, 2.0, 4.0):
+    # beam: full-girth joints at the crown's joint stations, the array panel's outline, a lap joint along each cap edge
+    for yj in [s - HARDPOINT_STATION for s in beam_joints(M)[0]]:
         groove(np.abs(y - yj), beam & skin)
         fasteners(y - yj, z + np.abs(x), beam & (cls == PAINTED))
     panel = np.maximum(np.abs(y) - (L - 0.35), np.abs(z - zc) - (zc - 0.18))

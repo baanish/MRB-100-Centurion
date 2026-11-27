@@ -25,9 +25,12 @@ namespace Centurion.Editor
         private const string AwacsPaintPath = SkinFolder + "/Centurion_mount.mat";
         // The design's AWACS radar range; AwacsBeam writes 0 until the beam is fully deployed.
         private const float AwacsRangeM = 150000f;
-        // AwacsEnvelopeCheck: the least gap from any mount collider to any part collider but fuselage_R's (the mount's joint
-        // pair, which never collides), and the stowed top above wheel contact (SPEC's 7.6 m less 0.15 m).
+        // AwacsEnvelopeCheck: the least gap from any moving mount collider to any part collider but the well's, and the
+        // stowed top above wheel contact (SPEC's 7.6 m less 0.15 m).
         private const float AwacsGapM = 0.10f, AwacsStowedTopM = 7.45f;
+        // The parts the spine well runs through, where the stowed mount and the mast's foot sit by design: the aft body
+        // (the mount's joint pair), the aft bay and the tail cone's front.
+        private static readonly string[] AwacsWellParts = { "fuselage_R", "bay_A", "tailcone" };
         private static string AwacsExportFolder => Path.Combine(RepoRoot, "art", "export_awacs");
 
         // Each mast stage and end section, the marker it rises or slides to, and whether it moves with the ends (the last
@@ -148,9 +151,15 @@ namespace Centurion.Editor
                     var renderer = go.AddComponent<MeshRenderer>();
                     renderer.sharedMaterials = entry.Value.Materials;
                     renderers.Add(renderer);
-                    foreach (var piece in entry.Value.Colliders)
+                    foreach (var (piece, k) in entry.Value.Colliders.Select((p, k) => (p, k)))
                     {
-                        var col = go.AddComponent<MeshCollider>();
+                        // The stowed mount lies in the spine well, through the aft body into the aft bay and back over the tail
+                        // cone's front, parts of their own it has no joint to: its hulls sit on children on the stock
+                        // no-collision layer, where hits still find them (UnitPart.cs:424 puts a disintegrated part's objects
+                        // there), so it never pushes on the airframe.
+                        var host = new GameObject(entry.Key + "_hull" + k) { layer = IgnoreCollisionsLayer };
+                        host.transform.SetParent(go.transform, false);
+                        var col = host.AddComponent<MeshCollider>();
                         col.sharedMesh = piece;
                         col.convex = true;
                     }
@@ -216,8 +225,8 @@ namespace Centurion.Editor
         }
 
         // AwacsEnvelopeCheck: the mount posed at hardpoint_dorsal for deploy 0, 0.05, ..., 1, as AwacsBeam moves it. Fails
-        // the build when any mount collider comes within AwacsGapM of a part collider other than fuselage_R's, or the stowed
-        // top stands over AwacsStowedTopM above wheel contact; reports the least gap, where, and the stowed top.
+        // the build when any moving mount collider comes within AwacsGapM of a part collider outside AwacsWellParts, or the
+        // stowed top stands over AwacsStowedTopM above wheel contact; reports the least gap, where, and the stowed top.
         private static void CheckAwacsEnvelope(Build b, Object mount)
         {
             if (mount == null)
@@ -230,10 +239,14 @@ namespace Centurion.Editor
             try
             {
                 var aeroType = GameType("AeroPart");
-                var mine = beam.GetComponentsInChildren<Collider>(true);
-                var carrier = b.Parts["fuselage_R"];
-                var airframe = b.Root.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger && !mine.Contains(c))
-                    .Select(c => (collider: c, part: c.GetComponentInParent(aeroType, true))).Where(c => c.part != null && c.part.gameObject != carrier).ToArray();
+                // Every moving piece rides on the lower mast stage; the base's hulls stay in the well.
+                var mine = FindDeep(beam.transform, "awacs_mast_1").GetComponentsInChildren<Collider>(true);
+                if (mine.Length == 0)
+                    throw new InvalidDataException("AWACS envelope check: the mount's moving pieces have no colliders to measure.");
+                var well = AwacsWellParts.Select(p => b.Parts[p]).ToArray();
+                var whole = beam.GetComponentsInChildren<Collider>(true);
+                var airframe = b.Root.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger && !whole.Contains(c) && c.gameObject.layer != IgnoreCollisionsLayer)
+                    .Select(c => (collider: c, part: c.GetComponentInParent(aeroType, true))).Where(c => c.part != null && !well.Contains(c.part.gameObject)).ToArray();
                 var slides = AwacsSlides.Select(s => (part: FindDeep(beam.transform, s.Part), end: s.End)).ToArray();
                 var homes = slides.Select(s => s.part.localPosition).ToArray();
                 var raised = AwacsSlides.Select(s => FindDeep(beam.transform, s.Marker).localPosition).ToArray();
@@ -260,7 +273,7 @@ namespace Centurion.Editor
                                 least = (gap, PathOf(piece.transform, beam.transform), part.name, deploy);
                         }
                 }
-                b.Report.Add($"AWACS envelope: deploy 0 to 1 by 0.05, {mine.Length} mount colliders against {airframe.Length} part colliders but fuselage_R's: " +
+                b.Report.Add($"AWACS envelope: deploy 0 to 1 by 0.05, {mine.Length} moving mount colliders against {airframe.Length} part colliders outside the well ({string.Join(", ", AwacsWellParts)}): " +
                              $"least gap {least.gap:F3} m, {least.piece} to {least.part} at deploy {least.deploy:F2} (limit {AwacsGapM}); stowed top {stowedTop:F2} m above wheel contact (limit {AwacsStowedTopM})");
                 var problems = new List<string>();
                 if (least.gap < AwacsGapM)
@@ -279,6 +292,8 @@ namespace Centurion.Editor
 
         // The least distance between two convex colliders, 0 when they overlap: PhysX's penetration test, else closest points
         // passed back and forth between the two shapes, which settles on the nearest pair for convex shapes.
+        private const int IgnoreCollisionsLayer = 15; // PhysicsLayers.IgnoreCollisions
+
         private static float ColliderGap(Collider a, Collider b)
         {
             if (Physics.ComputePenetration(a, a.transform.position, a.transform.rotation, b, b.transform.position, b.transform.rotation, out _, out _))

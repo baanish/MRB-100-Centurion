@@ -26,9 +26,9 @@ MonoBehaviour:
   jsonKey: baanish_centurion
   unitName: MRB-100 Centurion
   bogeyName: 
-  description: Long-endurance multirole bomber with a telescoping high wing, two
-    geared turbofans, nose and tail radars, and a laser point-defence turret. Carries
-    bombs or cruise missiles in two internal bays, or an AWACS radome.
+  description: BDF-built long-endurance multirole bomber with a telescoping high
+    wing, two geared turbofans, nose and tail radars, and a laser point-defence turret.
+    Carries bombs or cruise missiles in two internal bays, or an AWACS radome.
   code: MRB-100
   visibleRange: 5000
   iconRange: 100000
@@ -54,7 +54,7 @@ MonoBehaviour:
   CanSlingLoad: 0
   unitPrefab: {fileID: 7719488840801222469, guid: 997ce56eb5a1ad04f84ebda4a1fd588c,
     type: 3}
-  spawnOffset: {x: 0, y: 3.852238, z: 1.475}
+  spawnOffset: {x: 0, y: 3.8517776, z: 1.475}
   disabled: 0
   isEventContent: 0
   dontAutomaticallyAddToEncyclopedia: 0
@@ -67,4 +67,4 @@ MonoBehaviour:
     stallSpeed: 290
     maneuverability: 3
     maxWeight: 199000
-  restRotation: {x: 0.2669681, y: 0, z: 0}
+  restRotation: {x: 0.28045583, y: 0, z: 0}

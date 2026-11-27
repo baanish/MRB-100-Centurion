@@ -1,0 +1,42 @@
+{
+ "livery": "bdf_matte_gray",
+ "dark": 0.08,
+ "views": {
+  "front": {
+   "skin_px": 16620,
+   "dark_share": 0.013,
+   "p1": 0.07,
+   "median": 0.427
+  },
+  "rear": {
+   "skin_px": 18474,
+   "dark_share": 0.047,
+   "p1": 0.019,
+   "median": 0.37
+  },
+  "left": {
+   "skin_px": 40992,
+   "dark_share": 0.0173,
+   "p1": 0.042,
+   "median": 0.304
+  },
+  "right": {
+   "skin_px": 40985,
+   "dark_share": 0.0166,
+   "p1": 0.042,
+   "median": 0.338
+  },
+  "top": {
+   "skin_px": 105193,
+   "dark_share": 0.0,
+   "p1": 0.211,
+   "median": 0.457
+  },
+  "bottom": {
+   "skin_px": 103032,
+   "dark_share": 0.0329,
+   "p1": 0.019,
+   "median": 0.279
+  }
+ }
+}

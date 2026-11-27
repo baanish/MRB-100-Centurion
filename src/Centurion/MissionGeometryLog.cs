@@ -7,18 +7,18 @@ namespace Centurion;
 /// <summary>
 /// One-shot diagnostics per mission load, for gates G0.3 (every runway length, the longest recorded in SPEC.md) and G0.4
 /// (playable bounds and medium-hangar base positions, for the AWACS standoff). Positions are global (floating-origin
-/// independent) metres.
+/// independent) metres. Only a dev build writes it.
 /// </summary>
 public static class MissionGeometryLog
 {
     /// <summary>The medium hangar's UnitDefinition key (hangar_med.asset); the Centurion only fits these.</summary>
     const string MediumHangarKey = "hangar_med";
 
-    const string CenturionKey = "baanish_centurion";
 
+#if CENTURION_DEV
     public static void Write(CenturionLog log)
     {
-        AircraftDefinition? centurion = Encyclopedia.Lookup.TryGetValue(CenturionKey, out UnitDefinition definition) ? definition as AircraftDefinition : null;
+        AircraftDefinition? centurion = Encyclopedia.Lookup.TryGetValue(CenturionPlugin.JsonKey, out UnitDefinition definition) ? definition as AircraftDefinition : null;
         Mission? mission = MissionManager.CurrentMission;
         LevelInfo level = NetworkSceneSingleton<LevelInfo>.i;
         string map = mission == null ? "?" : mission.MapKey.Path;
@@ -96,7 +96,9 @@ public static class MissionGeometryLog
             log.Info(Invariant($"ai supply: {hq.faction?.factionName} Centurion {supply}, AI limit {hq.AIAircraftLimit}, in the aircraft list {listed}"));
         }
     }
+#endif
 
+    /// <summary>The name the map shows for an airbase; the AI's AWACS state and spawn rule name bases by it too.</summary>
     internal static string AirbaseName(Airbase airbase)
     {
         SavedAirbase saved = airbase.SavedAirbase;

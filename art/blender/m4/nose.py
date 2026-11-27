@@ -19,21 +19,23 @@ wing), as the blockout's fus_point. Shapes listed for the +X side are mirrored t
 
 import math
 
+import bmesh
 import numpy as np
 
 from mathutils import Matrix, Vector
 
 import flightdeck_layout as fl
 
+from . import airframe as af
 from . import body_structure, nose_bay, nose_exits, render
 from . import surface as sf
 from .surface import DOOR, FITTING, FRAME, HULL, RADOME, N, KEEL, CHINE_K
-from .paint import INTERIOR
+from .paint import INTERIOR, check_seams
 
 GROUP = "nose"
 PARTS = ("radar_F_fairing", "nose", "fuselage_F", "geardoor_FL_visible", "geardoor_FR_visible",
          "baydoor_FL_visible", "baydoor_FR_visible", "nose_hatch_L", "nose_hatch_R", "nose_door_visible")
-BUDGET_TRIS = 19000  # damage stage 2: reclaim and leaner damage structure (was 16000)
+BUDGET_TRIS = 19200  # damage stage 2: reclaim and leaner damage structure (was 16000); the SATCOM dome's finer shape
 # Bay doors share their twins' islands; gear doors keep unique islands for KEEP CLEAR on both sides.
 MIRROR_PARTS = {"baydoor_FR_visible": "baydoor_FL_visible", "nose_hatch_R": "nose_hatch_L"}
 # Close-ups (m4/render.py's view form); the first four make the contact sheet.
@@ -67,16 +69,30 @@ GEAR_DOOR_RIB_H = 0.05
 # mask spreads over the whole border quads of these coarse slabs as blotches.
 DOOR_SKIN = 11
 GEAR_DOOR_SKIN = 12
+# The nose gear doors' AO is baked again with the doors shut and each door texel keeps the lighter (as the main doors',
+# m4/struts.py STOWED_AO_CLASSES): they hang open at rest, their outer skin facing the nose gear's well (AO 0.82 on the
+# sideways faces, build 52), and the game shuts them with the gear up
+STOWED_AO_CLASSES = (GEAR_DOOR_SKIN,)
+
+
+def stowed(objs):
+    """The nose gear doors shut (gear.doors_shut) for this group's STOWED_AO_CLASSES bake."""
+    from . import gear
+    return gear.doors_shut(("geardoor_FL", "geardoor_FR"))
 # Forward bay roof, the whole length of the bay: the stock bay mounts sit centred on the hardpoint (CenturionAuthor puts
 # it 0.4 m under fuselage_M's pivot, z 3.55), the tallest, the ARAD-116 x4, reaching 0.60 m over it, and the longest,
 # the 500 kg bombs x12, from station 7.73, so the roof's frames and rack beam stand BAY_ROOM over every store
 # (check, bay_fit).
 BAY_CEILING, BAY_ROOM = 4.40, 0.05
 BAY_K = (25, 39)  # hull columns moved onto the bay doors' hinge lines (141 deg) inside the bay
-BAY_FRAMES = (9.8, 11.0, 12.2, 13.4, 14.6, 15.8)  # the skin's frame lines (STATION_LINES)
+BAY_FRAMES = (9.8, 11.0, 12.2, 13.4, 14.6, 15.8)  # the bay doors' rib stations
 DOOR_SEAM = 0.35  # degrees between the two bay doors' inner edges where they meet on the keel line (1.7 cm)
-RECEPTACLE_S, RECEPTACLE_K = (7.3, 8.5), (-1, 1)  # dorsal, behind the flight deck
-RECEPTACLE_DEPTH = (0.22, 0.04)  # slipway depth at its forward and aft ends
+# The refuelling receptacle's open slipway, dorsal behind the flight deck (cosmetic, docs/SPEC.md): stations, the ring
+# columns its walls stand on, and its depth at its forward and aft ends, so the floor ramps down from the aft lip to
+# the receptacle in the forward wall, which faces up and aft toward a tanker's boom
+RECEPTACLE_S, RECEPTACLE_K = (7.3, 8.5), (-1, 1)
+RECEPTACLE_DEPTH = (0.22, 0.04)
+SLIPWAY_LINING_MARGIN = 0.3  # m round the slipway clear of lining: more than the pass's 0.18 m press toward the axis
 # The forward bay door (stations, angles), +X side: the blockout's, its free edge carried on to the keel line, where the
 # doors close against each other. A keel strip between them crossed the open bay as a beam (owner, 2026-10-15).
 BAY_DOOR = (7.4, 16.6, 141.0, 180.0 - DOOR_SEAM / 2)
@@ -102,6 +118,7 @@ SATCOM = (11.1, 0.0)  # ahead of the dorsal wing fairing, which leaves the crown
 # Red anti-collision, bottom; the top one is on the wing fairing's crest (fuselage_aft), which covers the crown here.
 BEACONS = ((7.18, 180.0, "fuselage_F"),)
 FORMATION_SIZE = (0.6, 0.08)
+FORMATION_S, FORMATION_A0 = (8.96, 8.76), 93.0  # the strip's lower and upper end stations, its lower end's angle
 # The forward screen's camera (owner): an enhanced-vision housing on the crown between the radome joint and the
 # windscreen, its dark window looking ahead, where the flight deck screen's EXT CAM view is said to come from (the
 # screen is a window on the pilot's eye in game; nothing renders from here). Station, the body's centre above the skin.
@@ -190,9 +207,10 @@ def build(bl, surf, slots):
     sf.recess(p, g, q0, q1, RECEPTACLE_K[0], RECEPTACLE_K[1], slipway, SKIN, INTERIOR)
     sf.mirror_columns(p, g, KEEL, CHINE_K[1])
     fwd_fuselage_details(bl, surf, p, slots)
-    receptacle(bl, surf, p, slots)
     bay_interior(bl, surf, p, g, slots)
     body_structure.build_section(bl, surf, p, slots, 7.0, 17.0, bays=[BAY_DOOR[:2]])
+    clear_slipway(bl, surf, p)
+    receptacle(bl, surf, p, slots)  # after the slipway is cleared, which would cut into the fitting
 
     # ---- doors ----
     for sfx, side in (("L", 1), ("R", -1)):
@@ -399,15 +417,65 @@ def check(bl, objs):
                         "pass": not failing}}
 
 
+# The receptacle fitting, (radius, height) along its axis from the slipway floor, closed from pole to pole: the body
+# sunk into the floor, a machined collar, the lip, and the socket's wall down to its floor
+RECEPTACLE_PROFILE = ((0.0, -0.08), (0.1, -0.08), (0.1, 0.03), (0.125, 0.05), (0.125, 0.09), (0.105, 0.11),
+                      (0.06, 0.11), (0.055, 0.04), (0.0, 0.04))
+
+
 def receptacle(bl, surf, p, slots):
-    """The refuelling receptacle at the forward end of its slipway, with the slipway floodlight behind."""
+    """The refuelling receptacle, one closed machined fitting (RECEPTACLE_PROFILE) seated at the forward end of the
+    slipway, its axis up and aft toward a tanker's boom, with the slipway floodlight behind. The body's lining and
+    structure, 20 mm under the skin, crossed the slipway as sheets seen edge on: what of them stands in the slipway's
+    air goes."""
     SKIN, STRUCT, GLASS, MECH, LIGHT, WHITE, FORMATION = slots
     s = RECEPTACLE_S[0] + 0.16
     n = surf.normal(s, 0.0)
     floor = surf.point(s, 0.0) - n * (RECEPTACLE_DEPTH[0] - 0.03)
-    axis = (n * 0.8 + Vector((0, 1, 0)) * 0.6).normalized()  # facing up and aft, toward a tanker's boom
-    sf.revolve_axis(p, ((0.075, -0.05), (0.075, 0.06), (0.11, 0.1), (0.1, 0.12), (0, 0.06)), floor, axis, 12, MECH)
+    axis = (n * 0.8 + Vector((0, 1, 0)) * 0.6).normalized()
+    sf.revolve_axis(p, RECEPTACLE_PROFILE, floor, axis, 24, STRUCT)  # the stock mechanical sheet: machined dark metal
     lift_light(p, surf, RECEPTACLE_S[1] + 0.25, 0.0, slots, WHITE, r=0.06)
+
+
+def clear_slipway(bl, surf, p):
+    """Cut the faces other than the skin's out of the receptacle's slipway, from its walls' ring columns in and from
+    its floor up to the skin. The lining's rows are sparse, so one face can run the section's length through the
+    slipway: every face whose box meets the slipway's is split on its ends and sides first. The lining goes from a
+    margin round the slipway too (SLIPWAY_LINING_MARGIN): the pass presses it toward the body's axis
+    (s2_structure.LINING_RECESS), which carried the lining beside the slipway into its air."""
+    k = 0  # part(): the skin's slot is the part's first
+    lining = p.slots.index(af.SLOT) if af.SLOT in p.slots else None
+    y0, y1 = bl.st(RECEPTACLE_S[0]), bl.st(RECEPTACLE_S[1])
+    half = abs(surf.point(RECEPTACLE_S[0], sf.ring_deg(RECEPTACLE_K[1])).x)
+    top_z = surf.point(RECEPTACLE_S[0], 0.0).z
+
+    def floor_z(y):
+        st = y - bl.st(0.0)
+        t = min(max((st - RECEPTACLE_S[0]) / (RECEPTACLE_S[1] - RECEPTACLE_S[0]), 0.0), 1.0)
+        return surf.point(st, 0.0).z - RECEPTACLE_DEPTH[0] - (RECEPTACLE_DEPTH[1] - RECEPTACLE_DEPTH[0]) * t
+    gone, cut_verts = 0, []
+    for m, which, z_lo in ((0.0, lambda f: f.material_index != k, lambda v: floor_z(v.y) + 0.003),
+                           (SLIPWAY_LINING_MARGIN, lambda f: f.material_index == lining, lambda v: top_z - 0.5)):
+        a0, a1, h = y0 - m, y1 + m, half + m
+
+        def meets(f):
+            vs = [v.co for v in f.verts]
+            return (which(f) and min(v.y for v in vs) < a1 and max(v.y for v in vs) > a0
+                    and min(v.x for v in vs) < h and max(v.x for v in vs) > -h)
+        for co, no in (((0, a0, 0), (0, 1, 0)), ((0, a1, 0), (0, 1, 0)), ((h, 0, 0), (1, 0, 0)), ((-h, 0, 0), (1, 0, 0))):
+            faces = [f for f in p.bm.faces if meets(f)]
+            geom = list({v for f in faces for v in f.verts}) + list({e for f in faces for e in f.edges}) + faces
+            res = bmesh.ops.bisect_plane(p.bm, geom=geom, plane_co=Vector(co), plane_no=Vector(no))
+            cut_verts += [g for g in res["geom_cut"] if isinstance(g, bmesh.types.BMVert)]
+        cut = [f for f in p.bm.faces if which(f) and a0 + 0.005 < f.calc_center_median().y < a1 - 0.005
+               and abs(f.calc_center_median().x) < h - 0.005 and any(z_lo(v.co) < v.co.z < top_z + 0.05 for v in f.verts)]
+        bmesh.ops.delete(p.bm, geom=cut, context="FACES")
+        gone += len(cut)
+    # the cuts' leftovers: slivers where a plane passed a corner, and vertices no face uses
+    near = list({e for v in cut_verts if v.is_valid for e in v.link_edges})
+    bmesh.ops.dissolve_degenerate(p.bm, dist=1e-4, edges=near)
+    bmesh.ops.delete(p.bm, geom=[v for v in p.bm.verts if not v.link_faces], context="VERTS")
+    return gone
 
 
 def fwd_fuselage_details(bl, surf, p, slots):
@@ -422,16 +490,27 @@ def fwd_fuselage_details(bl, surf, p, slots):
     # SATCOM radome: a low dome stretched along the fuselage
     s, a = SATCOM
     c, n = surf.point(s, a), surf.normal(s, a)
-    faces = sf.revolve_axis(p, ((0.5, -0.07), (0.5, 0.0), (0.42, 0.09), (0.26, 0.16), (0, 0.19)), c, n, 20, SKIN, FITTING)
+    faces = sf.revolve_axis(p, ((0.5, -0.07), (0.5, 0.0), (0.46, 0.06), (0.38, 0.11), (0.26, 0.155), (0.13, 0.18), (0, 0.19)),
+                            c, n, 28, SKIN, FITTING)
     verts = list({v for f in faces for v in f.verts})
+    rise = {v: (v.co - c).dot(n) for v in verts}
     m = Matrix.Translation(c) @ Matrix.Diagonal((1.0, 1.7, 1.0, 1.0)) @ Matrix.Translation(-c)
     for v in verts:
         v.co = m @ v.co
+    # Its foot lands on the skin, not on the tangent plane at its centre: there the crown falls away under the ends and
+    # sides and left the 7 cm foot standing as a dark lip. The foot under the skin is structure, so the dome's base edge
+    # is hard and its normals do not bend toward the buried wall (lumpy shading on the dome).
+    for v in verts:
+        if rise[v] < 0.01:
+            sv = v.co.y + bl.Y0
+            d = surf.deg_for_x(sv, v.co.x, lower=False)
+            v.co = surf.point(sv, d) + surf.normal(sv, d) * rise[v]
+    p.tag([f for f in faces if all(rise[v] < 0.01 for v in f.verts)], STRUCT)
     length, width = FORMATION_SIZE
-    a0 = 93.0
-    a1 = a0 - math.degrees(length / bl.fus_profile(8.86)[0])
-    corners = ((8.96 - width / 2, a0), (8.96 + width / 2, a0),
-               (8.76 + width / 2, a1), (8.76 - width / 2, a1))
+    a0 = FORMATION_A0
+    a1 = a0 - math.degrees(length / bl.fus_profile(sum(FORMATION_S) / 2)[0])
+    corners = ((FORMATION_S[0] - width / 2, a0), (FORMATION_S[0] + width / 2, a0),
+               (FORMATION_S[1] + width / 2, a1), (FORMATION_S[1] - width / 2, a1))
     for side in (1, -1):
         sf.surface_patch(p, surf, side_corners(corners, side), 1, 6, 0.008, -0.012, FORMATION)
     s, a = GPS_DOME
@@ -485,30 +564,26 @@ def gear_door_floor(s, x):
 
 # ---------- paint layout ----------
 # Panel and marking data in (station, angle) like the geometry above; angles become girth with coords.arc_at.
-STATION_LINES = ((5.6, 118.0, 180.0),)  # nose frame, station and angles
-# One continuous skin over the part joints at 7 and 17 (as in fuselage_aft.py's layout): per band a fastened splice
-# (SPLICES) and laps (LAPS) at frames, no station shared by neighbouring bands, so no joint runs right round but the
-# radome's edge.
-BANDS = ((0.0, 48.0), (48.0, 112.5), (112.5, 180.0))
-SPLICES = ((9.8, 13.4), (11.6,), (13.0,))
-LAPS = ((7.2, 8.6, 11.0, 14.6), (7.6, 9.0, 12.2, 15.8), (8.6, 11.0, 14.6, 16.4))
-assert not any(set(LAPS[i] + SPLICES[i]) & set(LAPS[i + 1] + SPLICES[i + 1]) for i in range(len(BANDS) - 1)),     "neighbouring bands share a joint station: it would run on as one line"
+# Skin seams from the structure, as the F-240's panels.py lays them, in few large sheets as the stock Darkreach's: a
+# butt joint right round on the body's section joints behind the flight deck (7) and at the wing box (17, which
+# fuselage_aft.py draws too, on its side of the part joint) and one midway, with a rivet row either side, and lap
+# joints along the upper and chine longerons (LAPS) between them. Every seam ends on another seam or a physical edge
+# and every access panel sits inside one sheet: paint.check_seams holds both whenever the module loads. No rivet rows
+# on the frames between: at 60 px/m a 14 mm head is under a texel and a row of them reads as stitching.
 RADOME_JOINT = 3.625  # the dielectric radome's edge: a heavier line with fastener rows either side
-LONG_LINES = ((112.5, 1.75, 7.0), (135.0, 3.625, 7.4))  # nose stringers
-STRINGERS = ((48.0, 7.0, 17.0), (112.5, 7.0, 17.0))
+BUTT_JOINTS = (7.0, 12.0, 17.0)
+LAPS = ((48.0, BUTT_JOINTS[0], BUTT_JOINTS[-1]), (112.5, BUTT_JOINTS[0], BUTT_JOINTS[-1]))  # angle, stations
+BANDS = ((0.0, 48.0), (48.0, 112.5), (112.5, 180.0))  # the bands between the laps, for the panels' tones
 # Crew entry door, left side, clear of the glazing surround and ahead of the forward bay. Its lower skin rows
 # keep unique islands so the hatch and rescue marking can extend below the chine without appearing on the right.
 CREW_DOOR = fl.CREW_DOOR  # stations, level bottom and top heights below the glazing surround
-PANELS = (  # station from, to, angle from, to, corner radius, sides (+1, -1 or 0 for both)
-    (13.6, 14.7, 55.0, 82.0, 0.05, 0),
-    (15.0, 15.5, 100.0, 112.0, 0.03, -1),  # external power
-    (7.6, 8.1, 30.0, 44.0, 0.03, 0),
-    (3.78, 4.15, 96.0, 108.0, 0.03, 0),  # pitot heater access
-    (10.6, 11.3, 52.0, 66.0, 0.04, 0),
-    (14.2, 14.8, 120.0, 136.0, 0.04, 0),
+PANELS = (  # station from, to, angle from, to, corner radius, sides (+1, -1 or 0 for both): each inside one sheet
+    (3.9, 4.9, 118.0, 150.0, 0.06, 0),  # avionics bay doors
+    (9.9, 10.9, 56.0, 76.0, 0.05, 0),
+    (13.5, 14.5, 56.0, 76.0, 0.05, 0),
+    (14.7, 15.7, 118.0, 136.0, 0.04, 0),
+    (15.9, 16.5, 96.0, 108.0, 0.03, -1),  # external power
 )
-LEVEL_PANELS = ((4.35, 5.40, 120.0, 152.0, 0.06),  # avionics bay doors
-                (9.6, 10.5, 92.0, 118.0, 0.05), (11.9, 12.5, 96.0, 110.0, 0.04))
 DOOR_HANDLE = (6.78, 2.85)  # station, height on the free edge of the crew door
 RESCUE_ARROW = (6.78, 2.45)
 STATIC_PORTS = ((9.15, 101.0), (9.4, 101.0))
@@ -521,8 +596,7 @@ FLARES = ((9.95, 10.85, 121.0, 135.0),)
 WALKWAY = (9.7, 12.6, 0.55)  # stations, girth from the centreline
 NO_STEP = (9.2, 0.85)  # station, girth from the centreline
 MODEL_STENCIL = (5.3, 88.0)
-EXT_PWR_STENCIL = (15.25, -94.0)
-DIVERTERS = 8
+EXT_PWR_STENCIL = (16.2, -92.0)
 
 DARK = (0.10, 0.105, 0.11)
 STENCIL = (0.80, 0.80, 0.78)
@@ -531,54 +605,85 @@ RESCUE = (0.78, 0.62, 0.16)
 RED = (0.55, 0.10, 0.08)
 
 
+def seam_layout():
+    """The seams on the left side as (name, station from, to, angle from, to): rings at one station, laps at one angle.
+    The butt joints over the forward bay stop at its doors' hinge line."""
+    rings = [("radome joint", RADOME_JOINT, RADOME_JOINT, 0.0, 180.0)]
+    for b in BUTT_JOINTS:
+        rings.append((f"butt joint {b}", b, b, 0.0, BAY_DOOR[2] if BAY_DOOR[0] <= b <= BAY_DOOR[1] else 180.0))
+    return rings + [(f"lap {a}", s0, s1, a, a) for a, s0, s1 in LAPS]
+
+
+NOSE_OUTLINES = ([(f"panel {p[:4]}", *p[:4]) for p in PANELS] + [("flare plate", *f) for f in FLARES]
+                 + [("NACA inlet", NACA_INLET[0], NACA_INLET[1], NACA_INLET[2] - 4.0, NACA_INLET[2] + 4.0),
+                    ("receptacle slipway", *RECEPTACLE_S, 0.0, sf.ring_deg(RECEPTACLE_K[1])),
+                    ("louvres", LOUVRES[0], LOUVRES[1], LOUVRES[2] - 4.0, LOUVRES[2] + 4.0)])
+NOSE_EDGES = [("forward bay", BAY_DOOR[0], BAY_DOOR[1], BAY_DOOR[2], 180.0)]
+check_seams(seam_layout(), NOSE_OUTLINES, NOSE_EDGES)
+
+
+def formation_footprint(bl):
+    """The formation light strip's box on the left side (name, station from, to, angle from, to), as
+    fwd_fuselage_details lays it, for check_seams' fittings."""
+    length, width = FORMATION_SIZE
+    a1 = FORMATION_A0 - math.degrees(length / bl.fus_profile(sum(FORMATION_S) / 2)[0])
+    return [("formation strip", min(FORMATION_S) - width / 2, max(FORMATION_S) + width / 2, a1, FORMATION_A0)]
+
+
+def square_outlines():
+    """The panels and fittings drawn through Canvas.square, for paint.check_square."""
+    return ([(f"panel {p[:4]}", *p[:4]) for p in PANELS] + [("flare plate", *f) for f in FLARES]
+            + [("NACA inlet", NACA_INLET[0], NACA_INLET[1], NACA_INLET[2] - 4.0, NACA_INLET[2] + 4.0),
+               ("PITOT HOT", PITOT[0] - 0.15, PITOT[0] + 0.25, 83.0, 85.0),
+               ("EXT PWR", EXT_PWR_STENCIL[0] - 0.12, EXT_PWR_STENCIL[0] + 0.12, 91.0, 93.0)])
+
+
+def lettering(c):
+    """Every lettered stencil this group paints, for exterior_pass/check_lettering.py: (text, station, where, half
+    length along the station). where is ("deg", angle from the crown, + the left), ("z", height, side) for a stencil
+    placed by height, or ("door", |x| on the closed door, side) for one on an open gear door (gear_door_open)."""
+    ms, ma = MODEL_STENCIL
+    out = [("EXT PWR", EXT_PWR_STENCIL[0], ("deg", EXT_PWR_STENCIL[1]), 0.1),
+           ("RESCUE", RESCUE_ARROW[0], ("z", RESCUE_ARROW[1] - 0.08, 1), 0.15)]
+    for side in (1, -1):
+        out += [("PITOT HOT", PITOT[0] + 0.05, ("deg", side * 84.0), 0.15), ("MRB-100", ms, ("deg", side * ma), 0.5),
+                ("NO STEP", NO_STEP[0], ("deg", side * c.deg_at(NO_STEP[0], NO_STEP[1])), 0.27),
+                ("KEEP CLEAR", 5.4, ("door", 0.36, side), 0.4)]
+    return out
+
+
 def paint(cv, text_mask):
     """The group's paint over a Canvas (m4/paint.py)."""
     np = cv.xp
-    from .paint import PAINT, SMOOTH, panel_joint_mask, poly_sdf, rrect_sdf, seg_dist, smoothstep
+    from .paint import PAINT, SMOOTH, check_square, poly_sdf, rrect_sdf, seg_dist, smoothstep
     c = cv.coords
+    check_square(c, square_outlines())
+    check_seams(seam_layout(), NOSE_OUTLINES, NOSE_EDGES, fittings=formation_footprint(c.bl))
     cv.paint(cv.on(DOOR_SKIN, GEAR_DOOR_SKIN).astype(float), rgb=PAINT[DOOR], smooth=SMOOTH[DOOR])
     s, arc, deg = cv.s, cv.arc, cv.deg
     H, R = cv.on(HULL).astype(float), cv.on(RADOME).astype(float)
     HR = np.clip(H + R, 0, 1)
     ua, ad = np.abs(arc), np.abs(deg)
-    joints = panel_joint_mask(cv, PANELS)
-    level_panels = []
-    for s0, s1, a0, a1, r in LEVEL_PANELS:
-        sm = (s0 + s1) / 2
-        z0, z1 = sorted((cv.surf.point(sm, a0).z, cv.surf.point(sm, a1).z))
-        sdf = rrect_sdf(s, cv.pos[:, 2], s0, s1, z0, z1, r)
-        level_panels.append(sdf)
-        joints *= 1 - cv.fill_coverage(sdf - 0.05)
+    # the crew door and the escape hatches are openings: frame rows stop at their edges
     crew_sdf = rrect_sdf(s, cv.pos[:, 2], *CREW_DOOR, fl.DOOR_CORNER)
-    joints *= 1 - cv.fill_coverage(crew_sdf - 0.05) * (cv.pos[:, 0] > 0)
     hatch_sdf = rrect_sdf(s, np.abs(cv.pos[:, 0]), *fl.HATCH_S, *fl.HATCH_X, fl.HATCH_CORNER)
-    joints *= 1 - cv.fill_coverage(hatch_sdf - 0.05)
+    joints = (1 - cv.fill_coverage(crew_sdf - 0.05) * (cv.pos[:, 0] > 0)) * (1 - cv.fill_coverage(hatch_sdf - 0.05))
 
-    # radome: lightning diverter strips on eight meridians, metal on the dielectric
-    for k in range(DIVERTERS):
-        d0 = -180.0 + 22.5 + 45.0 * k
-        d = np.abs(arc - c.arc_at(s, d0))
-        run = smoothstep(0.43, 0.65, s) * smoothstep(3.51, 3.33, s) * R
-        cv.paint(cv.coverage(d, 0.025) * run, rgb=DARK, smooth=0.35)
-        pitch = np.abs((s - 0.65 + 0.0125) % 0.025 - 0.0125)
-        cv.paint(cv.fill_coverage(np.hypot(d, pitch) - 0.005) * run,
-                 rgb=(0.47, 0.47, 0.47), smooth=0.55, metal=0.25, height=0.0015)
+    # radome: plain, as the stock Darkreach's (no diverter strips: at 60 px/m their buttons alias into stitched seams),
+    # its one line the joint at RADOME_JOINT
     cv.paint(smoothstep(0.42, 0.36, s) * R, smooth=0.6)
-    cv.groove(ua, 0.012, mask=R * (s > 3.25) * (s < 3.58))
     for side in (1, -1):
         latch_arc = side * float(c.arc_at(3.54, 130.0))
         latch = rrect_sdf(s, arc, 3.46, 3.61, latch_arc - 0.055, latch_arc + 0.055, 0.012)
         cv.paint(cv.fill_coverage(latch) * R, rgb=(0.37, 0.38, 0.39), smooth=0.55, metal=0.15, height=0.001)
         cv.groove(np.abs(latch), 0.01, mask=R)
 
-    # skin panels differ a little in tone, Darkreach-like: a panel is a cell between the lines
-    band = np.digitize(ad, [b for _, b in BANDS[:-1]])
-    cell = np.zeros(cv.n, int)
-    for i, (laps, splices) in enumerate(zip(LAPS, SPLICES)):
-        cell = np.where(band == i, np.searchsorted(np.array(sorted(set(laps) | set(splices) | {RADOME_JOINT})), s), cell)
-    for a, s0, s1 in STRINGERS + LONG_LINES:
-        cell = cell * 2 + ((ad > a) & (s > s0) & (s < s1))
-    cell = (cell * 4 + band) * 2 + (arc > 0)
+    # skin panels differ a little in tone, Darkreach-like: a panel is a cell between the butt joints and the laps. Both
+    # sides take the left's tone: the lower right shows the left's texels but beside the crew door, whose own tone there
+    # read as a patch on no panel line.
+    bay = np.searchsorted(np.array((RADOME_JOINT,) + BUTT_JOINTS), s)
+    band = np.digitize(ad, [b for _, b in BANDS[:-1]]) * (s > LAPS[0][1])
+    cell = (bay * 4 + band) * 2 + 1
     tone = ((cell * 2654435761) % 1000) / 1000.0 - 0.5
     cv.albedo *= (1 + 0.05 * tone * HR)[:, None]
 
@@ -593,42 +698,21 @@ def paint(cv, text_mask):
         m = np.min(sdfs, axis=0)
         cv.paint(cv.fill_coverage(m - 0.16) * H, rgb=DARK, smooth=0.2)
 
-    # joints and skin lines
+    # seams (check_seams holds their ends)
     d = np.abs(s - RADOME_JOINT)
     cv.groove(d, 0.02, mask=HR * joints)
     cv.fasteners(d, ua, 0.035, mask=HR * joints)
-    for st_, a0, a1 in STATION_LINES:
-        m = H * joints * (ad >= a0) * (ad <= a1)
-        cv.groove(np.abs(s - st_), mask=m)
-        cv.fasteners(np.abs(s - st_), ua, 0.03, mask=m)
-    for (a0, a1), laps, splices in zip(BANDS, LAPS, SPLICES):
-        m = H * joints * smoothstep(a0 - 0.6, a0, ad) * smoothstep(a1 + 0.6, a1, ad)
-        for j in splices:
-            cv.groove(np.abs(s - j), 0.016, mask=m)
-            cv.fasteners(np.abs(s - j), ua, 0.035, mask=m)
-        for st_ in laps:
-            cv.groove(np.abs(s - st_), mask=m)
-    for a, s0, s1 in STRINGERS:
-        d = np.abs(ua - np.abs(c.arc_at(s, a)))
-        cv.groove(d, mask=H * joints * (s > s0) * (s < s1))
-    for a, s0, s1 in LONG_LINES:
-        d = np.abs(ua - np.abs(c.arc_at(s, a)))
-        m = H * joints * smoothstep(s0 - 0.01, s0, s) * smoothstep(s1 + 0.01, s1, s)
-        cv.groove(d, mask=m)
-        cv.fasteners(d, s, 0.03, mask=m)
+    for b in BUTT_JOINTS:
+        cv.groove(np.abs(s - b), 0.016, mask=H * joints)
+        cv.fasteners(np.abs(s - b), ua, 0.035, mask=H * joints)
+    for a, s0, s1 in LAPS:
+        cv.groove(np.abs(ua - np.abs(c.arc_at(s, a))), mask=H * joints * (s >= s0) * (s <= s1))
 
-    # access panels
+    # access panels: one fastener row on the panel, inside its outline (a row either side of the line read as stitching)
     for s0, s1, a0, a1, r, sides in PANELS:
-        for side in ((1, -1) if sides == 0 else (sides,)):
-            sm = (s0 + s1) / 2
-            v0, v1 = sorted((float(c.arc_at(sm, side * a0)), float(c.arc_at(sm, side * a1))))
-            sdf = rrect_sdf(s, arc, s0, s1, v0, v1, r)
-            cv.groove(np.abs(sdf), mask=H)
-            cv.fasteners(np.abs(sdf), s + arc, 0.03, mask=H * (np.abs(sdf) < 0.06))
-
-    for sdf in level_panels:
+        sdf = cv.box(s0, s1, a0, a1, r, sides)
         cv.groove(np.abs(sdf), mask=H)
-        cv.fasteners(np.abs(sdf), s + cv.pos[:, 2], 0.03, mask=H * (np.abs(sdf) < 0.06))
+        cv.fasteners(np.abs(sdf + 0.03), s + arc, 0.0, mask=H * (np.abs(sdf) < 0.06))
 
     s0, s1, z0, z1 = CREW_DOOR
     left = H * (cv.pos[:, 0] > 0)
@@ -653,13 +737,13 @@ def paint(cv, text_mask):
         for side in (1, -1):
             pv = float(c.arc_at(ps, side * pa))
             r = np.hypot(s - ps, arc - pv)
-            cv.paint(cv.coverage(np.abs(r - 0.055), 0.014) * H, rgb=RED)
+            cv.paint(cv.colour_line(np.abs(r - 0.055), 0.014) * H, rgb=RED)
             cv.paint(cv.fill_coverage(r - 0.018) * H, rgb=DARK, height=-0.002)
 
     # NACA inlet and louvres
     s0, s1, a = NACA_INLET
     from .fuselage_aft import flare_plates, naca
-    naca(cv, s0, s1, float(c.arc_at((s0 + s1) / 2, a)), H)
+    naca(cv, s0, s1, H, [(cv.square((s0 + s1) / 2, a)[1], 0.0)])
     flare_plates(cv, FLARES, H)
     s0, s1, a, n = LOUVRES
     z = cv.surf.point((s0 + s1) / 2, a).z  # the slots stand at one height, beside the level avionics door
@@ -673,22 +757,28 @@ def paint(cv, text_mask):
     # walkway lines on the crown, and the refuelling receptacle's slipway outline and guide stripe
     s0, s1, g = WALKWAY
     dash = ((s - s0) % 0.32) < 0.2
-    cv.paint(cv.coverage(np.abs(ua - g), 0.025) * H * dash * (s > s0) * (s < s1), rgb=WALK)
-    # receptacle: a dark slipway surround and white lead-in lines opening aft, toward the tanker's boom
-    v = float(c.arc_at(RECEPTACLE_S[0], sf.ring_deg(1))) + 0.1
-    sdf = rrect_sdf(s, arc, RECEPTACLE_S[0] - 0.1, RECEPTACLE_S[1] + 0.1, -v, v, 0.08)
-    cv.paint(cv.fill_coverage(sdf) * H, rgb=DARK, smooth=0.2)
+    cv.paint(cv.colour_line(np.abs(ua - g), 0.025) * H * dash * (s > s0) * (s < s1), rgb=WALK)
+    # receptacle: a crisp dark seal on the slipway's lip with a fastener row outside it, the slipway in dark metal that
+    # keeps its form in the AO, and white lead-in lines opening aft, toward the tanker's boom
+    v = float(c.arc_at(RECEPTACLE_S[0], sf.ring_deg(RECEPTACLE_K[1])))
+    lip = rrect_sdf(s, arc, RECEPTACLE_S[0], RECEPTACLE_S[1], -v, v, 0.0)
+    cv.paint(cv.coverage(np.abs(lip), 0.02) * H, rgb=DARK, smooth=0.3)
+    cv.fasteners(np.abs(lip - 0.05), s + arc, 0.0, mask=H * (np.abs(lip - 0.05) < 0.03))
+    slip = (s > RECEPTACLE_S[0] - 0.05) * (s < RECEPTACLE_S[1] + 0.05) * (ua < v + 0.05)
+    cv.paint(cv.on(INTERIOR) * slip, rgb=(0.2, 0.205, 0.21), smooth=0.45, metal=0.6)
+    v += 0.1
     for side in (1, -1):
         d, _ = seg_dist(s, arc, (RECEPTACLE_S[1] + 0.15, side * (v - 0.04)), (RECEPTACLE_S[1] + 1.05, side * (v + 0.42)))
         cv.paint(cv.coverage(d, 0.04) * H, rgb=STENCIL)
-    cv.paint(cv.coverage(ua, 0.04) * H * (s > RECEPTACLE_S[1] + 0.45) * (s < RECEPTACLE_S[1] + 1.05), rgb=STENCIL)
+    # the centre line stops 0.1 m short of the dorsal UHF blade's root (its leading edge half a root chord ahead)
+    uhf_s, _, _, uhf_chord = BLADES[0][:4]
+    cv.paint(cv.coverage(ua, 0.04) * H * (s > RECEPTACLE_S[1] + 0.45) * (s < uhf_s - uhf_chord / 2 - 0.1), rgb=STENCIL)
     for side in (1, -1):
-        cv.decal(text_mask("NO STEP"), (NO_STEP[0], side * NO_STEP[1]), 48 / 0.06, (side, 0), mask=H, rgb=STENCIL)
+        cv.decal(text_mask("NO STEP"), (NO_STEP[0], side * NO_STEP[1]), 48 / 0.14, (side, 0), mask=H, rgb=STENCIL)
 
     # stencils
     for side in (1, -1):
-        cv.decal(text_mask("PITOT HOT"), (PITOT[0] + 0.05, side * float(c.arc_at(PITOT[0], 84.0))), 48 / 0.045,
-                 (side, 0), mask=H, rgb=STENCIL)
+        cv.decal_at(text_mask("PITOT HOT"), PITOT[0] + 0.05, 84.0, side, 48 / 0.045, mask=H, rgb=STENCIL)
         ms, ma = MODEL_STENCIL
         z = cv.surf.point(ms, ma).z
         a0 = float(c.arc_at(ms - 0.3, cv.surf.deg_for_z(ms - 0.3, z)))
@@ -698,7 +788,7 @@ def paint(cv, text_mask):
         cv.decal(text_mask("MRB-100"), (ms, side * float(c.arc_at(ms, ma))), 48 / 0.2,
                  (side * u[0], u[1]), mask=H, rgb=STENCIL, axis_v=(0.0, -side))
     es, ea = EXT_PWR_STENCIL
-    cv.decal(text_mask("EXT PWR"), (es, float(c.arc_at(es, ea))), 48 / 0.045, (-1, 0), mask=H, rgb=STENCIL)
+    cv.decal_at(text_mask("EXT PWR"), es, ea, -1, 48 / 0.045, mask=H, rgb=STENCIL)
     paint_bay_doors(cv)
     paint_gear_doors(cv, text_mask)
     paint_well_roof(cv)
@@ -736,6 +826,17 @@ def paint_bay_doors(cv):
     for st_ in BAY_FRAMES[::2]:
         cv.groove(np.abs(s - st_), 0.012, mask=D * (inset > 0.12))
         cv.fasteners(np.abs(s - st_), ua, 0.0, 0.08, mask=D * (inset > 0.12))
+
+
+def gear_door_open(bl, s, x, side):
+    """The world point and outward normal on the open gear door of (station, |x|) on the closed door, the inverse of
+    paint_gear_doors' rotation (check_lettering.py finds the door's KEEP CLEAR by it)."""
+    s0, s1 = WELL_S[0] + 0.03, WELL_S[1] - 0.03
+    hinge = Vector((side * WELL_X, bl.st(s0), bl.fus_bottom_z(s0, WELL_X)))
+    end = Vector((side * WELL_X, bl.st(s1), bl.fus_bottom_z(s1, WELL_X)))
+    back = Matrix.Rotation(-side * math.pi / 2, 3, (end - hinge).normalized())
+    p = Vector((side * x, bl.st(s), bl.fus_bottom_z(s, x)))
+    return hinge + back @ (p - hinge), back @ Vector((0.0, 0.0, -1.0))
 
 
 def paint_gear_doors(cv, text_mask):

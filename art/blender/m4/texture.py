@@ -13,6 +13,76 @@ import numpy as np
 BAKE_MARGIN = 16
 
 
+# Where the flatter split applies (else BEAUTY, as before build 48): the V-tail roots' warped fillets are where BEAUTY
+# folded quads; applied everywhere it also moved the wing roots' inner shell off one opened sight line (check_damage_area)
+FLAT_SPLIT_PARTS = ("vtail_", "tailcone", "tail_end")
+
+
+def triangulate_split(bm, faces, part):
+    """triangulate_flat on the V-tail parts, BEAUTY elsewhere: the bake's proxy and the export call this alike."""
+    if part.startswith(FLAT_SPLIT_PARTS):
+        triangulate_flat(bm, faces)
+    else:
+        bmesh.ops.triangulate(bm, faces=faces, quad_method="BEAUTY", ngon_method="BEAUTY")
+
+
+def triangulate_flat(bm, faces):
+    """Every quad split on the diagonal whose two triangles fold least (a degenerate triangle counts as a full fold),
+    longer faces by BEAUTY. The bake's proxy and the export (exterior_pass/export_parts) both triangulate with it, so the
+    game draws the triangles the texels were baked on; BEAUTY ignores the fold, and on the warped quads of the V-tail
+    root fillets it cut 10 to 50 degree folds that shaded as glossy creases (build 47)."""
+    import math as _m
+
+    def sliver(a, b, c):  # exterior_pass/export_parts._degenerate: the export drops these, leaving a hole
+        lengths = ((a - b).length, (b - c).length, (c - a).length)
+        return min(lengths) < 1e-5 or (b - a).cross(c - a).length < 1e-5 * max(max(lengths), 1e-5) * 0.1
+
+    def fold(p, q, r, s):  # the triangles p q r and p r s; a sliver on either side counts as a full fold
+        if sliver(p.co, q.co, r.co) or sliver(p.co, r.co, s.co):
+            return _m.pi
+        n1, n2 = (q.co - p.co).cross(r.co - p.co), (r.co - p.co).cross(s.co - p.co)
+        return n1.angle(n2)
+    def diagonal(f):
+        """The flatter diagonal, or BEAUTY's where neither folds clearly less (6 degrees)."""
+        a, b, c, d = f.verts
+        f02, f13 = fold(a, b, c, d), fold(b, c, d, a)
+        if abs(f02 - f13) >= _m.radians(6.0):
+            return (a, c) if f02 < f13 else (b, d)
+        # BEAUTY's choice, read off a throwaway copy of the quad
+        tmp = bmesh.new()
+        tv = [tmp.verts.new(v.co) for v in f.verts]
+        tmp.faces.new(tv)
+        bmesh.ops.triangulate(tmp, faces=list(tmp.faces), quad_method="BEAUTY")
+        inner = next(e for e in tmp.edges if len(e.link_faces) == 2)
+        i, j = (tv.index(v) for v in inner.verts)
+        tmp.free()
+        return f.verts[i], f.verts[j]
+    # an inward twin (exterior pass stage 3: twin_src, twin_vert) takes its original's diagonal, so the two shells cut
+    # one quad the same way and no sight line opens between them (check_damage_area, wing_root_R, 2026-11-26)
+    tf, tv_ = bm.faces.layers.int.get("twin_src"), bm.loops.layers.int.get("twin_vert")
+    bm.verts.index_update()
+    quads = [f for f in faces if len(f.verts) == 4]
+    longer = [f for f in faces if len(f.verts) > 4]
+    chosen = {}
+    is_twin = (lambda f: f[tf] > 0) if tf is not None and tv_ is not None else (lambda f: False)
+    for f in [q for q in quads if not is_twin(q)]:
+        v1, v2 = diagonal(f)
+        chosen[frozenset(v.index for v in f.verts)] = {v1.index, v2.index}
+        bmesh.utils.face_split(f, v1, v2)
+    for f in [q for q in quads if is_twin(q)]:
+        orig = [lp[tv_] - 1 for lp in f.loops]
+        diag = chosen.get(frozenset(orig))
+        ends = [k for k, o in enumerate(orig) if diag is not None and o in diag]
+        lv = [lp.vert for lp in f.loops]
+        if len(ends) == 2 and ends[1] - ends[0] == 2 and fold(lv[ends[0]], lv[ends[0] + 1], lv[ends[1]], lv[(ends[1] + 1) % 4]) < _m.pi:
+            v1, v2 = lv[ends[0]], lv[ends[1]]
+        else:  # no original, or its diagonal would leave the twin a sliver the export drops
+            v1, v2 = diagonal(f)
+        bmesh.utils.face_split(f, v1, v2)
+    if longer:
+        bmesh.ops.triangulate(bm, faces=longer, quad_method="BEAUTY", ngon_method="BEAUTY")
+
+
 def make_proxy(objs, skin_name, mirrored, group_of=None, moving=()):
     """mirrored: {object name: set of face indices whose UVs are copies}; group_of: {object name: group number from
     1} and moving (the names of parts that slide with the stages), baked beside the paint class so each texel knows
@@ -35,6 +105,14 @@ def make_proxy(objs, skin_name, mirrored, group_of=None, moving=()):
         col = np.zeros((len(loop_cls), 4), np.float32)
         col[:, 0], col[:, 1], col[:, 2], col[:, 3] = loop_cls, (group_of or {}).get(o.name, 1), o.name in moving, 1.0
         me.color_attributes.new("clsf", "FLOAT_COLOR", "CORNER").data.foreach_set("color", col.ravel())
+        # baked on the triangles that export (exterior_pass/export_parts.drop_degenerate, triangulate_flat; Cycles' own
+        # split took the other diagonal on about half the quads, and where a quad's UVs are no parallelogram the texture
+        # sheared across it in the game: the right flank's serial leaned, build 45)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        triangulate_split(bm, [f for f in bm.faces if len(f.verts) > 3], o.name)
+        bm.to_mesh(me)
+        bm.free()
         c = bpy.data.objects.new("bake_proxy", me)
         bpy.context.scene.collection.objects.link(c)
         copies.append(c)

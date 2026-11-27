@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 239538020474484645, guid: 0cda6f768178402438bb8dd839a72254, type: 3}
   jsonKey: baanish_centurion_auger_16
   info: {fileID: 11400000, guid: ec631df27eea69a4784716b72bf7d770, type: 2}
-  mountName: GPO-2P Auger x16
-  ammo: 16
+  mountName: GPO-2P Auger x9
+  ammo: 9
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 16000
+  mass: 9000
   drag: 0
   emptyDrag: 0
   RCS: 0

@@ -20,25 +20,25 @@ namespace Centurion;
 /// </summary>
 sealed class OwnerState : MonoBehaviour
 {
-    const string CenturionKey = "baanish_centurion";
-
     // The half-float the axis travels as must stay finite (NetworkFloatHelper.Validate rejects the snapshot otherwise): bit 14
     // is the top exponent bit, so clearing it keeps the exponent under 31. Bit 15, the sign, marks a word; a plain command
     // from a build without it is a non-negative half and reads as none.
     const ushort Marker = 0x8000;
     const int ExtensionMask = 0xFF, LostShift = 8, RadarBit = 1 << 12, BeamBit = 1 << 13;
-    const float LogIntervalS = 0.5f;
     // A copy's first 5 s of words, about every 0.2 s.
     const int CapacitorWords = 25;
 
     internal static readonly PatchTarget[] PatchTargets =
     {
+        // Every aircraft's snapshot, about every 0.2 s each (AircraftNetworkTransform.cs:413-424).
         new("owner-state", typeof(AircraftNetworkTransform), "CreateSnapshot",
             postfix: AccessTools.Method(typeof(OwnerState), nameof(AfterCreateSnapshot))),
         new("owner-state", typeof(Aircraft), nameof(Aircraft.ApplySetInputs), new[] { typeof(CompressedInputs) },
             postfix: AccessTools.Method(typeof(OwnerState), nameof(AfterApplySetInputs))),
     };
 
+#if CENTURION_DEV
+    const float LogIntervalS = 0.5f;
     /// <summary>Every live Centurion's holder, local and remote.</summary>
     static readonly List<OwnerState> All = new();
     static readonly string[] Kinds = { "player", "ai" };
@@ -46,10 +46,11 @@ sealed class OwnerState : MonoBehaviour
 
     static ConfigEntry<bool> diagnostics = null!;
     static ConfigEntry<bool> stateLog = null!;
+    float nextLogAt;
+#endif
     static CenturionLog log = null!;
 
     Aircraft aircraft = null!;
-    float nextLogAt;
     bool capacitorStarted;
 
     /// <summary>True once a word from the simulating peer has arrived here; never on the simulating peer.</summary>
@@ -65,6 +66,7 @@ sealed class OwnerState : MonoBehaviour
     internal static void Install(ConfigFile config, CenturionLog log)
     {
         OwnerState.log = log;
+#if CENTURION_DEV
         if (!config.TryGetEntry("Diagnostics", "Enabled", out diagnostics))
         {
             throw new InvalidOperationException("OwnerState requires Diagnostics.Enabled to be bound before Install");
@@ -72,25 +74,18 @@ sealed class OwnerState : MonoBehaviour
 
         stateLog = config.Bind("Diagnostics", "OwnerStateLog", false,
             "With Diagnostics.Enabled, log each Centurion's span, lost stages, radar master and beam on this peer twice a second, keyed by persistent id with the wall clock, for comparing peers (tests/agentic/centurion_mp_agreement.py)");
-    }
-
-    /// <summary>The aircraft's state holder, added on first sight; null for any other aircraft.</summary>
-    internal static OwnerState? For(Aircraft aircraft)
-    {
-        if (aircraft.definition == null || aircraft.definition.jsonKey != CenturionKey)
-        {
-            return null;
-        }
-
-        return aircraft.TryGetComponent(out OwnerState state) ? state : aircraft.gameObject.AddComponent<OwnerState>();
+#endif
     }
 
     void Awake()
     {
         aircraft = GetComponent<Aircraft>();
+#if CENTURION_DEV
         All.Add(this);
+#endif
     }
 
+#if CENTURION_DEV
     void OnDestroy() => All.Remove(this);
 
     internal static void AddDefaults(Dictionary<string, object> state)
@@ -142,25 +137,36 @@ sealed class OwnerState : MonoBehaviour
             }
         }
     }
+#endif
 
+    /// <summary>
+    /// The sent copy of a simulating Centurion's inputs carries the yaw input before the fly-by-wire, which every copy opens
+    /// its drag rudders from as the owner does (TelescopeController.DragRudderYaw): a copy has only the owner's snapshot
+    /// inputs (Aircraft.ApplySetInputs, Aircraft.cs:1790-1797), and its tail surfaces then show the input
+    /// (ControlSurface.cs:160-175), a visual only, since copies run no aero job (AeroPart.cs:113). Its Custom Axis 1 carries
+    /// the state word.
+    /// </summary>
     static void AfterCreateSnapshot(AircraftNetworkTransform __instance, ref NetworkTransformBase.NetworkSnapshot __result)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("owner-state")) return;
-        if (!__result.ClientInputs.HasValue || __instance.Aircraft == null || !__instance.Aircraft.LocalSim || For(__instance.Aircraft) is not { } state)
+        if (!__result.ClientInputs.HasValue || CenturionSystems.Of(__instance.Aircraft) is not { } systems || !systems.Aircraft.LocalSim)
         {
             return;
         }
 
         CompressedInputs inputs = __result.ClientInputs.Value;
-        inputs.customAxis1.Value = state.OwnWord();
+        if (systems.Telescope != null)
+        {
+            inputs.yaw = systems.Telescope.SentYaw.Compress();
+        }
+
+        inputs.customAxis1.Value = Word(systems);
         __result.ClientInputs = inputs;
     }
 
     static void AfterApplySetInputs(Aircraft __instance, CompressedInputs inputs)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("owner-state")) return;
         ushort word = inputs.customAxis1.Value;
-        if ((word & Marker) == 0 || For(__instance) is not { } state)
+        if ((word & Marker) == 0 || CenturionSystems.Of(__instance)?.Owner is not { } state)
         {
             return;
         }
@@ -170,20 +176,20 @@ sealed class OwnerState : MonoBehaviour
         __instance.GetInputs().customAxis1 = state.Extension;
     }
 
-    ushort OwnWord()
+    static ushort Word(CenturionSystems systems)
     {
         int word = Marker;
-        if (aircraft.TryGetComponent(out TelescopeController telescope))
+        if (systems.Telescope is { } telescope)
         {
             word |= Mathf.RoundToInt(Mathf.Clamp01(telescope.Extension) * ExtensionMask) | (telescope.LostMask << LostShift);
         }
 
-        if (!aircraft.TryGetComponent(out RadarSuite radar) || radar.Master)
+        if (systems.Radar.Master)
         {
             word |= RadarBit;
         }
 
-        if (aircraft.TryGetComponent(out AwacsBeam beam) && beam.TargetUp)
+        if (systems.Beam.TargetUp)
         {
             word |= BeamBit;
         }
@@ -220,6 +226,7 @@ sealed class OwnerState : MonoBehaviour
         Words++;
     }
 
+#if CENTURION_DEV
     void Update()
     {
         if (!stateLog.Value || !diagnostics.Value || Time.unscaledTime < nextLogAt)
@@ -234,4 +241,5 @@ sealed class OwnerState : MonoBehaviour
         float beam = aircraft.TryGetComponent(out AwacsBeam awacs) && awacs.Fitted ? awacs.Deploy : float.NaN;
         log.Info(Invariant($"mp-state t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()} pid={aircraft.persistentID.Id} sim={(aircraft.LocalSim ? 1 : 0)} player={(aircraft.Player != null ? 1 : 0)} ext={extension:0.000} lost={lost} radar={radar} beam={beam:0.000} words={Words}"));
     }
+#endif
 }

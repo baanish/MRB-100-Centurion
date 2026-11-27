@@ -1,0 +1,299 @@
+{
+ "whole": {
+  "dark_share": 0.0029,
+  "mean": 0.892,
+  "skin_m2": 1478.1
+ },
+ "parts": {
+  "aileron_L_visible": {
+   "dark_share": 0.0,
+   "mean": 0.944,
+   "skin_m2": 13.6
+  },
+  "aileron_R_visible": {
+   "dark_share": 0.0,
+   "mean": 0.944,
+   "skin_m2": 13.6
+  },
+  "bay_A": {
+   "dark_share": 0.0089,
+   "mean": 0.698,
+   "skin_m2": 43.47
+  },
+  "bay_F": {
+   "dark_share": 0.0,
+   "mean": 0.956,
+   "skin_m2": 54.9
+  },
+  "baydoor_AL_visible": {
+   "dark_share": 0.0,
+   "mean": 0.878,
+   "skin_m2": 16.95
+  },
+  "baydoor_AR_visible": {
+   "dark_share": 0.0,
+   "mean": 0.878,
+   "skin_m2": 16.95
+  },
+  "baydoor_FL_visible": {
+   "dark_share": 0.0,
+   "mean": 0.995,
+   "skin_m2": 16.85
+  },
+  "baydoor_FR_visible": {
+   "dark_share": 0.0,
+   "mean": 0.995,
+   "skin_m2": 16.85
+  },
+  "Centurion": {
+   "dark_share": 0.031,
+   "mean": 0.91,
+   "skin_m2": 118.8
+  },
+  "cockpit": {
+   "dark_share": 0.0,
+   "mean": 0.841,
+   "skin_m2": 37.92
+  },
+  "flap_L1_visible": {
+   "dark_share": 0.0,
+   "mean": 0.875,
+   "skin_m2": 12.0
+  },
+  "flap_L2_visible": {
+   "dark_share": 0.0,
+   "mean": 0.824,
+   "skin_m2": 19.74
+  },
+  "flap_R1_visible": {
+   "dark_share": 0.0,
+   "mean": 0.877,
+   "skin_m2": 12.0
+  },
+  "flap_R2_visible": {
+   "dark_share": 0.0,
+   "mean": 0.824,
+   "skin_m2": 19.74
+  },
+  "fuselage_F": {
+   "dark_share": 0.0,
+   "mean": 0.954,
+   "skin_m2": 70.19
+  },
+  "fuselage_R": {
+   "dark_share": 0.0,
+   "mean": 0.971,
+   "skin_m2": 64.97
+  },
+  "gear_LM": {
+   "dark_share": 0.0,
+   "mean": 0.875,
+   "skin_m2": 5.22
+  },
+  "gear_RM": {
+   "dark_share": 0.0,
+   "mean": 0.875,
+   "skin_m2": 5.22
+  },
+  "geardoor_FL_visible": {
+   "dark_share": 0.0,
+   "mean": 0.845,
+   "skin_m2": 2.23
+  },
+  "geardoor_FR_visible": {
+   "dark_share": 0.0,
+   "mean": 0.835,
+   "skin_m2": 2.23
+  },
+  "geardoor_LM_visible": {
+   "dark_share": 0.0,
+   "mean": 0.619,
+   "skin_m2": 1.58
+  },
+  "geardoor_RM_visible": {
+   "dark_share": 0.0,
+   "mean": 0.619,
+   "skin_m2": 1.58
+  },
+  "nacelle_1": {
+   "dark_share": 0.0,
+   "mean": 0.853,
+   "skin_m2": 88.16
+  },
+  "nacelle_2": {
+   "dark_share": 0.0,
+   "mean": 0.853,
+   "skin_m2": 88.15
+  },
+  "nose_door_visible": {
+   "dark_share": 0.0,
+   "mean": 0.999,
+   "skin_m2": 2.01
+  },
+  "nose_hatch_L": {
+   "dark_share": 0.0,
+   "mean": 1.0,
+   "skin_m2": 0.91
+  },
+  "nose_hatch_R": {
+   "dark_share": 0.0,
+   "mean": 1.0,
+   "skin_m2": 0.91
+  },
+  "nozzle_1": {
+   "dark_share": 0.0,
+   "mean": 0.815,
+   "skin_m2": 8.48
+  },
+  "nozzle_2": {
+   "dark_share": 0.0,
+   "mean": 0.811,
+   "skin_m2": 8.48
+  },
+  "pylon_1": {
+   "dark_share": 0.0,
+   "mean": 0.599,
+   "skin_m2": 1.84
+  },
+  "pylon_2": {
+   "dark_share": 0.0006,
+   "mean": 0.599,
+   "skin_m2": 1.84
+  },
+  "radome": {
+   "dark_share": 0.0,
+   "mean": 0.998,
+   "skin_m2": 23.97
+  },
+  "ruddervator_L1_visible": {
+   "dark_share": 0.0,
+   "mean": 0.931,
+   "skin_m2": 7.84
+  },
+  "ruddervator_L2_visible": {
+   "dark_share": 0.0,
+   "mean": 0.991,
+   "skin_m2": 12.89
+  },
+  "ruddervator_R1_visible": {
+   "dark_share": 0.0,
+   "mean": 0.931,
+   "skin_m2": 7.84
+  },
+  "ruddervator_R2_visible": {
+   "dark_share": 0.0,
+   "mean": 0.991,
+   "skin_m2": 12.89
+  },
+  "spine_cover": {
+   "dark_share": 0.0034,
+   "mean": 0.989,
+   "skin_m2": 4.59
+  },
+  "spine_cover_A": {
+   "dark_share": 0.0034,
+   "mean": 0.986,
+   "skin_m2": 4.59
+  },
+  "spoiler_L_visible": {
+   "dark_share": 0.0013,
+   "mean": 0.993,
+   "skin_m2": 6.23
+  },
+  "spoiler_R_visible": {
+   "dark_share": 0.0013,
+   "mean": 0.993,
+   "skin_m2": 6.23
+  },
+  "sponson_L": {
+   "dark_share": 0.0,
+   "mean": 0.83,
+   "skin_m2": 30.02
+  },
+  "sponson_R": {
+   "dark_share": 0.0,
+   "mean": 0.83,
+   "skin_m2": 30.02
+  },
+  "strut_inner_L": {
+   "dark_share": 0.0,
+   "mean": 0.819,
+   "skin_m2": 8.51
+  },
+  "strut_inner_R": {
+   "dark_share": 0.0,
+   "mean": 0.819,
+   "skin_m2": 8.51
+  },
+  "strut_outer_L": {
+   "dark_share": 0.0,
+   "mean": 0.952,
+   "skin_m2": 27.04
+  },
+  "strut_outer_R": {
+   "dark_share": 0.0,
+   "mean": 0.95,
+   "skin_m2": 27.15
+  },
+  "tail_end": {
+   "dark_share": 0.0011,
+   "mean": 0.92,
+   "skin_m2": 56.33
+  },
+  "tailcone": {
+   "dark_share": 0.0,
+   "mean": 0.982,
+   "skin_m2": 57.09
+  },
+  "vtail_L": {
+   "dark_share": 0.0,
+   "mean": 0.926,
+   "skin_m2": 16.77
+  },
+  "vtail_R": {
+   "dark_share": 0.0,
+   "mean": 0.927,
+   "skin_m2": 16.77
+  },
+  "vtail_tip_L": {
+   "dark_share": 0.0,
+   "mean": 0.995,
+   "skin_m2": 30.32
+  },
+  "vtail_tip_R": {
+   "dark_share": 0.0,
+   "mean": 0.995,
+   "skin_m2": 30.32
+  },
+  "wing_outer_L": {
+   "dark_share": 0.0018,
+   "mean": 0.903,
+   "skin_m2": 36.1
+  },
+  "wing_outer_R": {
+   "dark_share": 0.0001,
+   "mean": 0.904,
+   "skin_m2": 36.08
+  },
+  "wing_root_L": {
+   "dark_share": 0.0,
+   "mean": 0.792,
+   "skin_m2": 95.77
+  },
+  "wing_root_R": {
+   "dark_share": 0.0,
+   "mean": 0.792,
+   "skin_m2": 95.72
+  },
+  "wing_tele2_L": {
+   "dark_share": 0.0,
+   "mean": 0.998,
+   "skin_m2": 10.59
+  },
+  "wing_tele2_R": {
+   "dark_share": 0.0,
+   "mean": 0.996,
+   "skin_m2": 10.62
+  }
+ }
+}

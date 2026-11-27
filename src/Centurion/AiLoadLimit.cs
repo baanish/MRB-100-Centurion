@@ -16,12 +16,11 @@ namespace Centurion;
 /// pilot easing over: at 0 g a 215 m/s aircraft noses over at 2.6 deg/s. The 1 g margin is the fly-by-wire's overshoot, which
 /// swung the load about 1 g either side of its target in those runs. The player's stick is never touched: flying the extended
 /// wing inside its limits stays the player's skill.
-/// Runs in a prefix of Aircraft.FilterInputs, where AutopilotPlane.AutoAim hands every AI state's stick to the filter
-/// (AutopilotPlane.cs:121-122); the player's state calls it too (PilotPlayerState.cs:68) and is left alone.
+/// Runs from TelescopeController's prefix of Aircraft.FilterInputs, where AutopilotPlane.AutoAim hands every AI state's
+/// stick to the filter (AutopilotPlane.cs:121-122); the player's state calls it too (PilotPlayerState.cs:68) and is left alone.
 /// </summary>
 static class AiLoadLimit
 {
-    const string CenturionKey = "baanish_centurion";
     const float MinNz = 0f, MaxNz = 3f;
 
     static readonly AccessTools.FieldRef<ControlsFilter.FlyByWire, float>? GLimit = FlyByWireField("gLimitPositive");
@@ -29,23 +28,13 @@ static class AiLoadLimit
     static readonly AccessTools.FieldRef<ControlsFilter.FlyByWire, float>? MaxPitchRate = FlyByWireField("maxPitchAngularVel");
     static readonly AccessTools.FieldRef<ControlsFilter.FlyByWire, float>? LimitFactor = FlyByWireField("limitFactorSmoothed");
 
-    internal static readonly PatchTarget[] PatchTargets =
-    {
-        new("ai-load-limit", typeof(Aircraft), nameof(Aircraft.FilterInputs),
-            prefix: AccessTools.Method(typeof(AiLoadLimit), nameof(BeforeFilterInputs))),
-    };
-
     static AccessTools.FieldRef<ControlsFilter.FlyByWire, float>? FlyByWireField(string name) =>
         AccessTools.Field(typeof(ControlsFilter.FlyByWire), name) == null ? null : AccessTools.FieldRefAccess<ControlsFilter.FlyByWire, float>(name);
 
-    static void BeforeFilterInputs(Aircraft __instance)
+    internal static void Apply(Aircraft aircraft, TelescopeController telescope)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("ai-load-limit")) return;
-        Aircraft aircraft = __instance;
-        if (aircraft.definition == null || aircraft.definition.jsonKey != CenturionKey || !aircraft.LocalSim
-            || aircraft.pilots.Length == 0 || aircraft.pilots[0].currentState is not PilotBaseState state || state is PilotPlayerState
+        if (!aircraft.LocalSim || aircraft.pilots.Length == 0 || aircraft.pilots[0].currentState is not PilotBaseState state || state is PilotPlayerState
             || GLimit == null || CornerSpeed == null || MaxPitchRate == null || LimitFactor == null
-            || !aircraft.TryGetComponent(out TelescopeController telescope)
             || Mathf.Max(telescope.Extension, telescope.Command) <= WingTearRule.MinExtension)
         {
             return;
@@ -87,10 +76,5 @@ static class AiLoadLimit
         }
 
         inputs.pitch = clamped;
-        if (CenturionPlugin.Log.StageDue("ai-load-limit"))
-        {
-            CenturionPlugin.Log.StageLine("ai-load-limit", Invariant(
-                $"{aircraft.name} ({state.GetType().Name}): pitch stick {stick:0.00} held to {clamped:0.00} for {MinNz:0} to +{MaxNz:0} g at extension {telescope.Extension:0.00}, {speed:0} m/s, load factor {telescope.Nz:0.00}"));
-        }
     }
 }

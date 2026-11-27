@@ -19,8 +19,6 @@ namespace Centurion;
 /// </summary>
 sealed class DragRudderSplits : MonoBehaviour
 {
-    static readonly AccessTools.FieldRef<ControlSurface, PtrAllocation<ControlSurfaceFields>>? JobFields =
-        AccessTools.Field(typeof(ControlSurface), "JobFields") == null ? null : AccessTools.FieldRefAccess<ControlSurface, PtrAllocation<ControlSurfaceFields>>("JobFields");
 
     sealed class Split
     {
@@ -28,6 +26,8 @@ sealed class DragRudderSplits : MonoBehaviour
         public ControlSurface Surface = null!;
         public Transform Upper = null!, Lower = null!;
         public float YawSide;
+        /// <summary>The last pose written was the drag rudder's, not the stock split's.</summary>
+        public bool Overriding = true;
     }
 
     Aircraft aircraft = null!;
@@ -41,7 +41,7 @@ sealed class DragRudderSplits : MonoBehaviour
         telescope = controller;
         foreach ((AeroPart aileron, float yawSide) in rudders)
         {
-            if (JobFields == null || !aileron.TryGetComponent(out ControlSurface surface) || !surface.GetJobTransforms(out _, out Transform upper, out Transform lower))
+            if (SurfaceRules.JobFields == null || !aileron.TryGetComponent(out ControlSurface surface) || !surface.GetJobTransforms(out _, out Transform upper, out Transform lower))
             {
                 TelescopeController.Log.Warning($"drag rudders on {owner.name}: {aileron.name} has no stock split halves or this game build lacks ControlSurface.JobFields, so its drag rudder doesn't show");
                 continue;
@@ -65,13 +65,21 @@ sealed class DragRudderSplits : MonoBehaviour
                 continue;
             }
 
-            ControlSurfaceFields* fields = JobFields!(split.Surface).ptr;
+            ControlSurfaceFields* fields = SurfaceRules.JobFields!(split.Surface).ptr;
             if (fields == null)
             {
                 continue;
             }
 
             float angle = Mathf.Max(fields->splitAmount, fields->maxSplit * telescope.DragRudderOpen(split.YawSide));
+            // A shut drag rudder leaves the stock split's own pose, which the job wrote by the same rule (ControlSurfaceJob_Math.cs:79-80)
+            // and which stands until its next write, so nothing is written once that pose is back.
+            if (angle == fields->splitAmount && !split.Overriding)
+            {
+                continue;
+            }
+
+            split.Overriding = angle != fields->splitAmount;
             split.Upper.localRotation = fields->restingSplitRotation * Quaternion.AngleAxis(angle, Vector3.right);
             split.Lower.localRotation = fields->restingSplitRotation * Quaternion.AngleAxis(-angle, Vector3.right);
         }

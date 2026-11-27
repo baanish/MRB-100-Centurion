@@ -20,7 +20,8 @@ sealed class FanSpin : MonoBehaviour
     const float FullRpmDegPerS = 400f;
     const float MaxStepDeg = 6.5f;
 
-    readonly List<(Turbofan Engine, Transform Fan)> fans = new();
+    readonly List<(Turbofan Engine, Transform Fan, Renderer? Mesh)> fans = new();
+#if CENTURION_DEV
     readonly double[] turnDeg = new double[2];
 
     internal void Read(Dictionary<string, object> state)
@@ -28,6 +29,7 @@ sealed class FanSpin : MonoBehaviour
         state["fans_found"] = fans.Count;
         for (int i = 0; i < turnDeg.Length; i++) state[$"fan_{i + 1}_turn_deg"] = System.Math.Round(turnDeg[i], 3);
     }
+#endif
 
     void Awake()
     {
@@ -44,7 +46,7 @@ sealed class FanSpin : MonoBehaviour
             {
                 if (child.name.StartsWith(FanPrefix) && child.name.EndsWith(FanSuffix))
                 {
-                    fans.Add((engine, child));
+                    fans.Add((engine, child, child.GetComponent<Renderer>()));
                 }
             }
         }
@@ -52,9 +54,11 @@ sealed class FanSpin : MonoBehaviour
 
     void Update()
     {
-        foreach ((Turbofan engine, Transform fan) in fans)
+        foreach ((Turbofan engine, Transform fan, Renderer? mesh) in fans)
         {
-            if (engine == null || fan == null)
+            // A fan no camera draws (inside a nacelle seen side-on, or far away) keeps its angle: a stopped fan's phase is
+            // invisible once it turns again.
+            if (engine == null || fan == null || mesh != null && !mesh.isVisible)
             {
                 continue;
             }
@@ -63,8 +67,10 @@ sealed class FanSpin : MonoBehaviour
             // about local Z by a negative angle (m4/engines.py blade_section).
             float step = Mathf.Min(engine.GetRPMRatio() * FullRpmDegPerS * Time.deltaTime, MaxStepDeg);
             fan.Rotate(0f, 0f, -step, Space.Self);
+#if CENTURION_DEV
             int index = fan.name == "fan_1_mesh" ? 0 : 1;
             turnDeg[index] += step;
+#endif
         }
     }
 }

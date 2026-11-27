@@ -7,6 +7,7 @@
 #
 #   Centurion-v<version>-nomm.zip          flat; NOMM supplies the install folder. The first release asset.
 #   Centurion-v<version>-plugin-only.zip   BepInEx/plugins/baanish.centurion/, extracted beside NuclearOption.exe
+#   centurion_livery_kit_<version>.zip     the player paint kit (tools/Build-LiveryKit.ps1), never inside the mod archives
 #   SHA256SUMS.txt
 #   Centurion-v<version>-nomnom.json       the NOMNOM listing, from packaging/NOMNOM-MANIFEST.template.json
 #   RELEASE-NOTES.md                      the release body, with public links at the tag
@@ -58,7 +59,7 @@ function Invoke-Git {
 $required = @(
     'README.md', 'LICENSE', 'audio/CREDITS.md', 'packaging/NOMNOM-MANIFEST.template.json',
     'src/Centurion/Centurion.csproj', 'src/Centurion/CenturionPlugin.cs', 'unity/Assets/Blueprinter/Mods/centurion/modinfo.json',
-    'tools/Build-Centurion.ps1', 'tools/Check-Identity.ps1', 'tools/Verify-Release.ps1',
+    'tools/Build-Centurion.ps1', 'tools/Check-Identity.ps1', 'tools/Verify-Release.ps1', 'tools/Build-LiveryKit.ps1',
     'art/export-manifest.json', 'tools/export_manifest.py', 'tools/scrub_fbx.py'
 )
 foreach ($path in $required) {
@@ -69,7 +70,7 @@ $changes = if ($NotesFile) { Get-Content -LiteralPath $NotesFile -Raw } else { '
 & python (Join-Path $repo 'tools/export_manifest.py')
 if ($LASTEXITCODE -ne 0) { Fail 'exports do not match art/export-manifest.json' }
 # Ignored exports are pinned by the committed manifest, including their JSON and textures.
-$inputs = @('src', 'unity', 'tools', 'packaging', 'README.md', 'LICENSE', 'audio', 'art/export-manifest.json')
+$inputs = @('src', 'unity', 'tools', 'packaging', 'README.md', 'LICENSE', 'audio', 'art/export-manifest.json', 'art/textures', 'docs/livery-kit')
 $statusBefore = @(Invoke-Git status --porcelain -- @inputs) -join "`n"
 if ($statusBefore) { Refuse "the build inputs are dirty ($(@($statusBefore -split "`n").Count) paths)" }
 # Unity assigns fresh prefab fileIDs. Every other tracked input must retain its bytes,
@@ -212,14 +213,21 @@ $nommZip = Write-ReleaseArchive "Centurion-v$tag-nomm.zip" ''
 $pluginZip = Write-ReleaseArchive "Centurion-v$tag-plugin-only.zip" "BepInEx/plugins/$modId/"
 $buildLock.ReleaseMutex()
 
+# The kit generator refuses an export that differs from the manifest this bundle was built from.
+$kitLast = $null
+& pwsh -NoProfile -File (Join-Path $repo 'tools/Build-LiveryKit.ps1') -Version $version | ForEach-Object { Write-Output "  $_"; $kitLast = $_ }
+if ($LASTEXITCODE -ne 0 -or $kitLast -notmatch '^LIVERY KIT PASS: ') { Fail "the livery kit did not build: $kitLast" }
+$kitZip = Join-Path $out "centurion_livery_kit_$tag.zip"
+Copy-Item -LiteralPath (Join-Path $build "centurion_livery_kit_$version.zip") -Destination $kitZip
+
 $nommHash = Get-Sha256 $nommZip
 $listingTemplate -replace '@VERSION@', $tag -replace '@SHA256@', $nommHash | Set-Content -LiteralPath (Join-Path $out "Centurion-v$tag-nomnom.json") -Encoding utf8NoBOM -NoNewline
-$zips = @($nommZip, $pluginZip)
+$zips = @($nommZip, $pluginZip, $kitZip)
 $releaseUrl = "https://github.com/baanish/MRB-100-Centurion/releases/download/v$tag"
 $sourceUrl = "https://github.com/baanish/MRB-100-Centurion/blob/v$tag"
 $notes = @(
     "# MRB-100 Centurion v$tag", '',
-    'For Nuclear Option 0.34.2. Requires BepInEx 5 and Blueprinter 2.0.1 or later.', '',
+    'For Nuclear Option 0.34.6. Requires BepInEx 5 and Blueprinter 2.0.1 or later.', '',
     'Every player needs the mod. Two-PC multiplayer validation is still pending; this is a prerelease.', ''
 )
 if ($changes) { $notes += @('## Changes', '', $changes.Trim(), '') }
@@ -231,7 +239,8 @@ $notes += @(
     '## Assets', '',
     "- [NOMM archive]($releaseUrl/Centurion-v$tag-nomm.zip), for the catalog. Its payload is flat.",
     "- [Manual archive]($releaseUrl/Centurion-v$tag-plugin-only.zip), with BepInEx/plugins/baanish.centurion/ included.",
-    "- [SHA256SUMS.txt]($releaseUrl/SHA256SUMS.txt), covering both archives, the catalog manifest and these notes.",
+    "- [Livery kit]($releaseUrl/centurion_livery_kit_$tag.zip), the paint model, templates and builder for player liveries. See the [livery kit guide]($sourceUrl/docs/livery-kit/README.md).",
+    "- [SHA256SUMS.txt]($releaseUrl/SHA256SUMS.txt), covering both archives, the livery kit, the catalog manifest and these notes.",
     "- [Catalog manifest]($releaseUrl/Centurion-v$tag-nomnom.json), for initial NOMNOM registration.", '',
     "Source: [v$tag]($sourceUrl)."
 )

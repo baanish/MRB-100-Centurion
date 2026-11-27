@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 2599160677084071494, guid: 44cdef8c4ea0943428249c1cd4265ea3, type: 3}
   jsonKey: baanish_centurion_gpon15_60
   info: {fileID: 11400000, guid: fe576a9ecc2f0854cb054088ed4b7d18, type: 2}
-  mountName: GPO-N (1.5kt) x60
-  ammo: 60
+  mountName: GPO-N (1.5kt) x16
+  ammo: 16
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 24000
+  mass: 6400
   drag: 0
   emptyDrag: 0
   RCS: 0

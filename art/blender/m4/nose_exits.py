@@ -1,6 +1,6 @@
 """The flight deck's exits in the nose (m4/nose.py, docs/COCKPIT-DESIGN.md): the escape hatch openings over the two
-seats and the crew door opening on the left side, cut into the hull, walled and floored so the nose stays one closed
-shell, and the panels that close them, each on its own part (the blockout's nose_hatch_L, nose_hatch_R and
+seats and the crew door opening on the left side, cut into the hull and walled (a hatch's opening stays open under its
+panel, which the game jettisons), and the panels that close them, each on its own part (the blockout's nose_hatch_L, nose_hatch_R and
 nose_door_visible), so the game can blow the hatches off and swing the door.
 
 The opening outlines and the hatch panels are rounded rectangles (flightdeck_layout): a hatch's in plan, as stations
@@ -147,9 +147,9 @@ def cut_window(part, surf, g, holes, slot, cls):
     return list(zip(rings, under))
 
 
-def line_opening(part, surf, ring, under, depth, slot, cls):
-    """An opening's walls from its outer ring down depth under the skin, and its floor across there, triangulated
-    over the grid points under it so it follows the surface."""
+def line_opening(part, surf, ring, under, depth, slot, cls, floor=True):
+    """An opening's walls from its outer ring down depth under the skin, and (floor) its floor across there,
+    triangulated over the grid points under it so it follows the surface."""
     bm = part.bm
     low = [(s, a, bm.verts.new(surf.point(s, a, -depth))) for s, a, _ in ring]
     centre = sum((v.co for _, _, v in low), Vector()) / len(low)
@@ -165,6 +165,8 @@ def line_opening(part, surf, ring, under, depth, slot, cls):
         sf.seam(bm, ring[i][2], ring[j][2])
         sf.seam(bm, low[i][2], low[j][2])
     part.tag(walls, slot, cls)
+    if not floor:
+        return
     inner = [(s, a, bm.verts.new(surf.point(s, a, -depth))) for s, a in under]
     pts = [(s, a) for s, a, _ in low] + [(s, a) for s, a, _ in inner]
     verts = [v for _, _, v in low] + [v for _, _, v in inner]
@@ -284,8 +286,12 @@ def build(bl, surf, p, g, exits, slots):
     exit parts: exits maps nose_hatch_L, nose_hatch_R and nose_door_visible to their sf.Part."""
     SKIN, STRUCT = slots[0], slots[1]
     hatches = [hatch_loop(surf, side) for side in (1, -1)]
+    # A hatch opening is walled but not floored: the game jettisons the panel on ejection, and a floor across the
+    # opening (on the structure slot, the stock sheet's pale lattice) stayed over the hole where the flight deck should
+    # show (the owner's playtest of build 52). The walls take the skin's dark interior paint, the rim seen once the
+    # panel has gone.
     for ring, under in cut_window(p, surf, g, hatches, SKIN, HULL):
-        line_opening(p, surf, ring, under, fl.HATCH_DEPTH, STRUCT, 0)
+        line_opening(p, surf, ring, under, fl.HATCH_DEPTH, SKIN, INTERIOR, floor=False)
     door = door_loop(surf)
     for ring, _ in cut_window(p, surf, g, [door], SKIN, HULL):
         vestibule(bl, p, ring, SKIN, slots[3])

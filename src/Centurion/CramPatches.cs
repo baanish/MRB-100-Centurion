@@ -10,7 +10,7 @@ namespace Centurion;
 
 /// <summary>
 /// The C-RAM's Harmony patches: cram-cover (escort cover and untargeted missiles), cram-ai (the C-RAM out of the AI pilot's
-/// weapon choice) and cram-kills (kills from the kill-feed RPC, on every peer, also feeding <see cref="SortieLog"/>); docs/M3-DESIGN.md, "Patches". The C-RAM is
+/// weapon choice), cram-hand-aim (the trigger, for <see cref="CramGuard"/>'s laser-only rule) and, in a dev build, cram-kills (kills from the kill-feed RPC, on every peer, for the readout and SortieLog); docs/M3-DESIGN.md, "Patches". The C-RAM is
 /// the Centurion's only zero-cost weapon, which cram-cover keys on so AAMs and HUD selection keep stock priorities.
 /// </summary>
 static class CramPatches
@@ -36,16 +36,18 @@ static class CramPatches
             postfix: AccessTools.Method(typeof(CramPatches), nameof(AfterAnalyzeTarget))),
         new("cram-ai", typeof(CombatAI), nameof(CombatAI.ChooseHQTarget), new[] { typeof(Unit), typeof(float), typeof(List<WeaponStation>) },
             prefix: AccessTools.Method(typeof(CramPatches), nameof(BeforeChooseHQTarget))),
+        new("cram-hand-aim", typeof(WeaponManager), nameof(WeaponManager.Fire),
+            prefix: AccessTools.Method(typeof(CramPatches), nameof(BeforeWeaponManagerFire))),
+#if CENTURION_DEV
         new("cram-kills", typeof(MessageManager), "UserCode_RpcKillMessage_635947223", new[] { typeof(PersistentID), typeof(PersistentID), typeof(KillType) },
-            postfix: AccessTools.Method(typeof(CramPatches), nameof(AfterKillMessage))),
+            postfix: AccessTools.Method(typeof(CramPatches), nameof(AfterKillMessage)), diagnostic: true),
+#endif
     };
 
     static bool BeforeLaserFire(Laser __instance)
     {
         var guard = CramGuard.ForLaser(__instance);
         if (guard == null) return true;
-        // A failed emission patch must not leave the stock unbounded linecast active (Laser.cs:275).
-        if (CenturionPlugin.FeaturesOff.Contains("cram-emission")) return false;
         // Fire stamps the station before emission (Laser.cs:217-219); rejected trigger holds must not count as shots.
         // Use the same part or last-known aim point and slew as FixedUpdate (Laser.cs:243-252).
         var part = TargetTransform(__instance);
@@ -99,7 +101,6 @@ static class CramPatches
 
     static void AfterLaserLateUpdate(Laser __instance, Renderer ___beamRenderer)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cram-emission")) return;
         var guard = CramGuard.ForLaser(__instance);
         if (guard == null || !___beamRenderer.enabled) return;
         // LateUpdate follows a moving hit part after emission (Laser.cs:234-238); bound the rendered beam too.
@@ -115,14 +116,12 @@ static class CramPatches
 
     static void AfterInterceptPriority(Missile __instance, Unit toUnit, float interceptorValue, ref float __result)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cram-cover")) return;
         if (interceptorValue != 0f || !CramGuard.Carriers.Contains(toUnit)) return;
         if (CoverPriority(__instance, toUnit) is float priority) __result = priority;
     }
 
     static void AfterAnalyzeTarget(WeaponStation weaponStation, Unit analyzer, TrackingInfo trackingInfo, ref OpportunityThreat __result)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cram-cover")) return;
         if (__result.opportunity == 0f || weaponStation.WeaponInfo.costPerRound != 0f || !CramGuard.Carriers.Contains(analyzer)) return;
         if (!trackingInfo.TryGetUnit(out Unit unit) || unit is not Missile missile || unit.radarAlt > 1f || missile.targetID == analyzer.persistentID) return;
         if (CoverPriority(missile, analyzer) == 0f) __result = new OpportunityThreat(0f, __result.threat);
@@ -138,17 +137,23 @@ static class CramPatches
 
     static void BeforeChooseHQTarget(Unit searcher, ref List<WeaponStation> stationList)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cram-ai")) return;
-        if (CramGuard.Carriers.Contains(searcher) && searcher.TryGetComponent<CramGuard>(out var guard))
+        if (CramGuard.Carriers.Contains(searcher) && CenturionSystems.Of(searcher as Aircraft)?.Cram is { } guard)
             stationList = guard.AiStations;
     }
 
+    /// <summary>The pilot's trigger calls Fire every frame it is down (PilotPlayerState.cs:182-185).</summary>
+    static void BeforeWeaponManagerFire(Aircraft ___aircraft)
+    {
+        if (CenturionSystems.Of(___aircraft) is { } systems) systems.Cram.TriggerFrame = Time.frameCount;
+    }
+
+#if CENTURION_DEV
     static void AfterKillMessage(PersistentID killerID, PersistentID killedID, KillType killedType)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("cram-kills")) return;
         if (SortieLog.Enabled.Value) SortieLog.Kill(killerID, killedID, killedType);
         if (killedType == KillType.Missile && UnitRegistry.TryGetUnit(killerID, out Unit killer)
             && CramGuard.Carriers.Contains(killer) && killer.TryGetComponent<CramGuard>(out var guard))
             guard.CountKill(killedID);
     }
+#endif
 }

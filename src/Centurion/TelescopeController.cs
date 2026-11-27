@@ -21,8 +21,6 @@ namespace Centurion;
 /// </summary>
 sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
 {
-    /// <summary>AircraftDefinition.jsonKey of the Centurion (CenturionAuthor.JsonKey).</summary>
-    const string CenturionKey = "baanish_centurion";
     const float TravelS = 8f;
     // Step 6's ratio of game to geometric area on the 2x span (150 to 40 m2, so 266 to stage 1 and 2's 71 m2 of run-out a side):
     // the 199 t extended aircraft lifts off at 6.4 deg (docs/M2-DESIGN.md, step 6.1).
@@ -43,9 +41,9 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     // thrust stops it near 280 m/s TAS. With it it tops out at Mach 0.85 at 6 km and 0.88 at 9 to 11 km (tools/fm
     // centurion_span.py body_rise), as a B-52 does.
     const float BodyRiseMach = 0.82f, BodyRiseGain = 50f;
-    // The inner wing and the body sections are cut into pieces (CenturionAuthor's CutParts), each carrying its share.
-    static readonly string[] BodyRiseParts = { "wing_root_L", "wing_root_R", "wing_outer_L", "wing_outer_R", "fuselage_F", "fuselage_F2",
-        "fuselage_R", "nose", "tailcone", "tail_end" };
+    // The inner wing and the tail cone are cut into pieces (CenturionAuthor's CutParts), each carrying its share.
+    static readonly string[] BodyRiseParts = { "wing_root_L", "wing_root_R", "wing_outer_L", "wing_outer_R", "fuselage_F",
+        "fuselage_R", "cockpit", "tailcone", "tail_end" };
     // Added to the authored 12 and 4 m2 at full extension, 5.5 times them: stage 1's area 25 m out multiplies the roll
     // damping, and with these the extended roll rate is 9.7 deg/s at 6 km and 150 m/s, as on step 6.
     const float AileronAreaM2 = 54f, SpoilerAreaM2 = 18f;
@@ -59,7 +57,8 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     // rotation (docs/M2-DESIGN.md, step 6.1). The ailerons' stock splits would do it from data, but they follow the
     // fly-by-wire's yaw output, and a split's servo lag inside its yaw-rate loop set the hold's high-speed turn oscillating
     // (centurion_circuit, run 20261012-234630; tools/fm centurion_turn split_forces), so the splits are only the airbrakes.
-    // DragRudderSplits shows the drag rudders on the splits without their drag.
+    // DragRudderSplits shows the drag rudders on the splits without their drag. The FilterInputs prefix captures the input
+    // and the sent copy carries it (OwnerState's snapshot postfix), so without the owner-state patches they stay shut.
     const float DragRudderM2 = 20f;
     // They open only past this much yaw input, fully at full input, and take DragRudderTravelS to travel. The input is the yaw
     // before the fly-by-wire (Aircraft.FilterInputs): its output, 3 x (input - yaw rate) + 0.05 x sideslip in degrees with the
@@ -90,8 +89,10 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     // ...and a step that changes the velocity by more than this is a correction (a warp, a late or bunched snapshot, a
     // joiner's first), left out: a 4.5 g pull adds about 2 m/s in one 0.05 s interval.
     const float RemoteJumpMps = 10f;
-    // The airborne AI schedule: extend below both, retract above either, hold in between.
-    const float ExtendBelowMach = 0.70f, ExtendBelowEas = 190f, RetractAboveMach = 0.75f, RetractAboveEas = 205f;
+    // The airborne AI schedule, on equivalent airspeed alone: extend below one, retract above the other, hold in between.
+    // Deliberately no Mach limit: one retracted the wing at the cruise height, where the retracted aircraft can't hold
+    // height (docs/GATES.md G2.12), and drag already stops the extended aircraft near Mach 0.80.
+    const float ExtendBelowEas = 190f, RetractAboveEas = 205f;
     // An observer follows the owner's extension (OwnerState) at twice the travel rate, so a gap a lost snapshot leaves closes
     // in under a second, and jumps a gap wider than this (a late joiner's first word, a long loss) at once.
     const float FollowRate = 2f, FollowJump = 0.25f;
@@ -109,8 +110,10 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         LocalPositionField == null ? null : AccessTools.FieldRefAccess<Vector3>(AttachInfoField!.FieldType, "localPosition");
     static readonly FieldInfo? StreamliningField = AccessTools.Field(typeof(AeroPart), "streamlining");
     static readonly FieldInfo? WingAreaField = AccessTools.Field(typeof(AeroPart), "wingArea");
+#if CENTURION_DEV
     static readonly FieldInfo? ParentPartField = AttachInfoField == null ? null : AccessTools.Field(AttachInfoField.FieldType, "parentPart");
     static readonly FieldInfo? LocalRotationField = AttachInfoField == null ? null : AccessTools.Field(AttachInfoField.FieldType, "localRotation");
+#endif
 
     internal static readonly PatchTarget[] PatchTargets =
     {
@@ -126,35 +129,41 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         // AIPilotLandingState.cs:291, 393, 453); the schedule overwrites it straight after, before anything reads it.
         new("telescope", typeof(Pilot), nameof(Pilot.Pilot_OnAeroInputsApplied),
             postfix: AccessTools.Method(typeof(TelescopeController), nameof(AfterPilotStep))),
-        // The player's state and the AI's autopilot each write the yaw input and then filter it in place (PilotPlayerState.cs:59-70,
-        // AutopilotPlane.cs:121-122).
-        new("drag-rudders", typeof(Aircraft), nameof(Aircraft.FilterInputs),
+        // The player's state and the AI's autopilot each write the stick and then filter it in place (PilotPlayerState.cs:59-70,
+        // AutopilotPlane.cs:121-122): every aircraft, every physics step.
+        new("telescope", typeof(Aircraft), nameof(Aircraft.FilterInputs),
             prefix: AccessTools.Method(typeof(TelescopeController), nameof(BeforeFilterInputs))),
-        // A copy has only the owner's snapshot inputs (Aircraft.ApplySetInputs, Aircraft.cs:1790-1797), so the sent copy carries
-        // the input instead of the fly-by-wire's output, and every copy opens its drag rudders from it as the owner does. A copy's
-        // tail surfaces then show the input (ControlSurface.cs:160-175), a visual only: copies run no aero job (AeroPart.cs:113).
-        new("drag-rudders", typeof(AircraftNetworkTransform), "CreateSnapshot",
-            postfix: AccessTools.Method(typeof(TelescopeController), nameof(AfterCreateSnapshot))),
     };
 
     internal static CenturionLog Log = null!;
+#if CENTURION_DEV
     internal static ConfigEntry<bool> Diagnostics = null!;
     internal static ConfigEntry<float> SpanCommand = null!;
     internal static ConfigEntry<float> StageMaxAngularVelocity = null!;
     internal static ConfigEntry<bool> PitchBudgetEnabled = null!;
     internal static ConfigEntry<bool> DebugTear = null!;
 
-    /// <summary>Every live Centurion's controller, local and remote.</summary>
+    /// <summary>Every live Centurion's controller, local and remote, for the readout.</summary>
     internal static readonly List<TelescopeController> All = new();
+#endif
 
     sealed class Stage
     {
         public AeroPart Part = null!;
         public AeroPart Parent = null!;
+        /// <summary>That side's wing root, whose loss takes the whole wing (<see cref="OneStage1Lost"/>); null if absent.</summary>
+        public AeroPart? Root;
         public object AttachInfo = null!;
         public Vector3 Retracted, Extended;
         public ConfigurableJoint? Slider;
-        public float Offset, AngleDeg, JointTorque;
+        /// <summary>The position last written to the stage's pose and slider; NaN after a physics mode change, which rebuilt both.</summary>
+        public Vector3 Placed = new(float.NaN, float.NaN, float.NaN);
+#if CENTURION_DEV
+        public float Offset;
+#endif
+#if CENTURION_DEV
+        public float AngleDeg, JointTorque;
+#endif
         public float DetachAskedAt = float.NegativeInfinity;
         /// <summary>When the owner's state first showed this stage lost while it is still on here.</summary>
         public float OwnerLostAt = float.PositiveInfinity;
@@ -169,6 +178,8 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         public float RiseArea;
         /// <summary>+1 on the right, -1 on the left for a drag rudder: the yaw input that opens it; 0 for none.</summary>
         public float YawSide;
+        /// <summary>An inner wing root, which carries the torn root's drag once a stage is gone.</summary>
+        public bool Root;
     }
 
     Aircraft aircraft = null!;
@@ -179,11 +190,13 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     HangarGuard hangarGuard = null!;
     OwnerState? owner;
     SurfaceMotionSound motionSound = null!;
-    bool locked, broken, tearing, snapRetract, dragRuddersOff;
+    bool locked, broken, tearing, snapRetract, ownerStateOff;
     float aiCommand, stickYaw, dragRudderL, dragRudderR, appliedRcs;
     Vector3 velocityPrev, accelFiltered;
+#if CENTURION_DEV
     readonly List<(UnitPart part, UnitPart parent, Quaternion rest)> flexParts = new();
     readonly HashSet<Rigidbody> massBodies = new();
+#endif
 
     public float Command { get; private set; }
     public float Extension { get; private set; }
@@ -191,14 +204,19 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     public float EasMps { get; private set; }
     public float Nz { get; private set; } = 1f;
     public bool Locked => locked;
+    public bool IsLocalPlayer => GameManager.GetLocalAircraft(out Aircraft local) && local == aircraft;
+#if CENTURION_DEV
     public float TornRootDragArea { get; private set; }
     public string TearState => tear.State;
     public string PhysicsMode => aircraft.simplePhysics ? "simple" : "complex";
-    public bool IsLocalPlayer => GameManager.GetLocalAircraft(out Aircraft local) && local == aircraft;
     public bool Simulated => aircraft.LocalSim;
     /// <summary>The largest pitch bend of any part against its parent since the last read (complex physics, diagnostics), degrees, + nose up.</summary>
     public float FlexPitchDeg { get; private set; }
     public string FlexPart { get; private set; } = "none";
+    /// <summary>The largest bend about any axis of a tail part (rear fuselage aft) against its parent, degrees: the owner's
+    /// ruling is that the tail is as rigid as a stock aircraft's and only the wing flexes (docs/DECISIONS.md, 2026-11-24).</summary>
+    public float TailBendDeg { get; private set; }
+    public string TailBendPart { get; private set; } = "none";
     /// <summary>The aircraft's centre of mass from every part's rigidbody, in the root part's frame (complex physics, diagnostics).</summary>
     public Vector3 CenterOfMassLocal { get; private set; }
     /// <summary>Stage 1 left's rigidbody centre of mass, where the game applies its force, in the root part's frame.</summary>
@@ -210,6 +228,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     public float Stage1ExpectedTorquePitch { get; private set; }
     /// <summary>The pitch-moment budget (complex physics, diagnostics); null until the first diagnostics step.</summary>
     public PitchBudget? Budget { get; private set; }
+#endif
     // The HUD's span gauge (SpanGauge) reads the extension in percent. SetLocalSim adds this controller before the local
     // player's HUD extras spawn (Aircraft.cs:1181, 1227), so the stock gauge finds it when its HUDAppManager starts.
     public float GetWingAngle() => Extension * 100f;
@@ -221,6 +240,9 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     internal float DragRudderOpen(float yawSide) => yawSide > 0f ? dragRudderR : dragRudderL;
     /// <summary>The yaw input the drag rudders follow: on the simulating peer the one before the fly-by-wire, on a copy the owner's.</summary>
     public float DragRudderYaw => aircraft.LocalSim ? stickYaw : aircraft.GetInputs().yaw;
+    /// <summary>The yaw input the sent copy carries in place of the fly-by-wire's output (OwnerState's snapshot postfix).</summary>
+    internal float SentYaw => stickYaw;
+#if CENTURION_DEV
     public float StageOffset(int stage) => stages[stage].Count == 0 ? 0f : stages[stage].Max(s => s.Offset);
     /// <summary>The largest angle between a stage and the part it slides on (they are built aligned), degrees.</summary>
     public float StageAngle(int stage) => stages[stage].Count == 0 ? 0f : stages[stage].Max(s => s.AngleDeg);
@@ -247,6 +269,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
 
     /// <summary>The largest stage offset any physics step has measured on this aircraft.</summary>
     public float PeakOffset { get; private set; }
+#endif
     /// <summary>
     /// The lost stages as <see cref="OwnerState"/> sends them: bit 0 stage 1 left, 1 stage 1 right, 2 stage 2 left, 3 stage 2
     /// right. A stage 2 counts only when it came off its stage 1; one riding a lost stage 1 goes with it.
@@ -295,52 +318,33 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         }
     }
 
-    static void AfterComplexPhysics(Aircraft __instance)
-    {
-        if (CenturionPlugin.FeaturesOff.Contains("telescope")) return;
-        For(__instance)?.OnComplexPhysics();
-    }
+    static void AfterComplexPhysics(Aircraft __instance) => For(__instance)?.OnComplexPhysics();
 
-    static void AfterSimplePhysics(Aircraft __instance)
-    {
-        if (CenturionPlugin.FeaturesOff.Contains("telescope")) return;
-        For(__instance)?.OnSimplePhysics();
-    }
+    static void AfterSimplePhysics(Aircraft __instance) => For(__instance)?.OnSimplePhysics();
 
     /// <summary>A stage's retracted position in the frame of the part it slides on, as authored; null for any other part.</summary>
     public Vector3? RetractedPosition(UnitPart part) => allStages.Find(s => s.Part == part)?.Retracted;
 
-    static bool BeforeBreakPart(Unit __instance, byte partID)
-    {
-        if (CenturionPlugin.FeaturesOff.Contains("owner-state")) return true;
-        return !(__instance.TryGetComponent(out TelescopeController controller) && controller.allStages.Exists(s => s.Replayed && s.Part != null && s.Part.id == partID));
-    }
+    static bool BeforeBreakPart(Unit __instance, byte partID) =>
+        !(__instance is Aircraft aircraft && CenturionSystems.Of(aircraft)?.Telescope is { } controller
+            && controller.allStages.Exists(s => s.Replayed && s.Part != null && s.Part.id == partID));
 
+    /// <summary>The Centurion's two rules on the stick: the yaw input before the fly-by-wire, which the drag rudders follow,
+    /// and the AI's load limit on the pitch stick (<see cref="AiLoadLimit"/>).</summary>
     static void BeforeFilterInputs(Aircraft __instance)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("drag-rudders")) return;
-        if (__instance.TryGetComponent(out TelescopeController controller))
+        if (CenturionSystems.Of(__instance)?.Telescope is not { } controller)
         {
-            controller.stickYaw = __instance.GetInputs().yaw;
+            return;
         }
-    }
 
-    static void AfterCreateSnapshot(AircraftNetworkTransform __instance, ref NetworkTransformBase.NetworkSnapshot __result)
-    {
-        if (CenturionPlugin.FeaturesOff.Contains("drag-rudders")) return;
-        if (__result.ClientInputs.HasValue && __instance.Aircraft != null && __instance.Aircraft.LocalSim
-            && __instance.Aircraft.TryGetComponent(out TelescopeController controller))
-        {
-            CompressedInputs inputs = __result.ClientInputs.Value;
-            inputs.yaw = controller.stickYaw.Compress();
-            __result.ClientInputs = inputs;
-        }
+        controller.stickYaw = __instance.GetInputs().yaw;
+        AiLoadLimit.Apply(__instance, controller);
     }
 
     static void AfterPilotStep(Pilot __instance)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("telescope")) return;
-        if (__instance.aircraft != null && __instance.aircraft.LocalSim && __instance.aircraft.TryGetComponent(out TelescopeController controller) && !controller.broken)
+        if (CenturionSystems.Of(__instance.aircraft)?.Telescope is { broken: false } controller && controller.aircraft.LocalSim)
         {
             controller.OwnCommand();
         }
@@ -349,7 +353,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     /// <summary>The aircraft's controller, added on first sight; null for any other aircraft or when the game lacks a member it needs.</summary>
     static TelescopeController? For(Aircraft aircraft)
     {
-        if (aircraft.definition == null || aircraft.definition.jsonKey != CenturionKey)
+        if (!CenturionSystems.IsCenturion(aircraft.definition))
         {
             return null;
         }
@@ -369,7 +373,6 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         aircraft = owner;
         motionSound = SurfaceMotionSound.For(aircraft);
         hangarGuard = new HangarGuard(aircraft);
-        SpoilerRule.Register(aircraft);
         tear = new WingTearRule(Log);
         // Without its complex-physics postfix the stages keep stock FixedJoints while attachInfo slides, and the stock rule
         // detaches a stage once it is 0.5 m off (AeroPart.cs:271-279); without the others the command or the sliders go stale.
@@ -406,7 +409,8 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                 }
 
                 object attach = AttachInfoField!.GetValue(part);
-                var stage = new Stage { Part = part, Parent = parent, AttachInfo = attach, Extended = end.localPosition, Retracted = LocalPosition(attach) };
+                var stage = new Stage { Part = part, Parent = parent, Root = parts.TryGetValue("wing_root_" + side, out AeroPart root) ? root : null,
+                    AttachInfo = attach, Extended = end.localPosition, Retracted = LocalPosition(attach) };
                 stages[i].Add(stage);
                 allStages.Add(stage);
             }
@@ -419,9 +423,10 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         // The root part (the centre fuselage) and the named body and inner wing parts.
         foreach (AeroPart part in parts.Values.Where(p => p.gameObject == aircraft.gameObject || BodyRiseParts.Contains(p.name)))
         {
-            bodyParts.Add(new Scheduled { Part = part, RiseArea = (float)WingAreaField!.GetValue(part) });
+            bodyParts.Add(new Scheduled { Part = part, RiseArea = (float)WingAreaField!.GetValue(part), Root = part.name == "wing_root_L" || part.name == "wing_root_R" });
         }
 
+#if CENTURION_DEV
         if (ParentPartField != null && LocalRotationField != null)
         {
             foreach (UnitPart part in aircraft.partLookup)
@@ -433,17 +438,24 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                 }
             }
         }
+#endif
 
-        // Without the input or the sent copy the drag rudders would open on the fly-by-wire's output, so they stay shut.
-        dragRuddersOff = CenturionPlugin.FeaturesOff.Contains("drag-rudders");
-        if (dragRuddersOff)
+        // Without the sent copy the drag rudders would open on the fly-by-wire's output on every other peer, so they stay shut;
+        // a copy also needs the owner's state to replay a lost stage.
+        ownerStateOff = CenturionPlugin.FeaturesOff.Contains("owner-state");
+        if (ownerStateOff)
         {
-            Log.Warning("drag rudders off: a drag-rudders patch is missing (see the Harmony lines)");
+            Log.Warning("drag rudders off: an owner-state patch is missing (see the Harmony lines)");
         }
 
         gameObject.AddComponent<DragRudderSplits>().Bind(aircraft, this, rollSurfaces.Where(s => s.YawSide != 0f).Select(s => (s.Part, s.YawSide)));
         WingDisplay.Attach(aircraft, this);
+        gameObject.AddComponent<WingFlex>().Bind(this);
+        foreach (Stage stage in stages[0]) stage.Parent.onJointBroken += ReleaseOuterWingBraces;
+        foreach (Stage stage in stages[0]) stage.Part.onJointBroken += ReleaseBrokenStage;
+#if CENTURION_DEV
         All.Add(this);
+#endif
         Log.Info(Invariant($"telescope on {aircraft.name} ({(aircraft.LocalSim ? "simulated here" : "remote")}): travel {TravelS} s, stage 1 {StageAreaM2} m2 a side, stage travel {Vector3.Distance(stages[0][0].Retracted, stages[0][0].Extended):0.00} m, body drag rise on {bodyParts.Count} parts, {bodyParts.Sum(b => b.RiseArea):0} m2"));
     }
 
@@ -460,8 +472,53 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
 
     void OnDestroy()
     {
+        foreach (Stage stage in stages[0])
+        {
+            if (stage.Parent != null) stage.Parent.onJointBroken -= ReleaseOuterWingBraces;
+            if (stage.Part != null) stage.Part.onJointBroken -= ReleaseBrokenStage;
+        }
+#if CENTURION_DEV
         All.Remove(this);
-        SpoilerRule.Forget(aircraft); // set in Bind, straight after AddComponent
+#endif
+    }
+
+    void ReleaseOuterWingBraces(UnitPart outerWing)
+    {
+        if (!isActiveAndEnabled || !aircraft.LocalSim) return;
+
+        // The stock tensors release these braces when the whole wing leaves. The outer wing can lose its
+        // own joint first, leaving the strut pinned to the inner strut and nacelle across that break.
+        bool left = outerWing.name == "wing_outer_L";
+        string outerStrut = left ? "strut_outer_L" : "strut_outer_R";
+        string innerStrut = left ? "strut_inner_L" : "strut_inner_R";
+        string nacelle = left ? "nacelle_1" : "nacelle_2";
+        foreach (AeroPart owner in aircraft.partLookup.OfType<AeroPart>())
+        {
+            if (owner == null) continue;
+            string? held = owner.name == outerStrut ? innerStrut : owner.name == nacelle ? outerStrut : null;
+            if (held == null) continue;
+
+            foreach (PartJoint brace in owner.Joints)
+            {
+                if (brace.connectedPart == null || brace.connectedPart.name != held || brace.joint == null) continue;
+                Log.Stage("outer wing brace " + owner.name, Invariant($"{owner.name} to {held} released after {outerWing.name} broke, was {brace.joint.breakForce:0} N and {brace.joint.breakTorque:0} N m"));
+                // A physics break on the nacelle would trip the wing root even at full health.
+                Destroy(brace.joint);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A stage 1 panel whose slider breaks (at 0 hp the stock rescale zeroes its break force, AeroPart.cs:554-563, and a hit
+    /// never detaches an AeroPart, UnitPart.cs:326) stays on the aircraft until the stock rule takes it off 0.5 m out
+    /// (AeroPart.cs:265-279), and its hulls, nested in the outer wing, collide with it until then: that contact broke the outer
+    /// strut, then the wing root. So the panel and its stage 2 stop touching the aircraft at the break; the stock rule still
+    /// detaches it, and the symmetric jettison follows through <see cref="OneStage1Lost"/>.
+    /// </summary>
+    void ReleaseBrokenStage(UnitPart panel)
+    {
+        if (!isActiveAndEnabled || panel.IsDetached()) return;
+        ReleaseTornColliders(panel);
     }
 
     /// <summary>
@@ -502,6 +559,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                         joint.anchor = Vector3.zero;
                         joint.connectedAnchor = Commanded(stage);
                         stage.Slider = joint;
+                        stage.Placed = joint.connectedAnchor;
                     }
 
                     joints[i].joint = joint;
@@ -509,7 +567,6 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
             }
         }
 
-        Log.Stage("telescope-physics", $"{aircraft.name}: complex physics, stage sliders built");
     }
 
     /// <summary>MergeWithParent has destroyed the sliders with the other joints and put each stage at attachInfo.localPosition.</summary>
@@ -518,9 +575,9 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         foreach (Stage stage in allStages)
         {
             stage.Slider = null;
+            stage.Placed = new Vector3(float.NaN, float.NaN, float.NaN);
         }
 
-        Log.Stage("telescope-physics", $"{aircraft.name}: simple physics, stages ride the aircraft's rigidbody");
     }
 
     void FixedUpdate()
@@ -531,18 +588,14 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         }
 
         float dt = Time.fixedDeltaTime;
-        if (!locked && DetachedStages > 0)
-        {
-            locked = true;
-            Log.Stage("telescope-locked", $"{aircraft.name}: a stage is gone, extension locked at 0");
-        }
+        if (!locked) locked = DetachedStages > 0;
 
         float rate = 1f;
         if (aircraft.LocalSim)
         {
             Command = OwnCommand();
         }
-        else if ((owner ??= OwnerState.For(aircraft)) is { Received: true } state)
+        else if ((owner ??= CenturionSystems.Of(aircraft)?.Owner) is { Received: true } state)
         {
             ReplayOwnerLoss(state);
             Command = state.Extension;
@@ -567,6 +620,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         ScheduleAero(dt);
         Slide(snapped);
         CapStageSpin();
+#if CENTURION_DEV
         if (Diagnostics.Value && !aircraft.simplePhysics && IsLocalPlayer)
         {
             MeasureFlex();
@@ -578,6 +632,9 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         }
 
         if (aircraft.LocalSim && (tear.Step(Extension, Nz, dt) || !tearing && (OneStage1Lost() || DebugTearDue())))
+#else
+        if (aircraft.LocalSim && (tear.Step(Extension, Nz, dt) || !tearing && OneStage1Lost()))
+#endif
         {
             tearing = true;
         }
@@ -605,10 +662,12 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
             command = 0f;
             snapRetract |= guard == HangarGuardAction.Snap;
         }
+#if CENTURION_DEV
         else if (SpanCommand.Value >= 0f && Diagnostics.Value && IsLocalPlayer)
         {
             command = SpanCommand.Value;
         }
+#endif
         else if (aircraft.pilots.Length > 0 && aircraft.pilots[0].currentState is PilotBaseState state && state is not PilotPlayerState)
         {
             command = AiSchedule(state);
@@ -628,8 +687,8 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         {
             PilotParkedState or AIPilotTaxiState => 0f,
             AIPilotTakeoffState or AIPilotLandingState or AIPilotShortLandingState => 1f,
-            _ when Mach < ExtendBelowMach && EasMps < ExtendBelowEas => 1f,
-            _ when Mach > RetractAboveMach || EasMps > RetractAboveEas => 0f,
+            _ when EasMps < ExtendBelowEas => 1f,
+            _ when EasMps > RetractAboveEas => 0f,
             _ => aiCommand,
         };
         return aiCommand;
@@ -683,17 +742,20 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         }
 
         float bodyRise = Mach > BodyRiseMach ? BodyRiseGain * (Mach - BodyRiseMach) * (Mach - BodyRiseMach) : 0f;
+#if CENTURION_DEV
         TornRootDragArea = 0f;
+#endif
         foreach (Scheduled body in bodyParts)
         {
-            float tornDrag = locked && body.Part != null && !body.Part.IsDetached()
-                && (body.Part.name == "wing_root_L" || body.Part.name == "wing_root_R") ? TornRootDragM2 : 0f;
+            float tornDrag = locked && body.Root && body.Part != null && !body.Part.IsDetached() ? TornRootDragM2 : 0f;
             Apply(body, 0f, bodyRise * body.RiseArea + tornDrag);
+#if CENTURION_DEV
             TornRootDragArea += tornDrag;
+#endif
         }
 
         // The airbrakes are the surfaces' stock splits (CenturionAuthor's Surfaces); the drag rudders are here.
-        float yaw = dragRuddersOff ? 0f : DragRudderYaw;
+        float yaw = ownerStateOff ? 0f : DragRudderYaw;
         dragRudderL = Mathf.MoveTowards(dragRudderL, DragRudderOpening(-1f, yaw), dt / DragRudderTravelS);
         dragRudderR = Mathf.MoveTowards(dragRudderR, DragRudderOpening(1f, yaw), dt / DragRudderTravelS);
         foreach (Scheduled surface in rollSurfaces)
@@ -715,14 +777,18 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         s.AppliedDrag = drag;
     }
 
+#if CENTURION_DEV
     /// <summary>
     /// Each part's pitch against the pose it spawned in on its parent (UnitPart.CreateAttachInfo, UnitPart.cs:173-180): on the
     /// simulating peer every part is its own rigidbody on joints (AeroPart.CreateJoints), which bend under load. Only the
     /// local player's aircraft, which is all AgenticState reads, and without allocating, since it runs every physics step.
     /// </summary>
+    static bool IsTailPart(string name) => name is "fuselage_R" or "tailcone" or "tail_end"
+        || name.StartsWith("vtail_", System.StringComparison.Ordinal) || name.StartsWith("ruddervator_", System.StringComparison.Ordinal);
+
     void MeasureFlex()
     {
-        float worst = 0f;
+        float worst = 0f, worstTail = 0f;
         foreach ((UnitPart part, UnitPart parent, Quaternion rest) in flexParts)
         {
             if (part == null || parent == null || part.IsDetached())
@@ -737,9 +803,18 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                 worst = pitch;
                 FlexPart = part.name;
             }
+
+            // Not Quaternion.Angle: it returns 0 under 0.16 deg.
+            float angle = 2f * Mathf.Asin(Mathf.Min(1f, new Vector3(bend.x, bend.y, bend.z).magnitude)) * Mathf.Rad2Deg;
+            if (IsTailPart(part.name) && angle > worstTail)
+            {
+                worstTail = angle;
+                TailBendPart = part.name;
+            }
         }
 
         FlexPitchDeg = worst;
+        TailBendDeg = worstTail;
 
         Transform root = aircraft.transform;
         Vector3 sum = Vector3.zero;
@@ -758,6 +833,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         Stage1CenterOfMassLocal = root.InverseTransformPoint(stages[0][0].Part.rb.worldCenterOfMass);
         ReadStageJob(stages[0][0].Part);
     }
+#endif
 
     /// <summary>
     /// Stage 1's own rigidbody (complex physics) gets <see cref="StageSpinCap"/> while attached and the game's default once it
@@ -766,7 +842,11 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     /// </summary>
     void CapStageSpin()
     {
+#if CENTURION_DEV
         float attached = StageMaxAngularVelocity.Value > 0f && Diagnostics.Value && IsLocalPlayer ? StageMaxAngularVelocity.Value : StageSpinCap;
+#else
+        float attached = StageSpinCap;
+#endif
         foreach (Stage stage in stages[0])
         {
             if (stage.Part == null || stage.Part.rb == null || stage.Part.rb == aircraft.rb)
@@ -779,12 +859,11 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
             if (rb.maxAngularVelocity != cap)
             {
                 rb.maxAngularVelocity = cap;
-                Vector3 inertia = rb.inertiaTensor;
-                Log.Stage("telescope-spin-cap-" + stage.Part.name, Invariant($"{aircraft.name}: maxAngularVelocity {cap} rad/s ({rb.mass:0} kg, inertia {inertia.x:0} {inertia.y:0} {inertia.z:0} kg m2, step {Time.fixedDeltaTime:0.0000} s)"));
             }
         }
     }
 
+#if CENTURION_DEV
     /// <summary>
     /// The force and torque AeroJob_Math left in the part's job fields for ApplyJobFields to add (AeroPart.cs:598-650), and the
     /// torque the job's own formula gives for that force, Cross(F, -liftRotation x centerOfLift) (AeroJob_Math.cs:126-131).
@@ -802,6 +881,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         Stage1JobTorquePitch = fields.hasForce == NuclearOption.Jobs.JobForceType.ForceAndTorque ? Vector3.Dot(fields.torque, right) : 0f;
         Stage1ExpectedTorquePitch = Vector3.Dot(expected, right);
     }
+#endif
 
     /// <summary>
     /// A stage nests inside the part it slides on, so their hulls overlap at every extension (most of stage 1 is inside the
@@ -811,19 +891,21 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     /// owner's torn stage hung from the root, clipping, after "joints released" (playtest 20261012-213053). So on every peer
     /// the torn stage 1 and the stage 2 riding it stop colliding with every part still on the aircraft, and fall clear.
     /// </summary>
-    void ReleaseTornColliders()
+    void ReleaseTornColliders(UnitPart? broken = null)
     {
-        foreach (Stage stage in stages[0])
+        // stage 1 with the stage 2 riding it, or a stage 2 torn off on its own
+        foreach (Stage stage in allStages)
         {
-            if (stage.CollisionsReleased || stage.Part == null || !stage.Part.IsDetached())
+            if (stage.CollisionsReleased || stage.Part == null || !(stage.Part.IsDetached() || stage.Part == broken))
             {
                 continue;
             }
 
             stage.CollisionsReleased = true;
             var torn = new HashSet<Collider>(stage.Part.GetComponentsInChildren<Collider>(true));
-            foreach (Stage outer in stages[1].Where(s => s.Parent == stage.Part && s.Part != null))
+            foreach (Stage outer in stages[1].Where(s => s.Parent == stage.Part && s.Part != null && !s.CollisionsReleased))
             {
+                outer.CollisionsReleased = true;
                 torn.UnionWith(outer.Part.GetComponentsInChildren<Collider>(true));
             }
 
@@ -863,9 +945,16 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
 
             Vector3 commanded = Commanded(stage);
             LocalPosition!(stage.AttachInfo) = commanded;
+            // A held extension leaves the pose and the slider's anchor where the last step put them: setting a joint's anchor
+            // reconfigures the PhysX joint, four times a step on every Centurion.
+            bool moved = commanded != stage.Placed;
+            stage.Placed = commanded;
             if (aircraft.simplePhysics)
             {
-                stage.Part.transform.localPosition = commanded;
+                if (moved)
+                {
+                    stage.Part.transform.localPosition = commanded;
+                }
             }
             else
             {
@@ -877,17 +966,19 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                     stage.Part.rb.velocity = stage.Parent.rb.GetPointVelocity(world);
                 }
 
-                if (stage.Slider != null)
+                if (stage.Slider != null && moved)
                 {
                     stage.Slider.connectedAnchor = commanded;
                 }
             }
 
+#if CENTURION_DEV
             // What the stock detach rule measures (AeroPart.cs:271-272).
             stage.Offset = Vector3.Distance(stage.Parent.transform.InverseTransformPoint(stage.Part.transform.position), commanded);
             PeakOffset = Mathf.Max(PeakOffset, stage.Offset);
             stage.AngleDeg = Quaternion.Angle(stage.Parent.transform.rotation, stage.Part.transform.rotation);
             stage.JointTorque = stage.Slider != null ? stage.Slider.currentTorque.magnitude : 0f;
+#endif
         }
     }
 
@@ -898,7 +989,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
     /// </summary>
     void ReplayOwnerLoss(OwnerState state)
     {
-        if (CenturionPlugin.FeaturesOff.Contains("owner-state"))
+        if (ownerStateOff)
         {
             return;
         }
@@ -925,6 +1016,7 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         }
     }
 
+#if CENTURION_DEV
     /// <summary>
     /// Debug.Tear on the local player's Centurion: both stage 1 panels come off through <see cref="Tear"/> once the span is
     /// fully out, for a check that needs the tear before another peer joins (G7.1's late joiner).
@@ -939,31 +1031,40 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
         Log.Stage("tear-debug", $"{aircraft.name}: Debug.Tear, tearing both stage 1 panels");
         return true;
     }
+#endif
 
     /// <summary>
     /// One stage 1 is off by any route (a hit, a joint, the stock rule) and the other is still on. Left to the lock's 8 s
     /// slew, the intact panel lifts alone: at 199 t and 120 m/s (233 kt) its 9.9 MN m is 45% of full aileron, and stick
     /// centred the aircraft banks 71 deg in 10 s; with only its area zeroed its mass still rolls it 2 deg the other way, and
     /// with both off it stays level (tools/fm centurion_span.py --one-side). So the intact one follows through
-    /// <see cref="Tear"/>, as G2.8 has both panels off after a tear.
+    /// <see cref="Tear"/>, as G2.8 has both panels off after a tear. Once either wing root is gone it does not fire: the
+    /// aircraft has lost a wing, and throwing off the other panel would only read as a second, unexplained loss.
     /// </summary>
     bool OneStage1Lost()
     {
+        int counted = 0;
         int lost = 0;
         foreach (Stage stage in stages[0])
         {
+            // `is not null` first: a root that was found and later destroyed (Unity null) is gone, not absent.
+            if (stage.Root is not null && (stage.Root == null || stage.Root.IsDetached()))
+            {
+                continue;
+            }
+
+            counted++;
             if (stage.Part == null || stage.Part.IsDetached())
             {
                 lost++;
             }
         }
 
-        if (lost != 1)
+        if (counted != 2 || lost != 1)
         {
             return false;
         }
 
-        Log.Stage("tear-paired", $"{aircraft.name}: one stage 1 is off, emergency jettison of the other");
         // GameMessage is the stock local notification path (GameplayUI.cs:171-173); never broadcast the cue to observers.
         if (IsLocalPlayer && SceneSingleton<GameplayUI>.i != null)
             SceneSingleton<GameplayUI>.i.GameMessage("Outer wing lost. Symmetric emergency jettison.");
@@ -1002,11 +1103,6 @@ sealed class TelescopeController : MonoBehaviour, IWingAngleGauge
                 {
                     done = false;
                     continue;
-                }
-
-                if (asked)
-                {
-                    Log.Stage("tear-detach-retry", $"{aircraft.name}: {stage.Part.name} detach not confirmed, asked again");
                 }
 
                 stage.DetachAskedAt = Time.time;

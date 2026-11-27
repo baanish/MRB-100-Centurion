@@ -1,5 +1,103 @@
 # Changelog
 
+## 0.2.0 (pre-release), 2026-11-26
+
+### Cockpit
+
+- The cockpit is rebuilt with a new layout: radar straight ahead, flight display on the left, stores on the right, and engine and fuel panels on the centre stack.
+- Throttles, gear, span and flap levers move, and the panels carry more switches.
+- The forward camera screen is wider and flatter. From the pilot's seat nothing behind it shows through, and at night it is see-through rather than a bright band.
+- The pilot's side window has a frame and sill, and the panels around it are angled to open the view.
+- Nothing hangs below the control strips into the footwell, so the rudder pedals are in sight and a seated pilot's legs can reach them.
+- A wing display left of the flight display shows the telescoping wing live, with the span in percent.
+
+### Exterior
+
+- Panel lines, seams and fittings are redrawn from the airframe's structure, and fittings sit square to the skin.
+- Faction roundels replace the earlier insignia, on the wings and the V-tail, placed as on the Darkreach.
+- The flap fairings under the wing move with their flaps: the rear half swings aft and down as the flap lowers, and nothing is left behind.
+- Spoilers rise out of recessed wells with a visible actuator.
+- The split ailerons open as two halves with structure between them.
+- Skin textures are sharper up close. The download is about 95 MB, up from 70 MB.
+- The wingtip navigation lights sit on the wingtips and move with the span.
+- The tail cone's two missile-warning domes and its coolant vent are removed.
+- The main wheels stow clear of the aft bay, and the gear doors close in flight.
+
+### Fuel and damage
+
+- The aircraft breaks into 45 sections instead of 64 parts. The layout follows the Darkreach's, and each section has its own armour and joints sized for the load it carries.
+- Parts no longer come off on the ground or in a full pull at full health.
+- The Centurion is built lighter than the Darkreach, so it breaks up sooner under missile, cannon and blast damage.
+- Fire is the game's own: a burning tank spreads to its neighbours as on a stock bomber, and the bays burn off.
+- Lasers can damage the Centurion and start its fires, as they do on stock aircraft.
+- A bay whose fuel tank burns for 20 seconds cooks off. Its stores explode once at the bay, sized by what is still loaded (up to 5,000 kg of TNT), which can break the aircraft apart. Release the bay's stores within those 20 seconds to prevent it. Nuclear stores never cook off.
+- A landing above about 3,000 ft/min at maximum weight, or about 4,200 ft/min at light weight, can break a main gear leg.
+- Losing a whole wing at its root no longer makes the other wing jettison its outer stages. Losing a single outer section still jettisons the other side.
+
+### Weapons and defence
+
+- Bay racks are balanced to the Darkreach's density, about 1.7 times its rounds of each munition. For example, PAB-250 is 60 a bay, and PAB-80LR is 120 forward and 144 aft.
+- Fixed: some bomb racks could be fitted to either bay, which allowed loads over the take-off limit. Each rack now fits its own bay only.
+- The 0.1.3 loads remain as LEGACY racks, labelled "LEGACY: <weapon> x<rounds>". They appear only in missions that allow event content, which no stock mission does. AI Centurions never carry them.
+- A mission saved in 0.1.3 loads its balanced rack under the same name. A saved LEGACY rack in a mission without event content leaves that bay empty.
+- The LEGACY PAB-80LR pair is over the take-off limit at full fuel, so use 93% fuel or less.
+- With both bays empty the laser still defends on its own. Hold the trigger to aim and fire it yourself, and let go to hand defence back.
+- With the Aryx Weaponry Pack or Meridian Works installed, the bays offer 45 Centurion-sized racks of their weapons, such as PGM-400LR x32, Atlatl x60, Black Arrow x60, Kalibr x16 and PAB-125HD x60 a bay. They appear only when the pack is installed. Nothing of either pack ships with the Centurion.
+- Event-content pack weapons, such as the Meridian Works Hailstorm, get racks filled to the bay's maximum. They appear only in missions that allow event content.
+
+### Flight
+
+- The tail is as rigid as a stock aircraft's tail. It no longer flutters at high speed or bends under normal pitch and yaw. Only the telescoping wing flexes.
+- Wheels on grass and soft ground break about as easily as a Darkreach's.
+
+### AI
+
+- Bombers attack a target near their base from altitude on their first run. Their release height scales with distance from base: 15,000 ft for a target 10 nautical miles out, rising to 50,000 ft at 30 nautical miles.
+- Bombers keep their assigned target through the transit until it is destroyed.
+- AI Centurions carry missile loadouts while an enemy long-range SAM is alive, and bombs once it is gone.
+- While an enemy long-range SAM covers their home base, AI missile bombers fire during the climb instead of waiting for cruise height.
+- AI Centurions keep their wings extended at cruise height, so they no longer retract them and sink.
+- AI Centurions wait for a hangar's doors to finish opening, so a wingtip no longer strikes a moving door, hold the shelter's centreline, and taxi at 12 knots or less.
+- AI presets use the balanced counts: Bombs 500 x66, Bombs 250 x120, Glide Bombs 250 x120, Glide Bombs 500 x54, Tusko-B x42.
+- In stock Domination, Escalation and Terminal Control, and their co-op variants, one BDF factory builds Centurions in turn with Darkreaches. BDF starts with none. The host can turn this off with `StockMissionSupply = false` under `[Missions]` in the Centurion config, from the next mission load.
+
+### Multiplayer
+
+- A player who joins after a cook-off sees the aircraft whole until it crashes. The late-joiner replay of a cook-off is removed.
+- Every player in a lobby needs the same weapon packs as the host.
+- Tested on two PCs over Steam: span, wing loss, radars, the AWACS beam, a bay cook-off and players who join late agree on both PCs.
+- On a dedicated server, a laser a client fires at a selected target damages it as in single player.
+
+### Liveries
+
+- A player livery kit ships as a separate download, `centurion_livery_kit_<version>.zip`: a 3D paint model, flat templates, the four liveries as examples and a livery builder for Unity. See the livery kit guide.
+- Each wing section, nacelle and outboard flap paints separately on the left and right. The flap track fairings share one paint area for both sides. Distant models carry the paint.
+- A livery installed locally was tested in the game. Steam Workshop sharing, with the tag `MRB-100 Centurion`, has not been tested.
+
+### Compatibility
+
+- Tested on Nuclear Option 0.34.6 with Blueprinter 2.1.1. Requires BepInEx 5 and Blueprinter 2.0.1 or later.
+- Not tested on Nuclear Option 0.35 or later.
+- With NO-Autopilot 6.x, the Centurion's profile holds track without rocking the wings.
+- The plugin no longer carries test hooks, recorders or debug settings. On first run it removes the Diagnostics, Debug and Capture sections from its config. Its WingFlex and C-RAM settings are kept.
+- Configuration Manager shows three switches for the Centurion: wing flex, escort cover and stock mission supply. The seven wing flex tuning values appear with Advanced settings ticked.
+
+### Not final yet
+
+- Battle damage openings, the braced structure behind them, and the look of a broken aircraft are not final.
+- A small gap shows in the skin where the left V-tail root meets the tail cone.
+- The AWACS radar mount takes no damage of its own. It is lost only with the fuselage section that carries it.
+- Up close, thin coloured lines on the skin step along their length, and on the green, desert and black liveries they carry a pale edge.
+- The NO STEP lettering on the inboard flaps reads mirrored.
+- A thin line of bare metal shows along the slanted joint of the outer flap fairings, seen from below.
+- A bay cook-off breaks the aircraft apart, but the game does not always count it as a kill. In testing it credited about half of the runs.
+- Missile kills are still being tuned. A Scythe or Scimitar hit does not yet reliably destroy the aircraft, and cannon hits need a sustained burst.
+- AI bombers still die to long-range SAM sites before release in the end-game Escalation mission.
+- On a dedicated server, free laser aim with no target selected and the automatic laser defence have not been tested. A Steam lobby refusing a player with different packs comes from reading the code and has not been run.
+- From some head positions in the pilot's seat, a few faint gaps show past the display modules. Under night vision, the wing display has a halo around it.
+- The NO-Autopilot step that adds track gains to an earlier profile has not been run in game.
+- Balance numbers are set by hand and will follow player feedback. The bombing and AWACS balance checks have not been rerun at the shipping radar size and rack counts.
+
 ## 0.1.3 (pre-release), 2026-10-20
 
 ### Cockpit

@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 7427710352535035458, guid: aed7ebbf5dad20a49a3e7c96c4ea9b97, type: 3}
   jsonKey: baanish_centurion_b500_45
   info: {fileID: 11400000, guid: d6ad2ffd08060084eaf76e9937e1bde8, type: 2}
-  mountName: GPO-500 x45
-  ammo: 45
+  mountName: GPO-500 x30
+  ammo: 30
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 22500
+  mass: 15000
   drag: 0
   emptyDrag: 0
   RCS: 0

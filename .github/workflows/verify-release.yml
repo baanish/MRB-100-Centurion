@@ -36,7 +36,8 @@ jobs:
           $release | Set-Content -LiteralPath release.json -Encoding utf8NoBOM
           gh release download $env:RELEASE_TAG --dir release-assets `
             --pattern "Centurion-$env:RELEASE_TAG-nomm.zip" --pattern "Centurion-$env:RELEASE_TAG-nomnom.json" `
-            --pattern "Centurion-$env:RELEASE_TAG-plugin-only.zip" --pattern RELEASE-NOTES.md --pattern SHA256SUMS.txt
+            --pattern "Centurion-$env:RELEASE_TAG-plugin-only.zip" --pattern "centurion_livery_kit_$($env:RELEASE_TAG.Substring(1)).zip" `
+            --pattern RELEASE-NOTES.md --pattern SHA256SUMS.txt
           if ($LASTEXITCODE -ne 0) { throw 'Could not download the release assets' }
       - name: Verify checksums, manifest and archive contents
         shell: pwsh

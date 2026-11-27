@@ -14,7 +14,7 @@ namespace Centurion;
 /// <para>
 /// The bend is a uniformly loaded cantilever clamped at the node (zero offset and slope there), evaluated per vertex from the
 /// vertex's position along the swept span axis in the inner wing's frame. The inner wing's root and outer pieces, stage 1,
-/// stage 2 and its wingtip (the part tree's pieces, CenturionAuthor's CutParts) use the same function of position, so they
+/// and stage 2 with its raked tip (CenturionAuthor's part tree) use the same function of position, so they
 /// bend as one wing at every extension and stay nested. Its size comes from the load factor
 /// <see cref="TelescopeController"/> computes on every peer from the aircraft's acceleration, through a spring-damper, then
 /// scaled with the span outboard of the node. Near the ground the rigid colliders are what touch it, so there the bend fades
@@ -49,43 +49,27 @@ sealed class WingFlex : MonoBehaviour
     static ConfigEntry<float> rise1g = null!, riseAtTear = null!, droop = null!, referenceSpan = null!, spanExponent = null!, frequency = null!, damping = null!;
     static CenturionLog log = null!;
 
-    /// <summary>The WingFlex config and the component that gives each Centurion its flex (CenturionPlugin.Awake).</summary>
-    internal static void Install(GameObject host, ConfigFile config, CenturionLog centurionLog)
+    /// <summary>The WingFlex config (CenturionPlugin.Awake); each Centurion gets its flex from TelescopeController.Bind.</summary>
+    internal static void Install(ConfigFile config, CenturionLog centurionLog)
     {
         log = centurionLog;
         flexOn = config.Bind("WingFlex", "Enabled", true, "Bend the wing's render meshes outboard of the strut node with the load (cosmetic: colliders and aero don't move)");
         rise1g = config.Bind("WingFlex", "TipRise1gM", 2.5f, new ConfigDescription(
-            "Tip rise in level 1 g flight at the reference span against the unloaded wing, m (2.5 m is 8.2 ft)", new AcceptableValueRange<float>(0f, 30f)));
+            "Tip rise in level 1 g flight at the reference span against the unloaded wing, m (2.5 m is 8.2 ft)", new AcceptableValueRange<float>(0f, 30f), "Advanced"));
         riseAtTear = config.Bind("WingFlex", "TipRiseAtTearM", 7.5f, new ConfigDescription(
-            "Tip rise at the 4 g tear limit at the reference span, m (7.5 m is 25 ft); between 1 and 4 g the wing stiffens toward it", new AcceptableValueRange<float>(0f, 60f)));
+            "Tip rise at the 4 g tear limit at the reference span, m (7.5 m is 25 ft); between 1 and 4 g the wing stiffens toward it", new AcceptableValueRange<float>(0f, 60f), "Advanced"));
         droop = config.Bind("WingFlex", "GroundDroopM", 0.75f, new ConfigDescription(
-            "Tip droop under the wing's own weight parked at the reference span, m (0.75 m is 2.5 ft); also the weight's share of every load", new AcceptableValueRange<float>(0f, 10f)));
+            "Tip droop under the wing's own weight parked at the reference span, m (0.75 m is 2.5 ft); also the weight's share of every load", new AcceptableValueRange<float>(0f, 10f), "Advanced"));
         referenceSpan = config.Bind("WingFlex", "ReferenceSpanM", 0f, new ConfigDescription(
-            "The span the three tip numbers hold at, m; 0 is the airframe's own fully extended span, read from its parts", new AcceptableValueRange<float>(0f, 300f)));
+            "The span the three tip numbers hold at, m; 0 is the airframe's own fully extended span, read from its parts", new AcceptableValueRange<float>(0f, 300f), "Advanced"));
         spanExponent = config.Bind("WingFlex", "SpanExponent", 3f, new ConfigDescription(
             "Tip offsets scale with (span outboard of the node / its length at the reference span) to this power: 4 is a cantilever under a fixed load per metre, 3 a fixed total lift",
-            new AcceptableValueRange<float>(0f, 6f)));
+            new AcceptableValueRange<float>(0f, 6f), "Advanced"));
         frequency = config.Bind("WingFlex", "FrequencyHz", 0.6f, new ConfigDescription(
-            "The flex's natural frequency, Hz: how fast the tips swing after a pull, a gust or a landing", new AcceptableValueRange<float>(0.05f, 5f)));
+            "The flex's natural frequency, Hz: how fast the tips swing after a pull, a gust or a landing", new AcceptableValueRange<float>(0.05f, 5f), "Advanced"));
         damping = config.Bind("WingFlex", "DampingRatio", 0.15f, new ConfigDescription(
-            "The flex's damping ratio: 1 settles without overshoot, lower swings longer", new AcceptableValueRange<float>(0.01f, 2f)));
+            "The flex's damping ratio: 1 settles without overshoot, lower swings longer", new AcceptableValueRange<float>(0.01f, 2f), "Advanced"));
         flexOn.SettingChanged += (_, _) => log.Info($"config WingFlex.Enabled = {flexOn.Value}");
-        host.AddComponent<Attacher>();
-    }
-
-    /// <summary>Adds a WingFlex beside each live TelescopeController (local and remote) once.</summary>
-    sealed class Attacher : MonoBehaviour
-    {
-        void Update()
-        {
-            foreach (TelescopeController telescope in TelescopeController.All)
-            {
-                if (!telescope.TryGetComponent(out WingFlex _))
-                {
-                    telescope.gameObject.AddComponent<WingFlex>().Bind(telescope);
-                }
-            }
-        }
     }
 
     sealed class Rider
@@ -100,23 +84,28 @@ sealed class WingFlex : MonoBehaviour
     sealed class Side
     {
         public string Name = "";
-        public UnitPart Root = null!, Outer = null!, Stage2 = null!, Tip = null!;
+        public UnitPart Root = null!, Outer = null!, Stage2 = null!;
         /// <summary>The bend frame in the inner wing's frame: s along the slide axis from the node, d up, c along the chord.</summary>
         public Matrix4x4 RootToBend, BendToRoot;
         /// <summary>
-        /// The wingtip's own mesh and its outermost vertex along the span axis, stage 2's for when the tip is gone, and the
-        /// outermost s of the inner wing with and without its outer piece (the tip once the stages are gone).
+        /// Stage 2's own mesh, which carries the raked tip (CenturionAuthor's part tree), and its outermost vertex along the span
+        /// axis; and the outermost s of the inner wing with and without its outer piece (the tip once the stages are gone).
         /// </summary>
-        public FlexMesh? TipMesh, StageMesh;
-        public int TipIndex, StageIndex;
+        public FlexMesh? StageMesh;
+        public int StageIndex;
         public float RootTipS, OuterTipS, NodeLateral;
         /// <summary>The tip's distance from the centreline with both stages run out by their remaining travel: half the airframe's full span.</summary>
         public float FullLateral;
         public readonly List<FlexMesh> Meshes = new();
         public readonly List<Rider> Riders = new();
         /// <summary>This frame's bent length outboard of the node, tip offset and tip slope.</summary>
-        public float Length, TipOffset, Scale;
+        public float Length, Scale;
+        /// <summary>The tip offset and length the riders were last placed for; NaN to place them on the next frame.</summary>
+        public float RiderTip = float.NaN, RiderLength = float.NaN;
+#if CENTURION_DEV
+        public float TipOffset;
         public float RiderOffset = float.NaN;
+#endif
     }
 
     TelescopeController telescope = null!;
@@ -124,22 +113,25 @@ sealed class WingFlex : MonoBehaviour
     readonly List<Side> sides = new();
     bool broken, shown;
     float offset, rate;
-    readonly Stopwatch watch = new();
 
     /// <summary>The wing's lift in g this frame (0 on the wheels), and the spring's target and state at the reference span, m.</summary>
     public float LiftG { get; private set; }
     public float Target { get; private set; }
     public float Offset => offset;
+    public int Vertices => sides.Sum(s => s.Meshes.Sum(m => m.VertexCount));
+#if CENTURION_DEV
+    readonly Stopwatch watch = new();
     /// <summary>The CPU time of the last frame's flex on this aircraft, ms, smoothed.</summary>
     public float CostMs { get; private set; }
-    public int Vertices => sides.Sum(s => s.Meshes.Sum(m => m.VertexCount));
 
     /// <summary>The bent tip's offset on one side, m, + up (NaN while unbound).</summary>
     public float TipOffset(int side) => side < sides.Count ? sides[side].TipOffset : float.NaN;
     /// <summary>How far that side's nav light has moved up the aircraft from its unbent place, m: the riders follow the tip.</summary>
     public float RiderOffset(int side) => side < sides.Count ? sides[side].RiderOffset : float.NaN;
+#endif
 
-    void Bind(TelescopeController owner)
+    /// <summary>From TelescopeController.Bind, local and remote, once its stages are found.</summary>
+    internal void Bind(TelescopeController owner)
     {
         telescope = owner;
         aircraft = owner.GetComponent<Aircraft>();
@@ -172,9 +164,9 @@ sealed class WingFlex : MonoBehaviour
         side = null;
         if (!parts.TryGetValue("wing_root_" + name, out UnitPart root) || !parts.TryGetValue("wing_outer_" + name, out UnitPart outer)
             || !parts.TryGetValue("wing_tele1_" + name, out UnitPart stage1) || !parts.TryGetValue("wing_tele2_" + name, out UnitPart stage2)
-            || !parts.TryGetValue("wing_tip_" + name, out UnitPart tipPart) || !parts.TryGetValue("strut_outer_" + name, out UnitPart strut))
+            || !parts.TryGetValue("strut_outer_" + name, out UnitPart strut))
         {
-            return $"no wing_root, wing_outer, wing_tele1, wing_tele2, wing_tip or strut_outer on side {name}";
+            return $"no wing_root, wing_outer, wing_tele1, wing_tele2 or strut_outer on side {name}";
         }
 
         // The span axis is stage 1's slide (CenturionAuthor.AddSlideEnds, on the outer wing it slides in), from its retracted
@@ -208,7 +200,7 @@ sealed class WingFlex : MonoBehaviour
         Matrix4x4 strutToRoot = rootT.worldToLocalMatrix * strut.transform.localToWorldMatrix;
         Vector3 node = strutVertices.Select(v => strutToRoot.MultiplyPoint3x4(v)).OrderByDescending(p => Vector3.Dot(p, span)).First();
 
-        var s = new Side { Name = name, Root = root, Outer = outer, Stage2 = stage2, Tip = tipPart };
+        var s = new Side { Name = name, Root = root, Outer = outer, Stage2 = stage2 };
         s.RootToBend = Matrix4x4.identity;
         s.RootToBend.SetRow(0, new Vector4(span.x, span.y, span.z, -Vector3.Dot(span, node)));
         s.RootToBend.SetRow(1, new Vector4(up.x, up.y, up.z, -Vector3.Dot(up, node)));
@@ -217,7 +209,7 @@ sealed class WingFlex : MonoBehaviour
         s.NodeLateral = Mathf.Abs(aircraft.transform.InverseTransformPoint(rootT.TransformPoint(node)).x);
         side = s;
 
-        foreach (UnitPart part in new[] { root, outer, stage1, stage2, tipPart })
+        foreach (UnitPart part in new[] { root, outer, stage1, stage2 })
         {
             // The part's own mesh and its LOD1 hull (CenturionAuthor.AddLods) bend; every other non-part child that shows
             // something (the nav light and its effects, the vortex emitter) rides the bent surface rigidly.
@@ -246,14 +238,12 @@ sealed class WingFlex : MonoBehaviour
 
         s.RootTipS = s.Meshes.Where(m => m.Part == root).Max(m => MaxS(m, out _));
         s.OuterTipS = s.Meshes.Where(m => m.Part == root || m.Part == outer).Max(m => MaxS(m, out _));
-        s.TipMesh = s.Meshes.FirstOrDefault(m => m.transform == tipPart.transform);
         s.StageMesh = s.Meshes.FirstOrDefault(m => m.transform == stage2.transform);
-        if (s.TipMesh == null || s.StageMesh == null)
+        if (s.StageMesh == null)
         {
-            return $"{tipPart.name} or {stage2.name} has no mesh of its own";
+            return $"{stage2.name} has no mesh of its own";
         }
 
-        MaxS(s.TipMesh, out s.TipIndex);
         MaxS(s.StageMesh, out s.StageIndex);
 
         // Each stage's remaining run to its _extended marker (CenturionAuthor.AddSlideEnds), added to the tip where it is now.
@@ -264,7 +254,7 @@ sealed class WingFlex : MonoBehaviour
         }
 
         Vector3 run2 = stage1.transform.TransformVector(end2.localPosition - stage1.transform.InverseTransformPoint(stage2.transform.position));
-        Vector3 tipFull = s.TipMesh.transform.TransformPoint(s.TipMesh.RestVertices[s.TipIndex]) + rootT.TransformVector(slide) + run2;
+        Vector3 tipFull = s.StageMesh.transform.TransformPoint(s.StageMesh.RestVertices[s.StageIndex]) + rootT.TransformVector(slide) + run2;
         s.FullLateral = Mathf.Abs(aircraft.transform.InverseTransformPoint(tipFull).x);
         return null;
 
@@ -315,15 +305,19 @@ sealed class WingFlex : MonoBehaviour
             Show(true);
         }
 
+#if CENTURION_DEV
         watch.Restart();
+#endif
         Spring(Time.deltaTime);
         foreach (Side side in sides)
         {
             BendSide(side);
         }
 
+#if CENTURION_DEV
         watch.Stop();
         CostMs = Mathf.Lerp(CostMs, (float)watch.Elapsed.TotalMilliseconds, 0.1f);
+#endif
     }
 
     void Show(bool flexed)
@@ -342,11 +336,15 @@ sealed class WingFlex : MonoBehaviour
                 rider.Transform.localRotation = rider.RestRotation;
             }
 
-            if (!flexed && side.Tip != null && !side.Tip.IsDetached())
+            side.RiderTip = side.RiderLength = float.NaN;
+
+#if CENTURION_DEV
+            if (!flexed && side.Stage2 != null && !side.Stage2.IsDetached())
             {
                 side.TipOffset = 0f;
                 side.RiderOffset = float.IsNaN(side.RiderOffset) ? float.NaN : 0f;
             }
+#endif
         }
     }
 
@@ -389,10 +387,9 @@ sealed class WingFlex : MonoBehaviour
         Transform rootT = side.Root.transform;
         Matrix4x4 worldToBend = side.RootToBend * rootT.worldToLocalMatrix;
         Matrix4x4 bendToWorld = rootT.localToWorldMatrix * side.BendToRoot;
-        // The outermost piece still on: the wingtip, stage 2, else the inner wing's end with or without its outer piece.
-        bool tipOn = side.Tip != null && !side.Tip.IsDetached(), stageOn = side.Stage2 != null && !side.Stage2.IsDetached();
-        FlexMesh? tipMesh = tipOn ? side.TipMesh : stageOn ? side.StageMesh : null;
-        int tipIndex = tipOn ? side.TipIndex : side.StageIndex;
+        // The outermost piece still on: stage 2 with the tip, else the inner wing's end with or without its outer piece.
+        FlexMesh? tipMesh = side.Stage2 != null && !side.Stage2.IsDetached() ? side.StageMesh : null;
+        int tipIndex = side.StageIndex;
         float innerS = side.Outer != null && !side.Outer.IsDetached() ? side.OuterTipS : side.RootTipS;
         Vector3 tipWorld = tipMesh != null ? tipMesh.transform.TransformPoint(tipMesh.RestVertices[tipIndex])
             : bendToWorld.MultiplyPoint3x4(new Vector3(innerS, 0f, 0f));
@@ -419,10 +416,20 @@ sealed class WingFlex : MonoBehaviour
             mesh.Bend(worldToBend, bendToWorld, tip, side.Length);
         }
 
+#if CENTURION_DEV
         if (tipMesh != null)
         {
             Vector3 moved = tipMesh.BentVertex(tipIndex) - tipMesh.RestVertices[tipIndex];
             side.TipOffset = Vector3.Dot(tipMesh.transform.TransformVector(moved), aircraft.transform.up);
+        }
+#endif
+
+        // As FlexMesh.Bend: a bend that moved under ResolutionM leaves the riders, children of their parts, where they sit.
+        bool rebend = !(Mathf.Abs(tip - side.RiderTip) < ResolutionM && Mathf.Abs(side.Length - side.RiderLength) < ResolutionM);
+        if (rebend)
+        {
+            side.RiderTip = tip;
+            side.RiderLength = side.Length;
         }
 
         foreach (Rider rider in side.Riders)
@@ -439,34 +446,44 @@ sealed class WingFlex : MonoBehaviour
                 continue;
             }
 
+            if (!rebend)
+            {
+                continue;
+            }
+
             Transform parent = rider.Transform.parent;
             // Bend at the visible fitting, since the donor nav lamp's pivot is nearly a metre away from its mesh.
             Vector3 rest = parent.TransformPoint(rider.RestPosition + rider.RestRotation * Vector3.Scale(rider.Anchor, rider.Transform.localScale));
             Vector3 q = worldToBend.MultiplyPoint3x4(rest);
-            Shape(q.x, tip, side.Length, out float w, out float theta, out float shortening);
-            Vector3 bent = bendToWorld.MultiplyPoint3x4(Bent(q, w, theta, shortening));
+            Shape(q.x, tip, side.Length, out float w, out float sin, out float cos, out float shortening);
+            Vector3 bent = bendToWorld.MultiplyPoint3x4(Bent(q, w, sin, cos, shortening));
             Vector3 spanWorld = bendToWorld.MultiplyVector(Vector3.right);
-            Vector3 tilted = bendToWorld.MultiplyVector(new Vector3(Mathf.Cos(theta), Mathf.Sin(theta), 0f));
+            Vector3 tilted = bendToWorld.MultiplyVector(new Vector3(cos, sin, 0f));
             rider.Transform.rotation = Quaternion.FromToRotation(spanWorld, tilted) * parent.rotation * rider.RestRotation;
             rider.Transform.position = bent - rider.Transform.TransformVector(rider.Anchor);
+#if CENTURION_DEV
             if (rider.Transform.name.StartsWith("navlight_"))
             {
                 side.RiderOffset = Vector3.Dot(bent - rest, aircraft.transform.up);
             }
+#endif
         }
     }
 
     /// <summary>
     /// A cantilever under a uniform load, clamped at s = 0 with its tip at s = length: offset w = tip (6x^2 - 4x^3 + x^4) / 3
-    /// with x = s / length, its slope's angle theta, and how far the bent centreline falls short of s along the span axis,
+    /// with x = s / length, the sine and cosine of its slope's angle (from the slope itself: the angle is within +-90 deg, so
+    /// cos = 1 / sqrt(1 + slope^2), which spares three trigonometric calls per vertex), and how far the bent centreline falls
+    /// short of s along the span axis,
     /// (1/2) the integral of w'^2 ds. Past the tip (the raked tip's outermost vertex can sit beyond the tip vertex used for
     /// the length) it carries on straight at the tip's slope.
     /// </summary>
-    static void Shape(float s, float tip, float length, out float w, out float theta, out float shortening)
+    static void Shape(float s, float tip, float length, out float w, out float sin, out float cos, out float shortening)
     {
         if (s <= 0f || tip == 0f)
         {
-            w = theta = shortening = 0f;
+            w = sin = shortening = 0f;
+            cos = 1f;
             return;
         }
 
@@ -483,15 +500,13 @@ sealed class WingFlex : MonoBehaviour
             shortening += past * (1f - 1f / Mathf.Sqrt(1f + slope * slope));
         }
 
-        theta = Mathf.Atan(slope);
+        cos = 1f / Mathf.Sqrt(1f + slope * slope);
+        sin = slope * cos;
     }
 
-    /// <summary>A point (s, d, c) in the bend frame on the bent wing: its section turned by theta about the chord, about the centreline.</summary>
-    static Vector3 Bent(Vector3 q, float w, float theta, float shortening)
-    {
-        float sin = Mathf.Sin(theta), cos = Mathf.Cos(theta);
-        return new Vector3(q.x - shortening - q.y * sin, w + q.y * cos, q.z);
-    }
+    /// <summary>A point (s, d, c) in the bend frame on the bent wing: its section turned by the slope's angle about the chord, about the centreline.</summary>
+    static Vector3 Bent(Vector3 q, float w, float sin, float cos, float shortening) =>
+        new Vector3(q.x - shortening - q.y * sin, w + q.y * cos, q.z);
 
     /// <summary>
     /// One renderer's own copy of its mesh, bent from the rest vertices. It lives on the renderer's GameObject, so the copy goes
@@ -509,8 +524,10 @@ sealed class WingFlex : MonoBehaviour
 
         public Vector3[] RestVertices { get; private set; } = null!;
         public int VertexCount => RestVertices.Length;
+#if CENTURION_DEV
         /// <summary>Vertex i as last bent, in the mesh's frame.</summary>
         public Vector3 BentVertex(int i) => vertices[i];
+#endif
 
         public bool Bind(MeshFilter meshFilter, UnitPart part)
         {
@@ -562,7 +579,7 @@ sealed class WingFlex : MonoBehaviour
             for (int i = 0; i < RestVertices.Length; i++)
             {
                 Vector3 q = toBend.MultiplyPoint3x4(RestVertices[i]);
-                Shape(q.x, tip, length, out float w, out float theta, out float shortening);
+                Shape(q.x, tip, length, out float w, out float sin, out float cos, out float shortening);
                 if (w == 0f)
                 {
                     vertices[i] = RestVertices[i];
@@ -579,8 +596,7 @@ sealed class WingFlex : MonoBehaviour
                     continue;
                 }
 
-                vertices[i] = fromBend.MultiplyPoint3x4(Bent(q, w, theta, shortening));
-                float sin = Mathf.Sin(theta), cos = Mathf.Cos(theta);
+                vertices[i] = fromBend.MultiplyPoint3x4(Bent(q, w, sin, cos, shortening));
                 if (hasNormals)
                 {
                     normals[i] = fromBend.MultiplyVector(Turn(toBend.MultiplyVector(restNormals[i]), sin, cos));

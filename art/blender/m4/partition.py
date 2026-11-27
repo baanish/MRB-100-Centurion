@@ -50,9 +50,26 @@ def apply(bl, parts):
             piece = cut(bl, src, spec["name"], hs)
         parts[spec["name"]] = piece
         flagged.add(piece.name)
+        for part in (src, piece):
+            canonical_order(part.bm)
     for name in flagged:
         rematch_mirrors(parts[name])
     return parts
+
+
+def canonical_order(bm):
+    """Vertices by position, edges and faces by their vertices: holes_fill and extrude_edge_only number the break faces
+    and torn lips they build in an order that changes run to run (the same geometry, numbered differently), and every
+    later cut, the UV pack and the export would follow it."""
+    rank = {v: i for i, v in enumerate(sorted(bm.verts, key=lambda v: v.co.to_tuple()))}  # sort() takes numbers only
+    bm.verts.sort(key=lambda v: rank[v])
+    bm.verts.index_update()
+    rank = {e: i for i, e in enumerate(sorted(bm.edges, key=lambda e: sorted(v.index for v in e.verts)))}
+    bm.edges.sort(key=lambda e: rank[e])
+    bm.edges.index_update()
+    rank = {f: i for i, f in enumerate(sorted(bm.faces, key=lambda f: sorted(v.index for v in f.verts)))}
+    bm.faces.sort(key=lambda f: rank[f])
+    bm.faces.index_update()
 
 
 def mirrored(left, right):
@@ -241,8 +258,8 @@ def cut_band(bl, src, spec):
 def torn_uv(part, faces):
     """Faces moved onto the airframe trim's torn strip: U along their longest extent, V bright at the skin's edge."""
     layer = af.uv_layer(part)
+    part.tag(faces, af.SLOT)  # all first: a face not yet moved would read as skin to its neighbours' corners
     for f in faces:
-        part.tag([f], af.SLOT)
         for loop in f.loops:
             v = loop.vert
             on_skin = any(g.material_index == 0 for g in v.link_faces if g is not f)

@@ -134,6 +134,39 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def repeatable_fbx(blend):
+    """Blender's FBX writer stamps each file with the clock, numbers its objects by Python's string hash (seeded anew
+    in every process), and writes the blend's absolute path and each texture's under the output folder, which
+    scrub_file blanks at their own lengths: so two exports of one blend never matched, even from one folder. Here the
+    time is fixed, an object's number comes from its key's SHA-1, the blend's path is its repo-relative one and a
+    texture's is its file name (the maps travel beside the FBXs, in textures/)."""
+    import datetime
+    from io_scene_fbx import export_fbx_bin as fbx_bin, fbx_utils
+    header = fbx_bin.fbx_header_elements
+    fbx_bin.fbx_header_elements = lambda root, scene_data, time=None: header(root, scene_data, datetime.datetime(2000, 1, 1))
+    key_to_uuid = fbx_utils._key_to_uuid
+
+    def stable_uuid(uuids, key):
+        if not (isinstance(key, int) and 0 <= key < 2**63):
+            key = int.from_bytes(hashlib.sha1(repr(key).encode()).digest()[:7], "little")
+        return key_to_uuid(uuids, key)
+    fbx_utils._key_to_uuid = stable_uuid
+    source = Path(blend).resolve()
+    source = source.relative_to(REPO).as_posix() if source.is_relative_to(REPO) else source.name
+    compound = fbx_bin.elem_props_compound
+
+    def props_compound(*args, **kwargs):
+        set_prop = compound(*args, **kwargs)
+        return lambda ptype, name, value, *a, **k: set_prop(ptype, name, source if name == b"ApplicationNativeFile" else value, *a, **k)
+    fbx_bin.elem_props_compound = props_compound
+    vid_path = fbx_bin._gen_vid_path
+
+    def file_name_only(img, scene_data):
+        name = Path(vid_path(img, scene_data)[1]).name
+        return name, name
+    fbx_bin._gen_vid_path = file_name_only
+
+
 def export_fbx(path, objects):
     bpy.ops.object.select_all(action="DESELECT")
     for obj in objects:
@@ -189,6 +222,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     remove_previous(out)
     bpy.ops.wm.open_mainfile(filepath=args["blend"])
+    repeatable_fbx(args["blend"])
     coll = bpy.data.collections.get(COLLECTION)
     if coll is None:
         raise SystemExit(f"no '{COLLECTION}' collection in {args['blend']}")
@@ -269,7 +303,6 @@ def main():
     manifest = {
         # Repo-relative, since the export is committed in the public repo and an absolute path names this machine.
         "source_blend": Path(args["blend"]).resolve().relative_to(REPO).as_posix() if Path(args["blend"]).resolve().is_relative_to(REPO) else Path(args["blend"]).name,
-        "source_sha256": sha256(args["blend"]),
         "axes": "Unity = (-x, z, -y) of Blender; pivots are world positions, bounds are part-local (in axes_unity)",
         "parts": report,
         "textures": copy_textures(args["blend"], out),

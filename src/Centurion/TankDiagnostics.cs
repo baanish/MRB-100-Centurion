@@ -1,3 +1,4 @@
+#if CENTURION_DEV
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +11,7 @@ namespace Centurion;
 static class TankDiagnostics
 {
     internal static ConfigEntry<string> Hit = null!;
-    static readonly string[] Names = { "fuselage_M", "fuselage_F", "fuselage_R", "tailcone" };
+    static readonly string[] Names = { "Centurion", "fuselage_F", "fuselage_R", "tailcone" };
     static readonly FieldInfo? TankPart = AccessTools.Field(typeof(FuelTank), "part");
     static readonly FieldInfo? OnFire = AccessTools.Field(typeof(FuelTank), "onFire");
     static readonly FieldInfo? FireSpawn = AccessTools.Field(typeof(FuelTank), "fireEffectSpawn");
@@ -27,11 +28,11 @@ static class TankDiagnostics
         }
         string name = Hit.Value;
         if (name == "") { applied = ""; return; }
-        if (name == applied || aircraft.definition == null || aircraft.definition.jsonKey != "baanish_centurion"
+        if (name == applied || aircraft.definition == null || aircraft.definition.jsonKey != CenturionPlugin.JsonKey
             || !aircraft.LocalSim || !aircraft.IsServer) return;
         applied = name;
         UnitPart? part = aircraft.partLookup.FirstOrDefault(p => p != null
-            && (p.gameObject == aircraft.gameObject ? "fuselage_M" : p.name) == name);
+            && (p.gameObject == aircraft.gameObject ? "Centurion" : p.name) == name);
         if (part == null || part.IsDetached() || part.hitPoints < 99f || part.GetComponent<FuelTank>() == null)
         {
             CenturionPlugin.Log.Warning("Debug.TankHit requires an intact part with a fuel tank");
@@ -49,7 +50,7 @@ static class TankDiagnostics
         foreach (string name in Names)
         {
             var tank = new Dictionary<string, object> { ["readable"] = false, ["on_fire"] = false, ["fire_active"] = false };
-            foreach (string key in new[] { "fuel_kg", "leak_kg_s", "part_hp", "burning_s", "tank_offset_m", "fire_offset_m", "fire_tank_offset_m",
+            foreach (string key in new[] { "fuel_kg", "leak_kg_s", "part_hp", "tank_offset_m", "fire_offset_m", "fire_tank_offset_m",
                 "fire_x_m", "fire_y_m", "fire_z_m", "fire_check_x_m", "fire_check_y_m", "fire_check_z_m" })
                 tank[key] = AircraftReadout.NotRead;
             tanks[name] = tank;
@@ -61,11 +62,10 @@ static class TankDiagnostics
     {
         if (TankPart == null || OnFire == null || FireSpawn == null || LeakRate == null) return;
         var tanks = (Dictionary<string, object>)state["fuel_tanks"];
-        var spread = aircraft.GetComponent<TankFireSpread>();
         foreach (FuelTank tank in aircraft.GetFuelTanks())
         {
             if (tank == null || TankPart.GetValue(tank) is not UnitPart part) continue;
-            string name = part.gameObject == aircraft.gameObject ? "fuselage_M" : part.name;
+            string name = part.gameObject == aircraft.gameObject ? "Centurion" : part.name;
             if (!tanks.TryGetValue(name, out object entry)) continue;
             var values = (Dictionary<string, object>)entry;
             Transform centre = part.CenterOfMass != null ? part.CenterOfMass : part.transform;
@@ -74,7 +74,6 @@ static class TankDiagnostics
             values["leak_kg_s"] = AircraftReadout.Round((float)LeakRate.GetValue(tank));
             values["part_hp"] = AircraftReadout.Round(part.hitPoints);
             values["on_fire"] = (bool)OnFire.GetValue(tank);
-            if (spread != null && aircraft.IsServer) values["burning_s"] = AircraftReadout.Round(spread.BurningSeconds(name));
             values["tank_offset_m"] = AircraftReadout.Round(Vector3.Distance(tank.transform.position, centre.position));
             Vector3 check = aircraft.transform.InverseTransformPoint(tank.transform.position);
             values["fire_check_x_m"] = AircraftReadout.Round(check.x);
@@ -92,3 +91,4 @@ static class TankDiagnostics
         }
     }
 }
+#endif

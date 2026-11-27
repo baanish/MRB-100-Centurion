@@ -9,7 +9,7 @@ $Directory = (Resolve-Path -LiteralPath $Directory).Path
 $repository = 'baanish/MRB-100-Centurion'
 # GitHub returns assets in case-insensitive name order; NOMNOM imports the first asset.
 $assets = @("Centurion-$Tag-nomm.zip", "Centurion-$Tag-nomnom.json",
-    "Centurion-$Tag-plugin-only.zip", 'RELEASE-NOTES.md', 'SHA256SUMS.txt')
+    "Centurion-$Tag-plugin-only.zip", "centurion_livery_kit_$($Tag.Substring(1)).zip", 'RELEASE-NOTES.md', 'SHA256SUMS.txt')
 foreach ($name in $assets) {
     if (-not (Test-Path -LiteralPath (Join-Path $Directory $name) -PathType Leaf)) { throw "Missing release asset: $name" }
 }

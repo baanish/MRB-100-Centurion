@@ -27,6 +27,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Centurion_cockpit_ink
+    second: {fileID: 2100000, guid: 45f9710515942b5439a898811ac2362b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Centurion_cockpit_kit
     second: {fileID: 2100000, guid: 9f5415d8b15138041bb7145aab0a26f4, type: 2}
   - first:
@@ -49,6 +54,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Centurion_cockpit_shell
     second: {fileID: 2100000, guid: 0618a5a74c4d4014d9da699aed515995, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Centurion_cockpit_trim
+    second: {fileID: 2100000, guid: 08f5369c4130f694dae29f1df36e937a, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

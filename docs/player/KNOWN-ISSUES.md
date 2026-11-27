@@ -1,18 +1,22 @@
 # Known issues
 
-Interim builds are work in progress for Nuclear Option 0.34.2. Check your release's notes and the [changelog](../../CHANGELOG.md) for changes. The [pilot's guide](FLYING.md) covers controls and normal operation.
+Interim builds are work in progress. Check your release's notes and the [changelog](../../CHANGELOG.md) for changes. The [pilot's guide](FLYING.md) covers controls and normal operation.
 
 ## Unfinished
 
-- The flight deck interior art and displays are still being finished. The Centurion has its own cockpit, but its presentation is not final.
-- The damage model and exposed structure are still in progress.
-- The sound set has not had its final listening pass. Engine, cabin, wing-stage and flap sounds are the Centurion's own; the gear and laser use stock sounds.
+- The look of battle damage is not final: the openings, the structure behind them and a broken aircraft.
+- A small gap shows in the skin where the left V-tail root meets the tail cone.
+- The AWACS radar mount takes no damage of its own. It is lost only with the fuselage section that carries it.
+- Up close, thin coloured lines on the skin step along their length, and on the green, desert and black liveries they carry a pale edge.
+- The NO STEP lettering on the inboard flaps reads mirrored.
+- A thin line of bare metal shows along the slanted joint of the outer flap fairings, seen from below.
+- From some head positions in the pilot's seat, a few faint gaps show past the display modules. Under night vision, the wing display has a halo around it.
 
 ## Multiplayer
 
 - Every player needs the mod and Blueprinter enabled. Keep the Centurion version the same across the lobby.
-- Testing has used a host and client on one PC, including simulated lag and late joins. Two-PC multiplayer validation is still pending.
-- On a dedicated server, manual laser aim may disagree with the server's aim, so damage may go in a different direction from the player's aim. Dedicated-server laser behaviour remains unverified. Leave another weapon selected to use automatic defence instead of relying on manual aim.
+- Two-PC sessions over Steam passed for the wing, radars, the AWACS beam, a bay cook-off and late joins. The laser has been tested only with host and client on one PC.
+- On a dedicated server, a laser fired at a selected target damages it as in single player (tested with one client). Free aim with no target selected may disagree with the server's aim, so damage may go in a different direction. Free aim and the automatic defence are untested on a dedicated server. Select a target before firing.
 - Joining while an AWACS beam is moving can show it at its destination until the animation catches up, for up to 12 seconds.
 - Keep `Cram.CoverEscorts` the same on every peer.
 
@@ -24,7 +28,7 @@ Interim builds are work in progress for Nuclear Option 0.34.2. Check your releas
 - The AWACS orbit can lie inside long-range SAM coverage. Its standoff is chosen for detection, so clear threatening sites or protect it.
 - The current AWACS endurance figure is extrapolated from a short loiter burn. It is not a guaranteed sortie duration and excludes climb, manoeuvring and the return to base.
 
-The mod targets Nuclear Option 0.34.2. Compatibility with later game versions is not established.
+Version 0.2.0 was tested on Nuclear Option 0.34.6 with Blueprinter 2.1.1.
 
 ## Report a problem
 

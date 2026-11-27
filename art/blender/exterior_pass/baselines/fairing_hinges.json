@@ -1,0 +1,152 @@
+[
+ {
+  "flap": "flap_L1",
+  "part": 1,
+  "pivot_world": [
+   3.4748,
+   -0.6854,
+   4.8793
+  ],
+  "axis_world": [
+   0.99304,
+   0.10896,
+   -0.04482
+  ],
+  "flap_hinge_world": [
+   3.5,
+   -0.361,
+   6.228
+  ],
+  "pivot_fwd_m": 0.32,
+  "pivot_up_m": -1.35,
+  "drift_span_m": 0.0474,
+  "sleeve_inside_m": 0.363,
+  "tail_aft_30_m": 0.118,
+  "tail_down_30_m": 1.72
+ },
+ {
+  "flap": "flap_L2",
+  "part": 1,
+  "pivot_world": [
+   7.8293,
+   -0.1673,
+   4.8827
+  ],
+  "axis_world": [
+   0.99304,
+   0.10896,
+   -0.04482
+  ],
+  "flap_hinge_world": [
+   7.85,
+   0.117,
+   6.032
+  ],
+  "pivot_fwd_m": 0.28,
+  "pivot_up_m": -1.15,
+  "drift_span_m": 0.0421,
+  "sleeve_inside_m": 0.362,
+  "tail_aft_30_m": 0.114,
+  "tail_down_30_m": 1.422
+ },
+ {
+  "flap": "flap_L2",
+  "part": 2,
+  "pivot_world": [
+   7.8294,
+   -0.1472,
+   4.9327
+  ],
+  "axis_world": [
+   0.99304,
+   0.10896,
+   -0.04482
+  ],
+  "flap_hinge_world": [
+   7.85,
+   0.117,
+   6.032
+  ],
+  "pivot_fwd_m": 0.26,
+  "pivot_up_m": -1.1,
+  "drift_span_m": 0.0388,
+  "sleeve_inside_m": 0.358,
+  "tail_aft_30_m": 0.113,
+  "tail_down_30_m": 1.349
+ },
+ {
+  "flap": "flap_R1",
+  "part": 1,
+  "pivot_world": [
+   -3.4748,
+   -0.6854,
+   4.8793
+  ],
+  "axis_world": [
+   0.99304,
+   -0.10896,
+   0.04482
+  ],
+  "flap_hinge_world": [
+   -3.5,
+   -0.361,
+   6.228
+  ],
+  "pivot_fwd_m": 0.32,
+  "pivot_up_m": -1.35,
+  "drift_span_m": 0.0474,
+  "sleeve_inside_m": 0.367,
+  "tail_aft_30_m": 0.118,
+  "tail_down_30_m": 1.72
+ },
+ {
+  "flap": "flap_R2",
+  "part": 1,
+  "pivot_world": [
+   -7.8293,
+   -0.1673,
+   4.8827
+  ],
+  "axis_world": [
+   0.99304,
+   -0.10896,
+   0.04482
+  ],
+  "flap_hinge_world": [
+   -7.85,
+   0.117,
+   6.032
+  ],
+  "pivot_fwd_m": 0.28,
+  "pivot_up_m": -1.15,
+  "drift_span_m": 0.0421,
+  "sleeve_inside_m": 0.362,
+  "tail_aft_30_m": 0.114,
+  "tail_down_30_m": 1.422
+ },
+ {
+  "flap": "flap_R2",
+  "part": 2,
+  "pivot_world": [
+   -7.8294,
+   -0.1472,
+   4.9327
+  ],
+  "axis_world": [
+   0.99304,
+   -0.10896,
+   0.04482
+  ],
+  "flap_hinge_world": [
+   -7.85,
+   0.117,
+   6.032
+  ],
+  "pivot_fwd_m": 0.26,
+  "pivot_up_m": -1.1,
+  "drift_span_m": 0.0388,
+  "sleeve_inside_m": 0.358,
+  "tail_aft_30_m": 0.113,
+  "tail_down_30_m": 1.349
+ }
+]

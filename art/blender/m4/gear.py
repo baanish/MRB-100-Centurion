@@ -928,6 +928,33 @@ def stowed(objs):
         bpy.context.view_layer.update()
 
 
+@contextmanager
+def doors_shut(hinges):
+    """Each named gear door hinge (an empty with its door, <hinge>_visible, under it) swung 90 degrees about its hinge
+    line (the empty's local Y) the way that turns the door's outer skin to face down: the doors hang open at rest with
+    the gear, and the game snaps them shut once the gear is up (CenturionAuthor.CloseGearDoor), so a door's outer skin
+    baked only at rest carries the occlusion of where it hangs. Back after."""
+    rest = {}
+    for name in hinges:
+        h, door = bpy.data.objects.get(name), bpy.data.objects.get(name + "_visible")
+        if h is None or door is None:
+            continue
+        rest[name] = h.matrix_world.copy()
+        me, mw = door.data, door.matrix_world
+        skin = {i for i, m in enumerate(me.materials) if m and m.name == "Centurion_skin"}
+        n = sum(((mw.to_3x3() @ p.normal) * p.area for p in me.polygons if p.material_index in skin), Vector())
+        P, axis = h.matrix_world.translation.copy(), h.matrix_world.col[1].xyz.normalized()
+        turn = min((math.radians(90), math.radians(-90)), key=lambda a: (Matrix.Rotation(a, 3, axis) @ n).z)
+        h.matrix_world = Matrix.Translation(P) @ Matrix.Rotation(turn, 4, axis) @ Matrix.Translation(-P) @ h.matrix_world
+    bpy.context.view_layer.update()
+    try:
+        yield
+    finally:
+        for name, m in rest.items():
+            bpy.data.objects[name].matrix_world = m
+        bpy.context.view_layer.update()
+
+
 def check(bl, objs):
     return {"nose_gear_retracted": nose_fit(bl, objs),
             "main_hinge_inside": hinge_inside(bl, objs),
@@ -1010,18 +1037,16 @@ def paint(cv, text_mask):
     px, pz, a, b = (np.interp(s, ss, rows[:, i]) for i in range(4))
     psi = np.degrees(np.arctan2((x - px) / a, (pz - q[:, 2]) / b))
     r_eff = np.sqrt((a * a + b * b) / 2)
-    cell = np.zeros(len(s), np.int64)
-    for i, (p0, p1, splits) in enumerate(struts.SPONSON_BANDS):
-        band = (psi >= p0) & (psi < p1)
-        cell[band] = (i + 1) * 64 + np.searchsorted(np.array(sorted(struts.SPONSON_RINGS + splits)), s[band])
-        cv.groove(np.abs(np.radians(psi - p1) * r_eff), mask=D * (edge > 0.02))
-        for si in splits:
-            cv.groove(np.abs(s - si), mask=D * band)
+    cell = np.searchsorted(np.array(struts.SPONSON_RINGS), s) * 4 + np.searchsorted(np.array(struts.SPONSON_LAPS), psi)
+    for p in struts.SPONSON_LAPS:
+        cv.groove(np.abs(np.radians(psi - p) * r_eff), mask=D * (edge > 0.02))
+    for si in struts.SPONSON_RINGS:
+        cv.groove(np.abs(s - si), 0.016, mask=D)
     cv.albedo *= (1 + 0.04 * (((cell * 2654435761) % 1000) / 1000.0 - 0.5) * D)[:, None]
     # the door's own: a red keep-clear line on its free edge only (the lowest, with the gear down), a fastener row round
     # the edge and on the ribs, a ruled placard (the right door's islands are this one's: no text)
     d_free = np.min([seg_dist(s, x, p, p1)[0] for p, p1 in zip(free, free[1:])], axis=0)
-    cv.paint(D * (edge > 0) * cv.coverage(np.abs(d_free - 0.025), struts.RED_LINE), rgb=RED)
+    cv.paint(D * (edge > 0) * cv.colour_line(np.abs(d_free - 0.025), struts.RED_LINE), rgb=RED)
     cv.fasteners(np.abs(edge - 0.07), s + x, 0.0, mask=D * (np.abs(edge - 0.07) < 0.03))
     for si in leg_door_ribs():
         cv.fasteners(np.abs(s - si), x, 0.0, mask=D * (np.abs(s - si) < 0.03) * (edge > 0.1))

@@ -6,7 +6,7 @@ namespace Centurion.Editor
     public static partial class CenturionAuthor
     {
         // These names are also the built-in slots in RadarSuite, which finds the rear one on RearRadarPart.
-        private const string FrontRadarName = "radar_F_fairing";
+        private const string FrontRadarName = "radome";
         private const string RearRadarName = "radar_R";
         private const string RearRadarPart = "tail_end"; // the tail radar's fairing is on the part tree's tail end
 

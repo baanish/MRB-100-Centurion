@@ -4,7 +4,7 @@ Releases come from [baanish/MRB-100-Centurion](https://github.com/baanish/MRB-10
 
 ## Prepare and package locally
 
-1. Set the same version in `src/Centurion/CenturionPlugin.cs`, `src/Centurion/Centurion.csproj` and `unity/Assets/Blueprinter/Mods/centurion/modinfo.json`. The scenarios and their generators name the bundle by version (`build/centurion_<version>.nobp`): replace the old name across `tests/agentic` and `tools` byte for byte (Python `read_bytes`/`write_bytes`; `sed -i` on Windows strips the CRLF files), or the playtests keep loading the previous build.
+1. On a clean tree, run `python -I tools/bump_version.py <old> <new>`. It lists the version in `src/Centurion/CenturionPlugin.cs`, `src/Centurion/Centurion.csproj` and `unity/Assets/Blueprinter/Mods/centurion/modinfo.json`, and every line that loads the bundle from `build/` by its versioned name (`build/centurion_<version>.nobp`). It changes nothing. Check the listing, then run it again with `--apply`, which keeps each file's line endings byte for byte. Lines that load kept builds under `.cache/` keep the old name, because those files keep it on disk. Edit the lines it marks `edit by hand` yourself. Without this step the playtests keep loading the previous build.
 2. After intentional exports, run `python tools/scrub_fbx.py` and `python tools/export_manifest.py --write`. The scrubber blanks native scene and absolute texture path metadata, preserves relative texture references, and verifies every other FBX node value. Commit `art/export-manifest.json` with the release source. The private checkout ignores the exports; the public checkout commits every export named by that manifest. Builds check those hashes and never re-export from a cached AWACS scene. Close the Unity editor for `unity/`.
 3. Run this single command from the repository root:
 
@@ -12,7 +12,7 @@ Releases come from [baanish/MRB-100-Centurion](https://github.com/baanish/MRB-10
    pwsh -NoProfile -File tools/Package-Release.ps1
    ```
 
-   Optionally pass `-NotesFile <markdown-file>` to include release-specific changes. `-CheckOnly` checks the pinned exports, committed inputs, versions and licence without Unity. The command builds the plugin from HEAD and the bundle, checks their versions and hashes, rejects tracked changes caused by the build except prefab fileIDs, and runs the Unity identity check. That check rejects game meshes and textures in the bundle and checks aircraft structure. The command then packages and verifies both archives, the manifest and their metadata. It publishes nothing.
+   Optionally pass `-NotesFile <markdown-file>` to include release-specific changes. `-CheckOnly` checks the pinned exports, committed inputs, versions and licence without Unity. The command builds the plugin from HEAD and the bundle, checks their versions and hashes, rejects tracked changes caused by the build except prefab fileIDs, and runs the Unity identity check. That check rejects game meshes and textures in the bundle and checks aircraft structure. The command then packages and verifies both archives, the manifest and their metadata. It builds the livery kit with `tools/Build-LiveryKit.ps1`, which runs Blender, and checks the kit against the same pinned export as the bundle. It publishes nothing.
 
 4. Require a final `RELEASE PASS` line. Outputs are in `.cache/release/v<version>-<UTC time>/`:
 
@@ -21,10 +21,11 @@ Releases come from [baanish/MRB-100-Centurion](https://github.com/baanish/MRB-10
    | `Centurion-v<version>-nomm.zip` | Flat payload for NOMM. Its name sorts first among release assets. |
    | `Centurion-v<version>-plugin-only.zip` | Manual game-root installation, including `BepInEx/plugins/baanish.centurion/`. |
    | `Centurion-v<version>-nomnom.json` | Initial catalog listing, with the NOMM ZIP hash and public download URL. |
+   | `centurion_livery_kit_<version>.zip` | The paint model, templates, example liveries and builder described in the [livery kit guide](livery-kit/README.md). It never goes inside the mod archives. |
    | `RELEASE-NOTES.md` | Release body with absolute links at the version tag. |
-   | `SHA256SUMS.txt` | SHA-256 of both archives, the manifest and notes. |
+   | `SHA256SUMS.txt` | SHA-256 of both archives, the livery kit, the manifest and notes. |
 
-   GitHub returns release assets sorted by name, ignoring case. `Centurion-v<version>-nomm.zip` sorts before `Centurion-v<version>-nomnom.json`, the manual ZIP, `RELEASE-NOTES.md` and `SHA256SUMS.txt`. Keep these names so NOMNOM imports the NOMM ZIP. Upload order does not control the API order.
+   GitHub returns release assets sorted by name, ignoring case. `Centurion-v<version>-nomm.zip` sorts before `Centurion-v<version>-nomnom.json`, the manual ZIP, `centurion_livery_kit_<version>.zip`, `RELEASE-NOTES.md` and `SHA256SUMS.txt`. Keep these names so NOMNOM imports the NOMM ZIP. Upload order does not control the API order.
 
    Staging `meta.json` and `README.md` also remain in the output directory. They are already inside both archives; do not upload them separately. Both archives carry the same DLL, bundle, metadata, README and licence, plus `audio/CREDITS.md` when sounds are present. Packaged README links point to the public source at `v<version>`. The DLL and bundle share one mod folder so NOMM toggles them together.
 
@@ -38,9 +39,9 @@ On a clean game profile with BepInEx 5 and Blueprinter 2.0.1+, extract the manua
 
 For the first release, create the public `baanish/MRB-100-Centurion` GitHub repository and push the public source. It must include the unobfuscated source matching the plugin DLL. Enable GitHub Actions. For every release:
 
-1. Push the source commit used by the local package. Tag that exact public commit `v<version>` and push the tag. A tag alone does not run the asset verifier.
-2. Run `pwsh -NoProfile -File tools/Publish-Release.ps1 -Directory <package-directory> -Tag v<version>`. It refuses missing or invalid assets and requires the tag to exist remotely. It creates a draft prerelease and uploads exactly the five documented assets. Before publishing, it checks their sizes, digests and case-insensitive name order with the NOMM ZIP first. It then publishes and verifies the prerelease. It never creates tags or pushes. If an upload or draft check fails, the draft stays unpublished; inspect it before retrying.
-3. Require a green **Verify release assets** workflow. It downloads those five assets and checks hashes, manifest version and URLs, Blueprinter dependency, archive layout, paired payloads, embedded `meta.json`, GitHub asset metadata and NOMM-first order before submitting the catalog listing.
+1. The release build rewrites the prefabs under `unity/Assets/Blueprinter/Mods/centurion` with fresh fileIDs. Commit them on their own. Then run `pwsh -NoProfile -File tools/Sync-PublicRepo.ps1`, which refuses uncommitted changes under the synced paths and commits nothing. Commit the synced tree in the public checkout and push it. Tag that exact public commit `v<version>` and push the tag. A tag alone does not run the asset verifier.
+2. Run `pwsh -NoProfile -File tools/Publish-Release.ps1 -Directory <package-directory> -Tag v<version>`. It refuses missing or invalid assets and requires the tag to exist remotely. It creates a draft prerelease and uploads exactly the six documented assets. Before publishing, it checks their sizes, digests and case-insensitive name order with the NOMM ZIP first. It then publishes and verifies the prerelease. It never creates tags or pushes. If an upload or draft check fails, the draft stays unpublished; inspect it before retrying.
+3. Require a green **Verify release assets** workflow. It downloads those six assets and checks hashes, manifest version and URLs, Blueprinter dependency, archive layout, paired payloads, embedded `meta.json`, the livery kit's file list and export hashes, GitHub asset metadata and NOMM-first order before submitting the catalog listing.
 
 The workflow runs on `release.published`, including prereleases published from drafts. If assets are corrected later, rerun it from Actions with the published tag as its input. Edits to an existing release do not trigger a new published event. A failed check reports a published release problem; it cannot prevent NOMNOM from discovering that release. Verify locally before publishing:
 

@@ -11,8 +11,8 @@ enum HangarGuardAction { Clear, Retract, Snap }
 /// Where an aircraft stands against the medium hangars (hangar_med, the only one the Centurion fits): the telescoping span
 /// keeps out of them (<see cref="Approach"/>) and the AWACS beam stays stowed near them (<see cref="Holds"/>). Spawn
 /// transforms are read each step, since a hangar on a moving unit carries it along (Hangar.cs:505-507, 627-631); the hangar
-/// list is looked up again every <see cref="ScanS"/>, since a client's or a carrier's hangars register after the mission start.
-/// One instance per aircraft and caller.
+/// list is looked up again every <see cref="ScanS"/>, since a client's or a carrier's hangars register after the mission start,
+/// and at once in a new mission. One instance per aircraft and caller; the list, a scene search, is shared by all of them.
 /// </summary>
 sealed class HangarGuard
 {
@@ -21,12 +21,17 @@ sealed class HangarGuard
     // Radar altitude above 1 m for less than this is still the ground: a bounce or a bump on the taxiway.
     const float GroundHopS = 0.5f;
 
+    static Hangar[] hangars = System.Array.Empty<Hangar>();
+    static Transform[] spawns = System.Array.Empty<Transform>();
+    static float scannedAt = float.NegativeInfinity;
+    static object? scannedMission;
+
     readonly Aircraft aircraft;
-    Transform[] spawns = System.Array.Empty<Transform>();
-    float scannedAt = float.NegativeInfinity, onGroundAt = float.NegativeInfinity;
+    float onGroundAt = float.NegativeInfinity;
 
     public HangarGuard(Aircraft aircraft) => this.aircraft = aircraft;
 
+#if CENTURION_DEV
     /// <summary>The spawn point (floor centre) of the medium hangar nearest the aircraft on the ground plane; null when the map has none.</summary>
     public Transform? Spawn
     {
@@ -52,6 +57,7 @@ sealed class HangarGuard
             return nearest;
         }
     }
+#endif
 
     /// <summary>On the ground (<see cref="GroundHopS"/>) within radiusM of any medium hangar's spawn point.</summary>
     public bool Holds(float radiusM)
@@ -118,7 +124,6 @@ sealed class HangarGuard
             float entry = along - Mathf.Sqrt(reachM * reachM - miss2);
             if (entry < slewM)
             {
-                CenturionPlugin.Log.Stage("hangar-guard-snap", Invariant($"{aircraft.name}: {entry:0} m from a medium hangar's reach at {speed:0.0} m/s, extension {extension:0.00} snapped home"));
                 return HangarGuardAction.Snap;
             }
 
@@ -131,6 +136,33 @@ sealed class HangarGuard
         return worst;
     }
 
+    /// <summary>
+    /// On the ground (<see cref="GroundHopS"/>) within radiusM of a medium hangar's spawn point while that hangar's doors are
+    /// still opening (Hangar.MoveDoors sets opening with openAmount under 1 until they are fully open); null otherwise. Doors
+    /// that are shut and not moving do not count, so nothing waits on a hangar no one is opening.
+    /// </summary>
+    public Hangar? OpeningNear(float radiusM)
+    {
+        if (!OnGround())
+        {
+            return null;
+        }
+
+        Scan();
+        Vector3 position = aircraft.transform.position;
+        for (int i = 0; i < hangars.Length; i++)
+        {
+            Hangar.DoorState doors = hangars[i] != null ? hangars[i].NetworkdoorState : default;
+            if (doors.opening && doors.openAmount < 1f && spawns[i] != null
+                && Vector3.ProjectOnPlane(spawns[i].position - position, Vector3.up).magnitude < radiusM)
+            {
+                return hangars[i];
+            }
+        }
+
+        return null;
+    }
+
     bool OnGround()
     {
         if (aircraft.radarAlt < 1f)
@@ -141,16 +173,18 @@ sealed class HangarGuard
         return Time.fixedTime - onGroundAt <= GroundHopS;
     }
 
-    void Scan()
+    static void Scan()
     {
-        if (Time.fixedTime - scannedAt <= ScanS)
+        if (Time.fixedTime - scannedAt <= ScanS && ReferenceEquals(scannedMission, MissionManager.CurrentMission))
         {
             return;
         }
 
         scannedAt = Time.fixedTime;
-        spawns = Object.FindObjectsOfType<Hangar>()
+        scannedMission = MissionManager.CurrentMission;
+        hangars = Object.FindObjectsOfType<Hangar>()
             .Where(h => h.TryGetComponent(out Unit unit) && unit.definition != null && unit.definition.jsonKey == MediumHangarKey && h.GetSpawnTransform() != null)
-            .Select(h => h.GetSpawnTransform()).ToArray();
+            .ToArray();
+        spawns = hangars.Select(h => h.GetSpawnTransform()).ToArray();
     }
 }

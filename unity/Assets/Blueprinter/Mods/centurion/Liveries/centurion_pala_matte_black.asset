@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: -65840929, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
   m_Name: centurion_pala_matte_black
   m_EditorClassIdentifier: 
-  Texture: {fileID: 2800000, guid: 06aeeb80535d57a42aac42506aac1bc7, type: 3}
+  Texture: {fileID: 2800000, guid: c61d3c09ee632ca409966c8c3f0e275c, type: 3}
   Glossiness: 0
   Colors:
   - Color:

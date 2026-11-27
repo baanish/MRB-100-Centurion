@@ -21,7 +21,33 @@ def hull_triangles(bl, surf, slots):
         bpy.data.meshes.remove(mesh)
         for part in parts.values():
             part.bm.free()
-    return BVHTree.FromPolygons(vertices, triangles, all_triangles=True)
+    return LandingHull(BVHTree.FromPolygons(vertices, triangles, all_triangles=True))
+
+
+class LandingHull:
+    """The hull's BVH with find_nearest's ties broken by position: a point nearest an edge or corner the triangles
+    share is as near all of them, and BVHTree returns whichever its build order puts first, so any change elsewhere
+    in fuselage_F (a paint panel's face order, the refuelling slipway) moved the strut root and its collider hull up
+    to 105 mm. The normal is the mean of every triangle at the nearest distance."""
+    TIE_M = 1e-6
+
+    def __init__(self, tree):
+        self.tree = tree
+
+    def find_nearest(self, point, distance=1.0e30):
+        hit, normal, index, d = self.tree.find_nearest(point, distance)
+        if hit is None:
+            return hit, normal, index, d
+        tied = self.tree.find_nearest_range(point, d + self.TIE_M)
+        if len(tied) > 1:
+            n = sum((t[1] for t in tied if t[3] <= d + self.TIE_M), normal * 0.0)
+            if n.length > 1e-9:
+                normal = n.normalized()
+            index = min(t[2] for t in tied if t[3] <= d + self.TIE_M)
+        return hit, normal, index, d
+
+    def __getattr__(self, name):
+        return getattr(self.tree, name)
 
 
 def hull_distance(hull, point):

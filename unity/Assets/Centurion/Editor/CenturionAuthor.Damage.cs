@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,306 +10,430 @@ namespace Centurion.Editor
 {
     public static partial class CenturionAuthor
     {
-        // Stock assigns fragments by role, not a mass threshold: Medusa's 900 kg fuselage uses large,
-        // its 900 kg engines small; Darkreach's 3,155 kg nozzles small, its 3,556 kg engines medium.
-        private static readonly (string Part, string Size)[] PartFragments =
+        // Each part's donor on the stock SFB-81 Darkreach, the Centurion's BDF sibling (docs/DECISIONS.md 2026-11-21): the
+        // Darkreach part that does its job (art/blender/damage_tree.py, the part map's "Section boundaries"). A part takes
+        // its donor's armour, hit points, thresholds, impact damage and fragments as they stand in the game's asset, and its
+        // joints the donor's strength per kilogram carried (DonorJointForce). Right-side parts take the left-side donor,
+        // which the Darkreach mirrors.
+        private static readonly Dictionary<string, string> PartDonors = new Dictionary<string, string>
         {
-            ("fuselage_M", "large"), ("fuselage_F", "large"), ("fuselage_F2", "large"), ("fuselage_R", "large"),
-            ("nose", "med"), ("cockpit", "med"), ("tailcone", "small"), ("tail_end", "small"),
-            ("wing_root_L", "small"), ("wing_root_R", "small"), ("wing_outer_L", "small"), ("wing_outer_R", "small"),
-            ("wing_tele1_L", "small"), ("wing_tele1_R", "small"),
-            ("wing_tele2_L", "small"), ("wing_tele2_R", "small"), ("wing_tip_L", "small"), ("wing_tip_R", "small"),
-            ("nacelle_1", "med"), ("nacelle_2", "med"),
-            ("nozzle_1", "small"), ("nozzle_2", "small"),
-            ("vtail_L", "small"), ("vtail_R", "small"), ("vtail_tip_L", "small"), ("vtail_tip_R", "small"),
-            ("sponson_L", "small"), ("sponson_R", "small"), ("sponson_tail_L", "small"), ("sponson_tail_R", "small"),
-            ("fuselage_F_upper", "small"), ("fuselage_F2_upper", "small"), ("fuselage_M_flank_L", "small"), ("fuselage_M_flank_R", "small"),
-            ("fuselage_R_upper_L", "small"), ("fuselage_R_upper_R", "small"), ("tailcone_upper", "small"),
+            { "Centurion", "Darkreach" }, { "radome", "nose" }, { "cockpit", "cockpit" }, { "fuselage_F", "fuselage_F" },
+            { "bay_F", "gearbay_L" }, { "fuselage_R", "fuselage_R" }, { "bay_A", "gearbay_L" }, { "tailcone", "tail" },
+            { "tail_end", "tail" },
+            { "wing_root_L", "wing1b_L" }, { "wing_root_R", "wing1b_L" }, { "wing_outer_L", "wing2_L" }, { "wing_outer_R", "wing2_L" },
+            { "wing_tele1_L", "wing2_L" }, { "wing_tele1_R", "wing2_L" }, { "wing_tele2_L", "wingtip_L" }, { "wing_tele2_R", "wingtip_L" },
+            { "strut_inner_L", "wing1a_L" }, { "strut_inner_R", "wing1a_L" }, { "strut_outer_L", "wing1a_L" }, { "strut_outer_R", "wing1a_L" },
+            { "pylon_1", "nacelle_L" }, { "pylon_2", "nacelle_L" }, { "nacelle_1", "engine_L" }, { "nacelle_2", "engine_L" },
+            { "nozzle_1", "nozzle_L" }, { "nozzle_2", "nozzle_L" }, { "sponson_L", "gearbay_L" }, { "sponson_R", "gearbay_L" },
+            { "vtail_L", "vstab1_L" }, { "vtail_R", "vstab1_L" }, { "vtail_tip_L", "vstab2_L" }, { "vtail_tip_R", "vstab2_L" },
+            { "flap_L1", "flap_L" }, { "flap_L2", "flap_L" }, { "flap_R1", "flap_L" }, { "flap_R2", "flap_L" },
+            { "ruddervator_L1", "rudder_L" }, { "ruddervator_L2", "rudder_L" }, { "ruddervator_R1", "rudder_L" }, { "ruddervator_R2", "rudder_L" },
+            { "aileron_L", "aileron_L" }, { "aileron_R", "aileron_L" }, { "spoiler_L", "aileron_L" }, { "spoiler_R", "aileron_L" },
         };
 
-        private static GameObject FragmentEffect(string size) =>
-            Load<GameObject>(Stock + "GameObject/fragments_" + size + "_PLACEHOLDER.prefab");
-
-        // How each part takes damage and holds on, in five classes after the stock bombers (Darkreach, Alkyon, EW1:
-        // .cache/damage/stock_armour.py): armour subtracts from a hit and tolerance divides what gets through
-        // (UnitPart.TakeDamage); a joint's strength falls with its part's hit points to nothing at the structural threshold
-        // (AeroPart.ApplyDamage), from JointG times the weight the joint carries (at least JointFloor), which the game
-        // multiplies by 10 (AeroPart.CreateJoints). Main box: the sections and wing roots that carry everything, tough as
-        // the Darkreach's fuselage. Primary: the structure that carries aero or engine loads, the Darkreach's wings and
-        // engines. Secondary: ends and fairings whose loss leaves the aircraft whole. Panel: the skin panels, cheeks,
-        // flap-track fairings and wingtips, which carry no aero load and come off as their hit points run out, as the
-        // stock tips and cheeks do. Surface: the control surfaces, the stock surfaces' armour on joints as strong as
-        // before, since they carry their own aero load.
-        private enum Toughness { MainBox, Primary, Secondary, Panel, Surface }
-
-        // Skin must burn without shedding in the first 30 s. Fire tolerance leaves weapon and collision damage alone.
-        private static bool IsSlowBurnSkin(string part) => PartToughness[part] == Toughness.Panel
-            || part == "sponson_tail_L" || part == "sponson_tail_R" || part == "wingfairing" || part == "radar_F_fairing"
-            || part == "tailcone_upper";
-        private const float SkinFireTolerance = 40f;
-        // Size for a tank host hit hard enough to ignite (49 HP) to hold its skin through the 20 s cook-off (owner: skin
-        // need only last about 30 s): 16.5/6 HP/s takes its joints near zero around 27 s, while neighbouring tanks still
-        // lose enough HP to puncture and catch fire.
-        // The upper tail shell carries V-tail joints and sees up to 90 raw fire HP/s; at 100 it retains 64 HP at 40 s.
-        private const float TankStructureFireTolerance = 6f;
-        private const float TailShellFireTolerance = 100f;
-        private static float? SlowBurnFireTolerance(string part) => part == "tailcone_upper" ? TailShellFireTolerance
-            : IsSlowBurnSkin(part) ? SkinFireTolerance
-            : part == "fuselage_M" || part == "fuselage_F" || part == "fuselage_R" || part == "tailcone"
-                ? TankStructureFireTolerance : (float?)null;
-
-        private static readonly Dictionary<Toughness, (float Pierce, float Blast, float PierceTolerance, float BlastTolerance, float Structural, float JointG, float JointFloor)> ToughnessValues =
-            new Dictionary<Toughness, (float, float, float, float, float, float, float)>
-            {
-                { Toughness.MainBox, (20, 70, 30, 5, -25, 60, 2e5f) },
-                { Toughness.Primary, (20, 70, 10, 5, -25, 60, 2e5f) },
-                { Toughness.Secondary, (15, 60, 5, 3, -25, 30, 5e4f) },
-                { Toughness.Panel, (10, 50, 3, 2, 0, 15, 2e4f) },
-                { Toughness.Surface, (10, 40, 3, 2, 0, 60, 2e5f) },
-            };
-
-        private static readonly Dictionary<string, Toughness> PartToughness = new Dictionary<string, Toughness>
+        // The heaviest store each hardpoint registers, which its part's joint carries with the part (the part map's joint
+        // table): the forward bay's PAB-80LR x196, the aft bay's AGM-99 x60 or PAB-80LR x216, the AWACS radome on the
+        // spine, the C-RAM on the tail end.
+        private static readonly Dictionary<string, float> HeaviestStoreKg = new Dictionary<string, float>
         {
-            { "fuselage_M", Toughness.MainBox }, { "fuselage_F2", Toughness.MainBox }, { "fuselage_F", Toughness.MainBox },
-            { "fuselage_R", Toughness.MainBox }, { "wing_root_L", Toughness.MainBox }, { "wing_root_R", Toughness.MainBox },
-            { "cockpit", Toughness.MainBox },
-            { "nose", Toughness.Primary }, { "tailcone", Toughness.Primary }, { "tailcone_upper", Toughness.Primary },
-            { "sponson_L", Toughness.Primary }, { "sponson_R", Toughness.Primary },
-            { "wing_outer_L", Toughness.Primary }, { "wing_outer_R", Toughness.Primary },
-            { "wing_tele1_L", Toughness.Primary }, { "wing_tele1_R", Toughness.Primary },
-            { "wing_tele2_L", Toughness.Primary }, { "wing_tele2_R", Toughness.Primary },
-            { "strut_inner_L", Toughness.Primary }, { "strut_inner_R", Toughness.Primary },
-            { "strut_outer_L", Toughness.Primary }, { "strut_outer_R", Toughness.Primary },
-            { "pylon_1", Toughness.Primary }, { "pylon_2", Toughness.Primary },
-            { "nacelle_1", Toughness.Primary }, { "nacelle_2", Toughness.Primary },
-            { "vtail_L", Toughness.Primary }, { "vtail_R", Toughness.Primary },
-            { "tail_end", Toughness.Secondary }, { "sponson_tail_L", Toughness.Secondary }, { "sponson_tail_R", Toughness.Secondary },
-            { "vtail_tip_L", Toughness.Secondary }, { "vtail_tip_R", Toughness.Secondary },
-            { "nozzle_1", Toughness.Secondary }, { "nozzle_2", Toughness.Secondary },
-            { "radar_F_fairing", Toughness.Secondary }, { "wingfairing", Toughness.Secondary },
-            { "fuselage_F_upper", Toughness.Panel }, { "fuselage_F2_upper", Toughness.Panel },
-            { "fuselage_M_flank_L", Toughness.Panel }, { "fuselage_M_flank_R", Toughness.Panel },
-            { "fuselage_R_upper_L", Toughness.Panel }, { "fuselage_R_upper_R", Toughness.Panel },
-            { "tail_end_upper", Toughness.Panel }, { "cheek_L", Toughness.Panel }, { "cheek_R", Toughness.Panel },
-            { "flap_track_L1", Toughness.Panel }, { "flap_track_L2", Toughness.Panel },
-            { "flap_track_R1", Toughness.Panel }, { "flap_track_R2", Toughness.Panel },
-            { "wing_tip_L", Toughness.Panel }, { "wing_tip_R", Toughness.Panel },
-            { "flap_L1", Toughness.Surface }, { "flap_L2", Toughness.Surface }, { "flap_R1", Toughness.Surface }, { "flap_R2", Toughness.Surface },
-            { "spoiler_L", Toughness.Surface }, { "spoiler_R", Toughness.Surface }, { "aileron_L", Toughness.Surface }, { "aileron_R", Toughness.Surface },
-            { "ruddervator_L1", Toughness.Surface }, { "ruddervator_L2", Toughness.Surface },
-            { "ruddervator_R1", Toughness.Surface }, { "ruddervator_R2", Toughness.Surface },
+            { "bay_F", 24500f }, { "bay_A", 27000f }, { "fuselage_R", 6000f }, { "tail_end", 300f },
         };
 
-        private static float JointForce(string part, float carriedKg)
+        // The fields a part copies from its donor.
+        private static readonly string[] DonorDamageFields =
+            { "hitPoints", "armorProperties", "impactDamage", "structuralThreshold", "integrityThreshold", "disintegrationEffects" };
+
+        // A light airframe (owner, 2026-11-22, docs/DECISIONS.md): any missile hit is a kill, while a fighter cannon needs a
+        // sustained burst, and the kill is the stock one ("keep it stock"): a wing, the tail or the nose leaving, the crew
+        // lost, the ground. No part is critical, as on every stock aircraft. Every part keeps its donor's 100 hit points (the
+        // stock rescale sets joint strength from them, AeroPart.ApplyDamage) and fire and impact tolerances (the fire chain
+        // and landings do not move). Each kind divides its donor's pierce and blast tolerances by its own factors, which
+        // multiply what a hit does. Blast is what a missile's fragments, flak and a cannon shell's small charge deal; pierce
+        // is a cannon round's and a missile's penetrator's. At the donor's values a missile left
+        // the tail cone 65 pierce and 34 blast from behind (4 makes it 202), the cockpit 12 pierce and 128 to 158 blast
+        // head-on (the owner's cap of 1.5 makes it 204), and the rear fuselage about 246 from the side. One 27 mm round put
+        // about 108 hp of pierce and 16 of blast into a wing, so structure takes a quarter of its donor's pierce and its blast
+        // as is: about four rounds to sever a wing, and the cannon from astern takes the tail in 2 to 3 s, as on a Darkreach.
+        private static readonly (float Pierce, float Blast, string[] Prefixes)[] LightAirframe =
         {
-            var t = ToughnessValues[PartToughness[part]];
-            return Mathf.Max(t.JointFloor, carriedKg * 9.81f * t.JointG);
+            (1f, 2f, new[] { "flap_", "aileron_", "spoiler_", "ruddervator_", "radome", "vtail_tip_" }),
+            (1f, 1.5f, new[] { "cockpit" }),
+            (1f, 4f, new[] { "Centurion", "fuselage_F", "fuselage_R", "tailcone", "tail_end" }),
+            (1f, 2f, new[] { "bay_F", "bay_A" }),
+            // A destroyed nacelle takes its wing (WingRootTrips), so the engine takes a fighter's rounds and shell splash
+            // more slowly than structure: at structure's factors a burst on the engines took one in under a second, faster
+            // than through the wing root. A missile's blast on it (about 500 hp at structure's factors) and a forward bay's
+            // cook-off (about 480) still destroy it twice over at half.
+            (0.1f, 0.5f, new[] { "nacelle_" }),
+        };
+        // Every other part: wing roots, outer wings, stages, struts, pylons, nacelles, sponsons, fins.
+        private static readonly (float Pierce, float Blast) Structure = (0.25f, 1f);
+
+        // Blast armour is deliberately the donor's everywhere, the centre section's 70 included. Every fragment ray from
+        // below crosses the centre and gains 0.1 m of virtual distance per point (DamageEffects.FragTrace), so a missile
+        // from directly below takes only flaps, as on the Darkreach (docs/DECISIONS.md, 2026-11-22).
+
+        private static (float Pierce, float Blast) DamageScale(string part) =>
+            LightAirframe.Where(k => k.Prefixes.Any(p => part == p || (p.EndsWith("_") && part.StartsWith(p))))
+                .Select(k => (k.Pierce, k.Blast)).DefaultIfEmpty(Structure).First();
+
+        private static float ToleranceFactor(string part, string field) =>
+            field == "pierceTolerance" ? DamageScale(part).Pierce : field == "blastTolerance" ? DamageScale(part).Blast : 1f;
+
+        private static readonly string[] ArmourFields =
+            { "pierceArmor", "blastArmor", "fireArmor", "pierceTolerance", "blastTolerance", "fireTolerance", "overpressureLimit" };
+
+        // The dry centre of gravity 0.1.3 flew with, retracted: each part's mass at its rigid body's centre of mass
+        // (art/blender/damage_finalize.py), station and height above the ground in metres; extended, the stages' strokes
+        // with 0.1.3's stage masses move it 0.318 m aft and 0.054 m down (the part map's "Centre of gravity").
+        private static readonly Vector2 ShippedCg = new Vector2(20.575f, 4.498f), ShippedCgExtended = new Vector2(20.893f, 4.444f);
+        private const float CgTolerance = 0.02f;
+        private const int PartCount = 45, ShapeCount = 47;
+        // AIPilotCombatModes.EjectionCheck bails out above 40 m when PartDamageTracker.GetDetachedRatio() > 0.12
+        // (AIPilotCombatModes.cs:1241): a wing tear and one more lost part must stay under it, with the AWACS beam's mount
+        // part fitted too.
+        private const float EjectionRatio = 0.12f;
+
+        private static Component DonorPart(string donor)
+        {
+            var darkreach = Load<GameObject>(DarkreachPrefab);
+            var parts = darkreach.GetComponentsInChildren(GameType("AeroPart"), true);
+            return donor == "Darkreach" ? darkreach.GetComponent(GameType("AeroPart"))
+                : parts.SingleOrDefault(p => p.name == donor) ?? throw new MissingReferenceException("The Darkreach has no part " + donor);
         }
 
-        // Where two parts meet: the middle of their colliders' common bounds (a cut piece's cut face, a section's joint
-        // ring), or, where the bounds don't touch, of the gap between them; an empty under part named for the other.
-        private static Transform JointAnchor(GameObject part, GameObject other)
+        private static float Mass(Component part) => new SerializedObject(part).FindProperty("mass").floatValue;
+
+        // A part and everything hanging from it: its own and its descendants' dry masses and their heaviest stores.
+        private static float CarriedKg(Build b, string part) =>
+            b.Parts[part].GetComponentsInChildren(GameType("AeroPart"), true).Sum(p => Mass(p) + (HeaviestStoreKg.TryGetValue(p.name, out var kg) ? kg : 0f));
+
+        // The donor's parent-joint force per kilogram of its own dry subtree, times the kilograms this part's joint carries:
+        // a joint as strong for its load as the Darkreach's for its own.
+        private static float DonorScaledForce(Build b, string part)
         {
-            Bounds BoundsOf(GameObject go) =>
-                go.GetComponents<Collider>().Where(c => !(c is MeshCollider m && m.sharedMesh == null)).Select(c => c.bounds).Aggregate((a, c) => { a.Encapsulate(c); return a; });
-            var a = BoundsOf(part);
-            var o = BoundsOf(other);
-            var lo = Vector3.Max(a.min, o.min);
-            var hi = Vector3.Min(a.max, o.max);
-            var name = "joint_" + other.name;
-            var anchor = part.transform.Find(name);
-            if (anchor == null)
-                anchor = new GameObject(name) { layer = part.layer }.transform;
-            anchor.SetParent(part.transform, false);
-            anchor.position = (lo + hi) / 2;
-            return anchor;
+            var donor = DonorPart(PartDonors[part]);
+            var joints = new SerializedObject(donor).FindProperty("joints");
+            if (joints.arraySize == 0)
+                throw new InvalidDataException($"{part}'s donor {donor.name} has no joint to scale");
+            var donorForce = joints.GetArrayElementAtIndex(0).FindPropertyRelative("breakForce").floatValue;
+            var donorCarried = donor.GetComponentsInChildren(GameType("AeroPart"), true).Sum(Mass);
+            return donorForce / donorCarried * CarriedKg(b, part);
         }
 
-        // Same-part FuelTanks follow these pivots. The aft fire must reach the tail's collider and vice versa. fuselage_F's
-        // pivot is its old joint at station 17, inside fuselage_F2 since the part tree's cut at 12: it moves forward to its
-        // tank's middle (station 9.95, art/blender/m4/body_structure.py TANKS), where its leaks and fires start.
-        private static readonly (string Part, float Aft)[] TankPivotOffsets =
+        // The parts whose braces carry main loads against the parts they brace: the
+        // sponsons hold the main gear against the body, the bays and the tail cone; the struts hold the engines and the wing
+        // against the body; the wing roots hold the wing against the body sections. A brace is as strong as its owner's
+        // joint, so the solver shares the load across it and the tree joints between its two parts; a brace between two
+        // such parts with a weaker joint on either side breaks that joint first, at full health (0.1.3 lost skin panels on
+        // the runway that way). So each such brace ties its two parts to the stronger joint of the pair, and a part that
+        // carries only itself keeps its donor-scaled strength and can break under load as a stock section does.
+        private static readonly HashSet<string> MainLoadBraceOwners = new HashSet<string>
         {
-            ("fuselage_F", -7.05f), ("fuselage_R", 5.5f), ("tailcone", 0.5f),
+            "sponson_L", "sponson_R", "strut_inner_L", "strut_inner_R", "strut_outer_L", "strut_outer_R", "wing_root_L", "wing_root_R",
         };
 
-        private static void PlaceBodyTanks(Build b)
+        // The +4 g design load at 199 t: every lifting part's share of the lift, over the whole lifting area at full span,
+        // which TelescopeController adds to stage 1 and the roll surfaces (its StageAreaM2, AileronAreaM2, SpoilerAreaM2).
+        private const float DesignLoadFactor = 4f, DesignMassKg = 199000f;
+        private static readonly Dictionary<string, float> ExtensionAreaM2 = new Dictionary<string, float>
         {
-            foreach (var entry in TankPivotOffsets)
+            { "wing_tele1_L", 266f }, { "wing_tele1_R", 266f }, { "aileron_L", 54f }, { "aileron_R", 54f }, { "spoiler_L", 18f }, { "spoiler_R", 18f },
+        };
+        // An engine's thrust at its speed curve's peak, which its JetNozzle puts on the nozzle part (JetNozzle.cs:409).
+        private const float MaxThrustN = 330000f * 1.25f;
+
+        private static float LiftAreaM2(Component part) =>
+            new SerializedObject(part).FindProperty("wingArea").floatValue + (ExtensionAreaM2.TryGetValue(part.name, out var add) ? add : 0f);
+
+        // The main load a part's joint carries besides weight: the lift of the part and everything on it at the design
+        // load, and an engine's thrust where a nozzle hangs from it. The tail's moving surfaces carry 6.5 times their drawn
+        // area (Surfaces), so donor scaling by mass leaves the V-tail's joints far short of their lift.
+        private static float LoadFloorN(Build b, string part)
+        {
+            var aeroType = GameType("AeroPart");
+            var all = b.Root.GetComponentsInChildren(aeroType, true);
+            var liftPerM2 = DesignLoadFactor * DesignMassKg * 9.81f / all.Sum(LiftAreaM2);
+            var subtree = b.Parts[part].GetComponentsInChildren(aeroType, true);
+            var thrust = b.Parts[part].GetComponentsInChildren(GameType("JetNozzle"), true).Length * MaxThrustN;
+            return Mathf.Max(subtree.Sum(LiftAreaM2) * liftPerM2, thrust);
+        }
+
+        // Parts rated at their parent's strength per kilogram carried instead of their donor's. The radome hangs about 17 m
+        // ahead of the centre of gravity, against the Darkreach nose's 13 m, so a pitch kick loads it harder: a stock
+        // fragmentation shove from the aft bay's 100 kg cook-off turned the airframe 33 deg/s in one step and put 59 g on
+        // the nose donor's 62 g joint (in game), which broke at full health. At the cockpit's rating it holds about 113 kN;
+        // it still comes off at 0 hp, where the stock rescale sets a structural-threshold-0 part's joints to 0
+        // (AeroPart.ApplyDamage).
+        private static readonly Dictionary<string, string> RatedLikeParent = new Dictionary<string, string> { { "radome", "cockpit" } };
+
+        // Parts tied to a neighbour's main-load group though no brace joins them. The tail end hangs 19 m behind the centre
+        // of gravity on a 140 kN donor-scaled joint, and a 2,500 fpm touchdown broke it at full health before any leg, at
+        // 199 t and light; the owner's gear ruling wants the legs to give first. At
+        // the tail cone's group strength it leaves only when it or the tail cone is destroyed.
+        private static readonly Dictionary<string, string> TiedWith = new Dictionary<string, string> { { "tail_end", "tailcone" } };
+
+        // A part's joint force: its donor-scaled force or its load floor, the larger (or its parent's rating, RatedLikeParent),
+        // raised to the stronger of each pair a main-load brace ties (MainLoadBraceOwners) or TiedWith names. The telescoping stages' braces
+        // are free joints that carry nothing (TelescopeController) and tie nothing.
+        private static float DonorJointForce(Build b, string part)
+        {
+            if (b.JointForce == null)
             {
-                var go = b.Parts[entry.Part];
-                if (go.transform.lossyScale != Vector3.one || Quaternion.Angle(go.transform.rotation, Quaternion.identity) > 0.001f)
-                    throw new InvalidDataException(entry.Part + " tank pivot requires an axis-aligned, unit-scale part");
-                var children = go.transform.Cast<Transform>().Select(t => (Transform: t, Position: t.position)).ToArray();
-                var offset = new Vector3(0, 0, -entry.Aft);
-                var meshes = new Dictionary<Mesh, Mesh>();
-                Mesh Shift(Mesh source)
-                {
-                    if (meshes.TryGetValue(source, out var saved)) return saved;
-                    var shifted = Object.Instantiate(source);
-                    shifted.name = entry.Part + "_tank_origin_" + source.name;
-                    shifted.vertices = source.vertices.Select(v => v - offset).ToArray();
-                    shifted.RecalculateBounds();
-                    saved = SaveMesh(shifted);
-                    meshes.Add(source, saved);
-                    return saved;
-                }
-                var cg = CenterOfMass(b);
-                go.GetComponent<MeshFilter>().sharedMesh = Shift(go.GetComponent<MeshFilter>().sharedMesh);
-                foreach (var collider in go.GetComponents<MeshCollider>())
-                    collider.sharedMesh = Shift(collider.sharedMesh);
-                go.transform.position += offset;
-                foreach (var child in children) child.Transform.position = child.Position;
-                if (Vector3.Distance(cg, CenterOfMass(b)) > 0.0001f
-                    || children.Any(c => Vector3.Distance(c.Transform.position, c.Position) > 0.0001f))
-                    throw new InvalidDataException(entry.Part + " tank pivot changed the CG or a child position");
-                foreach (var pair in meshes)
-                {
-                    var original = pair.Key.vertices;
-                    var shifted = pair.Value.vertices;
-                    if (original.Length != shifted.Length
-                        || original.Where((v, i) => (v - shifted[i] - offset).magnitude > 0.0001f).Any())
-                        throw new InvalidDataException(entry.Part + " tank pivot changed mesh geometry");
-                }
+                var own = b.Joints.Keys.ToDictionary(n => n, n => Mathf.Max(DonorScaledForce(b, n), LoadFloorN(b, n)));
+                foreach (var entry in RatedLikeParent)
+                    own[entry.Key] = Mathf.Max(own[entry.Key], own[entry.Value] / CarriedKg(b, entry.Value) * CarriedKg(b, entry.Key));
+                var group = b.Joints.Keys.ToDictionary(n => n, n => n);
+                string Find(string n) => group[n] == n ? n : group[n] = Find(group[n]);
+                foreach (var entry in b.Joints.Where(e => MainLoadBraceOwners.Contains(e.Key)))
+                    foreach (var other in entry.Value.Skip(1).Where(group.ContainsKey))
+                        group[Find(other)] = Find(entry.Key);
+                foreach (var entry in TiedWith)
+                    group[Find(entry.Key)] = Find(entry.Value);
+                b.JointForce = b.Joints.Keys.ToDictionary(n => n, n => b.Joints.Keys.Where(m => Find(m) == Find(n)).Max(m => own[m]));
+                foreach (var g in b.Joints.Keys.GroupBy(Find).Where(g => g.Count() > 1))
+                    b.Report.Add($"joint tie: {string.Join(", ", g.OrderBy(n => n))} at {g.Max(n => own[n]) / 1000:0} kN, from {g.OrderByDescending(n => own[n]).First()}");
+                foreach (var n in b.Joints.Keys.OrderBy(n => n, StringComparer.Ordinal))
+                    b.Report.Add($"joint table {n}: donor-scaled {DonorScaledForce(b, n) / 1000:0} kN, load floor {LoadFloorN(b, n) / 1000:0} kN, authored {b.JointForce[n] / 1000:0} kN");
             }
+            return b.JointForce[part];
         }
 
         private static void AuthorDamage(Build b)
         {
-            // All systems and LODs are in place, but joints have not yet been authored at the final pivots.
-            PlaceBodyTanks(b);
             foreach (var entry in b.Parts)
             {
+                var donor = new SerializedObject(DonorPart(PartDonors[entry.Key]));
                 var so = new SerializedObject(b.Part(entry.Key));
-                var effects = Prop(so, "disintegrationEffects");
-                effects.arraySize = 0;
-                foreach (var fragment in PartFragments.Where(f => f.Part == entry.Key))
-                {
-                    effects.arraySize++;
-                    effects.GetArrayElementAtIndex(effects.arraySize - 1).objectReferenceValue = FragmentEffect(fragment.Size);
-                }
-                var t = ToughnessValues[PartToughness[entry.Key]];
-                Prop(so, "armorProperties.pierceArmor").floatValue = t.Pierce;
-                Prop(so, "armorProperties.blastArmor").floatValue = t.Blast;
-                Prop(so, "armorProperties.pierceTolerance").floatValue = t.PierceTolerance;
-                Prop(so, "armorProperties.blastTolerance").floatValue = t.BlastTolerance;
-                if (SlowBurnFireTolerance(entry.Key) is float fireTolerance)
-                {
-                    Prop(so, "armorProperties.fireArmor").floatValue = 0f;
-                    Prop(so, "armorProperties.fireTolerance").floatValue = fireTolerance;
-                }
-                Prop(so, "structuralThreshold").floatValue = t.Structural;
+                foreach (var field in DonorDamageFields)
+                    so.CopyFromSerializedProperty(Prop(donor, field));
+                foreach (var tolerance in new[] { "pierceTolerance", "blastTolerance" })
+                    Prop(so, "armorProperties").FindPropertyRelative(tolerance).floatValue =
+                        Prop(donor, "armorProperties").FindPropertyRelative(tolerance).floatValue / ToleranceFactor(entry.Key, tolerance);
+                Prop(so, "criticalPart").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
         private static void CheckDamage(Build b)
         {
-            var parts = b.Root.GetComponentsInChildren(GameType("AeroPart"), true);
-            if (PartFragments.Length * 35 < parts.Length * 14)
-                throw new InvalidDataException("Fragment coverage must reach Darkreach's 14/35 parts");
-            foreach (var fragment in PartFragments)
+            var aeroType = GameType("AeroPart");
+            var parts = b.Root.GetComponentsInChildren(aeroType, true);
+            var problems = new List<string>();
+            Physics.SyncTransforms();
+
+            var shapes = parts.Sum(p => p.GetComponents<MeshCollider>().Length);
+            if (parts.Length != PartCount || shapes != ShapeCount)
+                problems.Add($"{parts.Length} parts with {shapes} collision shapes; the tree has {PartCount} and {ShapeCount}");
+
+            foreach (var part in parts)
             {
-                var effects = Prop(new SerializedObject(b.Part(fragment.Part)), "disintegrationEffects");
-                if (effects.arraySize != 1 || effects.GetArrayElementAtIndex(0).objectReferenceValue != FragmentEffect(fragment.Size))
-                    throw new InvalidDataException(fragment.Part + " requires fragments_" + fragment.Size + " placeholder reference");
+                var name = b.Parts.First(p => p.Value == part.gameObject).Key;
+                var hulls = part.GetComponents<MeshCollider>();
+                if (hulls.Length == 0)
+                {
+                    problems.Add(name + " has no collision shape");
+                    continue;
+                }
+                // Each shape convex as stored: every face outward and not degenerate, every vertex behind every face.
+                foreach (var hull in hulls)
+                    problems.AddRange(ShapeFaults(hull.sharedMesh).Select(f => $"{name}'s shape {hull.sharedMesh.name}: {f}"));
+                var origin = part.transform.position;
+                if (Vector3.Distance(hulls[0].ClosestPoint(origin), origin) > 1e-4f)
+                    problems.Add($"{name}'s origin {origin} lies outside its own shape");
+                // The donor's damage values, as they stand in the game's asset, but for the light airframe's tolerances.
+                var donor = new SerializedObject(DonorPart(PartDonors[name]));
+                var so = new SerializedObject(part);
+                foreach (var field in DonorDamageFields.Where(f => f != "armorProperties"))
+                    if (!SerializedProperty.DataEquals(Prop(so, field), Prop(donor, field)))
+                        problems.Add($"{name}'s {field} isn't its donor {PartDonors[name]}'s");
+                foreach (var field in ArmourFields)
+                {
+                    var factor = ToleranceFactor(name, field);
+                    var expected = Prop(donor, "armorProperties").FindPropertyRelative(field).floatValue / factor;
+                    if (Mathf.Abs(Prop(so, "armorProperties").FindPropertyRelative(field).floatValue - expected) > 1e-4f)
+                        problems.Add($"{name}'s {field} isn't its donor {PartDonors[name]}'s{(factor != 1f ? $" over {factor:0.##}" : "")}");
+                }
+                if (Prop(so, "criticalPart").boolValue)
+                    problems.Add($"{name} is a critical part; no stock aircraft has one");
+                // A wing root holds its own joint with itself as tensor, then one joint to its engine pylon per trip part with
+                // that part as tensor, and nothing else: a joint into the body would hold the wing on when a trip fires.
+                var held = Enumerable.Range(0, Prop(so, "joints").arraySize).Select(i => Prop(so, "joints").GetArrayElementAtIndex(i))
+                    .Select(j => (To: j.FindPropertyRelative("connectedPart").objectReferenceValue?.name,
+                        Tensor: j.FindPropertyRelative("tensor").objectReferenceValue?.name)).ToList();
+                if (WingRootTrips.TryGetValue(name, out var trips))
+                {
+                    var tensors = new[] { name }.Concat(trips).ToList();
+                    var targets = new[] { ParentPart(b, name) }.Concat(trips.Select(_ => TripAnchor(b, name))).ToList();
+                    if (!held.Select(j => j.Tensor).SequenceEqual(tensors) || !held.Select(j => j.To).SequenceEqual(targets))
+                        problems.Add($"{name}'s joints are {string.Join(", ", held.Select(j => $"{j.To} (tensor {j.Tensor ?? "none"})"))}, " +
+                            $"not {string.Join(", ", targets.Zip(tensors, (t, s) => $"{t} (tensor {s})"))}");
+                }
+                // A trip part's every joint break trips its wing, so each brace it owns has a tensor inside that wing.
+                var tripped = TrippedWingRoot(name);
+                if (tripped != null)
+                    foreach (var brace in held.Skip(1).Where(j => j.Tensor == null || !InWing(b, tripped, j.Tensor)))
+                        problems.Add($"{name} trips {tripped} but owns a brace to {brace.To} with tensor {brace.Tensor ?? "none"}, outside that wing");
+                var scale = DamageScale(name);
+                b.Report.Add($"light airframe {name}: pierce x{scale.Pierce:0.##}, blast x{scale.Blast:0.##}");
+                var joints = Prop(so, "joints");
+                for (var i = 1; i < joints.arraySize; i++)
+                    if (joints.GetArrayElementAtIndex(i).FindPropertyRelative("tensor").objectReferenceValue == null)
+                        problems.Add($"{name}'s brace to {joints.GetArrayElementAtIndex(i).FindPropertyRelative("connectedPart").objectReferenceValue.name} has no tensor");
+                if (joints.arraySize > 0)
+                {
+                    var force = DonorJointForce(b, name);
+                    for (var i = 0; i < joints.arraySize; i++)
+                    {
+                        var joint = joints.GetArrayElementAtIndex(i);
+                        if (Mathf.Abs(joint.FindPropertyRelative("breakForce").floatValue - force) > 1f || joint.FindPropertyRelative("breakTorque").floatValue != joint.FindPropertyRelative("breakForce").floatValue
+                            || joint.FindPropertyRelative("anchor").objectReferenceValue != null)
+                            problems.Add($"{name}'s joint {i} isn't its donor's strength with torque equal to force and no anchor");
+                    }
+                    b.Report.Add($"joint {name}: {force / 1000:0} kN (x10 in game; donor {PartDonors[name]} scaled to {CarriedKg(b, name):0} kg carried: {DonorScaledForce(b, name) / 1000:0}); " +
+                        string.Join(", ", Enumerable.Range(0, joints.arraySize).Select(i => joints.GetArrayElementAtIndex(i)).Select(j =>
+                            j.FindPropertyRelative("connectedPart").objectReferenceValue.name + (j.FindPropertyRelative("tensor").objectReferenceValue is Object t ? " (tensor " + t.name + ")" : ""))));
+                }
             }
-            CheckToughness(b, parts);
-            CheckPartTree(b, parts);
-            // Sliding stages occupy the inner wings. Fuel stays in the body, with no cross-tank leak connections.
-            var layout = new[] { (Part: "fuselage_M", Kg: 15000f), (Part: "fuselage_F", Kg: 3000f),
-                (Part: "fuselage_R", Kg: 3000f), (Part: "tailcone", Kg: 3000f) };
+
+            foreach (var entry in TiedWith)
+                if (DonorJointForce(b, entry.Key) != DonorJointForce(b, entry.Value))
+                    problems.Add($"{entry.Key}'s joint is {DonorJointForce(b, entry.Key) / 1000:0} kN, not {entry.Value}'s group strength {DonorJointForce(b, entry.Value) / 1000:0} kN");
+
+            // Jointed neighbours' shapes may overlap no deeper than the Darkreach's own do: once their joint breaks the solver
+            // shoves an overlap apart, and stock lives with that much.
+            var stock = DeepestJointedOverlap(Load<GameObject>(DarkreachPrefab), _ => false);
+            var mine = DeepestJointedOverlap(b.Root, go => b.Blockout.Slide(go.name).HasValue);
+            b.Report.Add($"jointed overlaps (not the stages): deepest {mine.Depth * 1000:0} mm, {mine.Pair}; the Darkreach's deepest {stock.Depth * 1000:0} mm, {stock.Pair}");
+            if (mine.Depth > stock.Depth)
+                problems.Add($"jointed shapes {mine.Pair} overlap {mine.Depth * 1000:0} mm, deeper than the Darkreach's deepest, {stock.Depth * 1000:0} mm ({stock.Pair})");
+
+            // Dry centre of gravity, retracted and extended, against 0.1.3's.
+            var slides = Parts.Where(p => b.Blockout.Slide(p.Name).HasValue).Select(p => b.Parts[p.Name].transform)
+                .Select(t => (stage: t, rest: t.localPosition, end: t.parent.Find(t.name + "_extended").localPosition)).ToArray();
+            Vector2 Cg()
+            {
+                var cg = CenterOfMass(b);
+                return new Vector2(OriginStation - (cg.z + b.Blockout.Origin.z), cg.y + b.Blockout.Origin.y);
+            }
+            var retracted = Cg();
+            foreach (var (stage, _, end) in slides)
+                stage.localPosition = end;
+            var extended = Cg();
+            foreach (var (stage, rest, _) in slides)
+                stage.localPosition = rest;
+            foreach (var (pose, cg, shipped) in new[] { ("retracted", retracted, ShippedCg), ("extended", extended, ShippedCgExtended) })
+            {
+                b.Report.Add($"CG {pose}: station {cg.x:F3} m, {cg.y:F3} m up; 0.1.3 {shipped.x:F3}, {shipped.y:F3} ({(cg.x - shipped.x) * 1000:+0;-0} mm, {(cg.y - shipped.y) * 1000:+0;-0} mm)");
+                if ((cg - shipped).magnitude > CgTolerance)
+                    problems.Add($"the {pose} dry CG {cg} is more than {CgTolerance * 100:0} cm from 0.1.3's {shipped}");
+            }
+
+            // A wing tear takes stage 1 and the stage 2 on it, each side.
+            var tear = new[] { "L", "R" }.Sum(s => b.Parts["wing_tele1_" + s].GetComponentsInChildren(aeroType, true).Length);
+            foreach (var (what, lost, total) in new[] { ("a wing tear and one more part", tear + 1, parts.Length), ("the same with the AWACS beam", tear + 1, parts.Length + 1) })
+            {
+                b.Report.Add($"ejection ratio, {what}: {lost} of {total} parts, {(float)lost / total:P1} (AI bails out over {EjectionRatio:P0})");
+                if ((float)lost / total >= EjectionRatio)
+                    problems.Add($"{what} loses {lost} of {total} parts, over the AI's {EjectionRatio:P0} ejection ratio");
+            }
+
+            // Fuel stays in four body tanks with dry wings (docs/DECISIONS.md), each a FuelTank on its section's AeroPart.
+            var layout = new[] { (Part: "Centurion", Kg: 15000f), (Part: "fuselage_F", Kg: 3000f), (Part: "fuselage_R", Kg: 3000f), (Part: "tailcone", Kg: 3000f) };
             foreach (var entry in layout)
             {
                 var part = b.Part(entry.Part);
                 var tanks = part.GetComponents(GameType("FuelTank"));
-                if (tanks.Length != 1)
-                    throw new InvalidDataException(entry.Part + " requires one same-part FuelTank");
-                var so = new SerializedObject(tanks[0]);
-                if (Prop(so, "part").objectReferenceValue != part || Prop(so, "fuelCapacity").floatValue != entry.Kg
-                    || Prop(so, "connectedTanks").arraySize != 0)
-                    throw new InvalidDataException(entry.Part + " requires an independent " + entry.Kg + " kg tank on its AeroPart");
+                var so = tanks.Length == 1 ? new SerializedObject(tanks[0]) : null;
+                if (so == null || Prop(so, "part").objectReferenceValue != part || Prop(so, "fuelCapacity").floatValue != entry.Kg || Prop(so, "connectedTanks").arraySize != 0)
+                    problems.Add(entry.Part + " requires one independent " + entry.Kg + " kg FuelTank on its AeroPart");
             }
             var allTanks = b.Root.GetComponentsInChildren(GameType("FuelTank"), true);
             if (allTanks.Length != layout.Length || allTanks.Sum(t => Prop(new SerializedObject(t), "fuelCapacity").floatValue) != 24000f)
-                throw new InvalidDataException("Centurion requires four body tanks with 24000 kg total capacity and no wing tanks");
-            Physics.SyncTransforms();
-            foreach (var source in layout)
+                problems.Add("the Centurion requires four body tanks of 24,000 kg in all and no wing tanks");
+
+            // Stock fire: a burning tank damages every collider inside a sphere on its transform of radius 1.5 x the mean
+            // half extent of its part's first collider's bounds (FuelTank.cs:331-336). It must carry forward to centre to
+            // rear to tail, back from the tail, and reach each bay.
+            var reaches = new[]
             {
-                var part = b.Part(source.Part);
-                var extents = part.GetComponent<Collider>().bounds.extents;
+                ("fuselage_F", "Centurion"), ("Centurion", "fuselage_F"), ("Centurion", "fuselage_R"), ("fuselage_R", "tailcone"),
+                ("tailcone", "fuselage_R"), ("fuselage_F", "bay_F"), ("Centurion", "bay_F"), ("Centurion", "bay_A"), ("fuselage_R", "bay_A"), ("tailcone", "bay_A"),
+            };
+            foreach (var (source, target) in reaches)
+            {
+                var from = b.Parts[source].transform.position;
+                var extents = b.Parts[source].GetComponent<Collider>().bounds.extents;
                 var radius = (extents.x + extents.y + extents.z) * 0.33333f * 1.5f;
-                foreach (var target in layout)
-                {
-                    var distance = b.Part(target.Part).GetComponents<Collider>()
-                        .Min(c => Vector3.Distance(part.transform.position, c.ClosestPoint(part.transform.position)));
-                    var reaches = distance <= radius;
-                    if ((source.Part == "fuselage_R" && target.Part == "tailcone"
-                        || source.Part == "tailcone" && target.Part == "fuselage_R") && !reaches)
-                        throw new InvalidDataException(source.Part + " fire must reach " + target.Part);
-                    b.Report.Add($"Tank fire reach: {source.Part} -> {target.Part}: radius {radius:F3} m, collider distance {distance:F3} m, reaches {reaches}");
-                }
+                var distance = b.Parts[target].GetComponents<Collider>().Min(c => Vector3.Distance(from, c.ClosestPoint(from)));
+                b.Report.Add($"tank fire reach: {source} -> {target}: radius {radius:F2} m, nearest collider {distance:F2} m, margin {radius - distance:+0.00;-0.00} m");
+                if (distance > radius)
+                    problems.Add($"{source}'s tank fire misses {target} by {distance - radius:F2} m");
             }
-            b.Report.Add($"Damage checks passed: fragments {PartFragments.Length}/{parts.Length}; 4 same-part body tanks, 24000 kg; fuselage_M 15000, fuselage_F 3000, fuselage_R 3000, tailcone 3000; no wing tanks");
+
+            if (problems.Count > 0)
+                throw new InvalidDataException("Centurion damage checks failed:\n  " + string.Join("\n  ", problems));
+            b.Report.Add($"damage checks passed: {parts.Length} parts, {shapes} convex shapes, every origin inside its shape, Darkreach donor armour and joints, every brace with a tensor, dry CG within {CgTolerance * 100:0} cm of 0.1.3's, four body tanks with the fire chain");
         }
 
-        // Every AeroPart has a toughness class and carries its armour, threshold and joint strengths; no two joints link
-        // the same pair of parts.
-        private static void CheckToughness(Build b, Component[] parts)
+        // The deepest overlap (Physics.ComputePenetration) between the solid colliders of any two parts a PartJoint links,
+        // leaving out parts skip names; root is a prefab asset (instantiated for the measure) or a scene object.
+        private static (float Depth, string Pair) DeepestJointedOverlap(GameObject root, Func<GameObject, bool> skip)
         {
             var aeroType = GameType("AeroPart");
-            var pairs = new HashSet<(Object, Object)>();
-            foreach (var part in parts)
+            var instance = root.scene.IsValid() ? root : (GameObject)Object.Instantiate(root);
+            try
             {
-                var name = b.Parts.First(p => p.Value == part.gameObject).Key;
-                if (!PartToughness.TryGetValue(name, out var cls))
-                    throw new InvalidDataException(name + " has no toughness class (PartToughness)");
-                var t = ToughnessValues[cls];
-                var so = new SerializedObject(part);
-                if (Prop(so, "armorProperties.pierceArmor").floatValue != t.Pierce || Prop(so, "armorProperties.blastArmor").floatValue != t.Blast
-                    || Prop(so, "armorProperties.pierceTolerance").floatValue != t.PierceTolerance || Prop(so, "armorProperties.blastTolerance").floatValue != t.BlastTolerance
-                    || Prop(so, "structuralThreshold").floatValue != t.Structural)
-                    throw new InvalidDataException($"{name} doesn't carry its {cls} armour");
-                if (SlowBurnFireTolerance(name) is float fireTolerance && (Prop(so, "armorProperties.fireArmor").floatValue != 0f
-                    || Prop(so, "armorProperties.fireTolerance").floatValue != fireTolerance))
-                    throw new InvalidDataException(name + " requires fire armour 0 and fire tolerance " + fireTolerance);
-                var carried = part.GetComponentsInChildren(aeroType, true).Sum(p => new SerializedObject(p).FindProperty("mass").floatValue);
-                var joints = Prop(so, "joints");
-                for (var i = 0; i < joints.arraySize; i++)
+                Physics.SyncTransforms();
+                var deepest = (Depth: 0f, Pair: "none");
+                foreach (var part in instance.GetComponentsInChildren(aeroType, true).Where(p => !skip(p.gameObject)))
                 {
-                    var joint = joints.GetArrayElementAtIndex(i);
-                    var other = joint.FindPropertyRelative("connectedPart").objectReferenceValue;
-                    if (!pairs.Add((part, other)) || !pairs.Add((other, part)))
-                        throw new InvalidDataException($"{name} has a second joint to {other.name}");
-                    if (Mathf.Abs(joint.FindPropertyRelative("breakForce").floatValue - JointForce(name, carried)) > 1f
-                        || joint.FindPropertyRelative("anchor").objectReferenceValue == null)
-                        throw new InvalidDataException($"{name}'s joint to {other.name} isn't its {cls} strength at its anchor");
+                    var joints = new SerializedObject(part).FindProperty("joints");
+                    for (var i = 0; i < joints.arraySize; i++)
+                    {
+                        var other = joints.GetArrayElementAtIndex(i).FindPropertyRelative("connectedPart").objectReferenceValue as Component;
+                        if (other == null || skip(other.gameObject))
+                            continue;
+                        foreach (var a in part.GetComponents<Collider>().Where(c => c.enabled && !c.isTrigger))
+                            foreach (var c in other.GetComponents<Collider>().Where(c => c.enabled && !c.isTrigger))
+                                if (Physics.ComputePenetration(a, a.transform.position, a.transform.rotation, c, c.transform.position, c.transform.rotation, out _, out var depth)
+                                    && depth > deepest.Depth)
+                                    deepest = (depth, $"{part.name}/{other.name}");
+                    }
                 }
-                b.Report.Add($"toughness {name}: {cls}, armour {t.Pierce}/{t.Blast}, tolerance {t.PierceTolerance}/{t.BlastTolerance}, structural {t.Structural}, joints {JointForce(name, carried):0} N (x10 in game) for {carried:0} kg carried");
+                return deepest;
+            }
+            finally
+            {
+                if (instance != root)
+                    Object.DestroyImmediate(instance);
             }
         }
 
-        // The part tree as the blockout cut it (art/blender/part_splits.py): every blockout part with a mass is an AeroPart
-        // or a visual piece on the part that carries its mass, and each cut part's pieces carry the whole's area and moment.
-        private static void CheckPartTree(Build b, Component[] parts)
+        // What a convex collider's stored triangles get wrong: a degenerate face, one facing in, a vertex in front of a
+        // face, more than Unity keeps.
+        private static IEnumerable<string> ShapeFaults(Mesh mesh)
         {
-            var names = new HashSet<string>(parts.Select(p => b.Parts.First(e => e.Value == p.gameObject).Key));
-            foreach (var part in b.Blockout.Parts.Values.Where(p => p.Props.ContainsKey("mass_kg")))
+            var v = mesh.vertices;
+            var t = mesh.triangles;
+            if (t.Length / 3 > 255 || v.Distinct().Count() > 255)
+                yield return $"{v.Distinct().Count()} points and {t.Length / 3} triangles, over Unity's 255";
+            var centre = v.Aggregate(Vector3.zero, (s, p) => s + p) / v.Length;
+            for (var i = 0; i < t.Length; i += 3)
             {
-                var visual = VisualPieces.Any(v => v.Piece == part.Name);
-                if (names.Contains(part.Name) == visual)
-                    throw new InvalidDataException($"{part.Name} is {(visual ? "both a visual piece and an AeroPart" : "neither an AeroPart nor a visual piece")}");
+                var a = v[t[i]];
+                var n = Vector3.Cross(v[t[i + 1]] - a, v[t[i + 2]] - a);
+                if (n.magnitude < 2e-5f)
+                {
+                    yield return $"triangle {i / 3} is degenerate";
+                    continue;
+                }
+                n.Normalize();
+                if (Vector3.Dot(n, a - centre) <= 0)
+                    yield return $"triangle {i / 3} faces in ({Vector3.Dot(n, a - centre):F4} m, area {Vector3.Cross(v[t[i + 1]] - a, v[t[i + 2]] - a).magnitude / 2:F6} m2, at {a})";
+                else if (v.Max(p => Vector3.Dot(p - a, n)) > 1e-3f)
+                    yield return $"triangle {i / 3} has a vertex {v.Max(p => Vector3.Dot(p - a, n)) * 1000:F2} mm in front of it";
             }
-            foreach (var group in CutParts)
-            {
-                var whole = Parts.Single(p => p.Name == group[0]);
-                var sos = group.Select(n => new SerializedObject(b.Part(n))).ToArray();
-                var area = sos.Sum(so => so.FindProperty("wingArea").floatValue);
-                var drag = sos.Sum(so => so.FindProperty("dragArea").floatValue);
-                if (Mathf.Abs(area - whole.WingArea) > 0.001f || Mathf.Abs(drag - whole.DragArea) > 0.001f)
-                    throw new InvalidDataException($"{string.Join(" + ", group)} carry {area} m2 and {drag} drag, not {whole.Name}'s {whole.WingArea} and {whole.DragArea}");
-            }
-            b.Report.Add($"part tree: {names.Count} AeroParts, visual pieces {string.Join(", ", VisualPieces.Select(v => v.Piece + " on " + v.Part))}; cut parts keep their area and drag: {string.Join("; ", CutParts.Select(g => string.Join(" + ", g)))}");
         }
     }
 }

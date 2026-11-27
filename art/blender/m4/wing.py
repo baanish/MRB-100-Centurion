@@ -65,6 +65,7 @@ COVE = 19  # a cut-out's cove walls and lip underside: skin-toned structure, see
 CAP_ROOT, CAP_STAGE1, CAP_STAGE2, CAP_CUFF = range(20, 24)
 WIPER = 24
 REFLECTOR = 25
+JETTISON_PIPE = 26  # exterior_pass/s4_uv.py reads it by number on wing_root_<side>
 ON_STAGE1, ON_STAGE2 = (STAGE1, CAP_STAGE1, WIPER), (STAGE2, CAP_STAGE2, TIP, CAP_CUFF)
 
 ROOT_N, STAGE_N, TIP_N = 22, 22, 16  # airfoil points per surface, cosine spaced (the blockout's 10)
@@ -83,7 +84,11 @@ TIP_F = (0.0, 0.1, 0.22, 0.35, 0.55, 0.72, 0.79, 0.85, 0.9, 0.94, 0.97, 0.99)
 LIGHT_F = 0.93  # the tail light sits on the tip section here
 STROBE_F = 0.8  # the strobe, on the upper skin where the rounded end is still thick enough to hold it
 TIP_CAP_F = 0.66  # the dielectric tip cap carrying the lights starts at this reach fraction
-NAV_LENS = (0.81, 0.15, 0.05)  # reach fraction, oval half length and height in metres
+# Nav lens wrapped over the tip's leading edge: reach fraction, half span in metres, and half its sweep round the nose in
+# sigma (the root of the chord fraction, upper positive). It follows the skin, standing NAV_LENS_RISE proud: the edge
+# here is raked and rounding, so a flat lens on one axis meets it at about 40 degrees, half buried and half in the air.
+NAV_LENS = (0.81, 0.04, 0.2)
+NAV_LENS_RISE = 0.004
 LIGHT_SEG = 12  # segments round the strobe and tail light
 # Formation strip on the tip's upper skin: inboard end (reach fraction), chord fraction of its front edge, length and
 # width in metres (one size on every group).
@@ -123,7 +128,10 @@ CANOE_M = 32  # points round a fairing section
 # the fixed half ends in a steep cut. Landing under the hinge, the cut grazed the bottom line and the fixed half ended
 # in a long sliver, a pale blade from the side with its flap hidden.
 CANOE_SPLIT_ANGLE = 35.0
-JETTISON = 12.6  # fuel jettison pipe out of the fixed trailing edge between flap 2 and the aileron
+# Fuel jettison pipe out of the fixed trailing edge between flap 2 and the aileron, its root in a dark painted slot. Its
+# faces carry JETTISON_PIPE, which s4_uv puts on the recesses' dark point as the control surfaces' dischargers are: on
+# the stock sheet's pale tan fitting patch it read as a bare rod hanging off the trailing edge.
+JETTISON, JETTISON_SLOT = 12.6, 0.03  # semi-span, half width in metres
 DISCHARGERS = {"aileron": (14.6, 16.4, 18.2, 19.45), "tip": (0.3, 0.62, 0.9)}
 
 
@@ -561,11 +569,13 @@ def build_root(bl, p, side, hinges, sfx, slots):
         rings.append(ring)
         skin_cols.append(cols)
     rings[-1] = af.inset_ring(rings[-1], bl.CDIR, bl.TDIR, BEVEL[0])
-    # Round the exposed closing rib aft of the child's section without narrowing the stage opening.
-    for i, q in enumerate(rings[-1]):
-        u = (q - sec(xs[-1])[0]).dot(bl.CDIR) / sec(xs[-1])[1]
-        if u > 0.96:
-            rings[-1][i] = q - bl.CDIR * (0.055 * ((u - 0.96) / 0.04) ** 2)
+    # Round the exposed closing rib aft of the child's section without narrowing the stage opening, the bevel's inner
+    # ring too: at full chord it stood the end lip 50 mm aft of the tip cuff's rounded trailing edge
+    for r in (-2, -1):
+        for i, q in enumerate(rings[r]):
+            u = (q - sec(xs[r])[0]).dot(bl.CDIR) / sec(xs[r])[1]
+            if u > 0.96:
+                rings[r][i] = q - bl.CDIR * (0.055 * ((u - 0.96) / 0.04) ** 2)
 
     def cove(r, k):  # a face with a corner off the outer skin is cove: the lip's underside, the cove and end walls
         if not {k, (k + 1) % M} <= skin_cols[r] & skin_cols[r + 1]:
@@ -714,7 +724,7 @@ def jettison_pipe(bl, p, side, slots):
     up, lo = (bl.airfoil_point(le, c, t, cd, td, cam, 1.0, u) for u in (True, False))
     mid = (up + lo) / 2
     out = (cd - td * 0.12).normalized()
-    sf.tube(p, [mid - cd * 0.08, mid + out * 0.12, mid + out * 0.3], 0.028, 12, MECH, sf.FITTING)
+    sf.tube(p, [mid - cd * 0.08, mid + out * 0.12, mid + out * 0.3], 0.028, 12, MECH, JETTISON_PIPE)
 
 
 def build_stage(bl, p, side, k, slots):
@@ -795,12 +805,14 @@ def build_tip(bl, p, side, slots):
     sec = af.table_section(bl, rows)
     reach = lambda f: rows[0][0] + (rows[-1][0] - rows[0][0]) * f
     tsurf = af.AirfoilSurface(bl, sec)
-    f, half_w, half_h = NAV_LENS
-    centre = tsurf.point(reach(f), 0.0)
-    axis = (Vector((side, 0, 0)) * 0.7 - bl.CDIR).normalized()
-    across = bl.TDIR.cross(axis).normalized()
-    nav = RED if side > 0 else GREEN
-    lamp_unit(p, centre + axis * 0.040, axis, across, half_w, half_h, nav, SKIN, nav)
+    f, half_x, half_s = NAV_LENS
+    x0 = reach(f)
+    corners = [(x0 - half_x, -half_s), (x0 + half_x, -half_s), (x0 + half_x, half_s), (x0 - half_x, half_s)]
+    # Open, a dome over the patch whose rim dips into the skin, so its outline is an oval: CenturionAuthor aims the glow
+    # along the lens's mean vertex normal, which a closed slab's floor cancels.
+    rise = lambda i, j: max(-0.008, NAV_LENS_RISE - 0.012 * math.hypot(i / 6 - 1, j / 4 - 1) ** 4)
+    _, floor, sides = sf.surface_patch(p, tsurf, corners, 12, 8, rise, -0.012, RED if side > 0 else GREEN)
+    bmesh.ops.delete(p.bm, geom=floor + sides, context="FACES")
     le, c, t, cd, td, cam = sec(reach(LIGHT_F))
     out = Vector((side, 0, 0))
     tip_light(p, le + cd * (c - 0.03), (out * 0.3 + cd).normalized(), WHITE, MECH, 0.055)
@@ -1035,7 +1047,9 @@ LAP_CONTRAST = 0.5  # stringer laps (lines without fastener rows) at this share 
 LOWER_PANELS = tuple((x, u, 0.3, 0.2, 0.04, -1) for x, u in ((5.15, 0.6), (8.35, 0.6), (12.1, 0.6), (13.9, 0.5),
                                                             (15.0, 0.6), (16.6, 0.5)))
 WALKWAY = (3.6, 6.3, 0.18, 0.58)  # x from, to; chord fractions: outboard of the fairing, bordered by dashed lines
-NO_STEP = (3.95, 5.1, 6.25)  # x of the NO STEP stencils on flap 1, behind the walkway (TEXT_PARTS)
+# x of the NO STEP stencils on flap 1, behind the walkway (TEXT_PARTS); the inboard one clear of the body fairing's edge
+# with the flap down 30 (at 3.95 its first letter went under it)
+NO_STEP = (4.2, 5.2, 6.25)
 NO_STEP_H = 0.14  # their raster's height in metres: 6 cm letters were 4 texels at 61 px/m, a blur
 FUEL_FILLER = (10.0, 0.33)  # gravity filler on the upper skin, at the inner tank's outer end
 FUEL_VENT = (10.9, 0.28)  # NACA vent on the lower skin
@@ -1073,6 +1087,8 @@ STENCIL = (0.80, 0.80, 0.78)
 PLACARD = ((0.50, 0.51, 0.52), (0.30, 0.305, 0.31))  # plate, rules
 RED = (0.55, 0.10, 0.08)
 RED_LINE = 0.022  # every red marking's line weight
+# The spoiler outline's offset from the spoiler: at 6 cm its front read as lying on the panel's leading edge in game
+SPOILER_MARGIN = 0.10
 WITNESS_TINT = 0.5  # the stage witness line's share of RED over the skin: full red there read as the loudest mark
 WALK = (0.58, 0.59, 0.59)  # the walkway's dashed border, as the nose's and the fairing's
 SKIN_CLASSES = (WING, STAGE1, STAGE2, TIP, FLAP, AILERON, SPOILER, FAIRING,
@@ -1175,8 +1191,8 @@ def paint(cv, text_mask):
     fx0, fx1, f_station = PYLON_FILLET
     WP = W * (1 - lo * (X > fx0) * (X < fx1) * (pos[:, 1] + bl.Y0 < f_station))  # the inner wing off the fillets
     for i, (u0, s, rows) in enumerate(ROOT_LINES):
-        if rows:
-            chord_line(WP, u0, s, rows, 3.0, x_in)
+        if rows:  # from flap 1's inner splice: inboard of it they stopped in plain skin beside the fairing
+            chord_line(WP, u0, s, rows, ROOT_SPLICES[0], x_in)
         else:
             for j, (a, b) in enumerate(zip(ROOT_SPLICES, ROOT_SPLICES[1:] + (x_in,))):
                 if (i + j) % 3 != 0:
@@ -1195,7 +1211,8 @@ def paint(cv, text_mask):
     for x, u, wx, ws_, r, s in FUEL_PANELS:
         panel(WP, x, u, wx + 0.13, ws_ + 0.13, r + 0.04, s)
     for x in np.arange(3.6, x_in - 0.3, 1.2):
-        rib(WP, x, 0.0, 0.12)
+        if min(abs(x - splice) for splice in ROOT_SPLICES) >= 0.24:  # one beside a splice read as a doubled seam
+            rib(WP, x, 0.0, 0.12)
     for x in (3.8, 4.7, 5.6, 6.4):
         panel(WP, x, 0.075, 0.7 if x < 6 else 0.35, 0.34, 0.025, -1)
         panel(WP, x, 0.10, 0.18, 0.10, 0.015, -1)
@@ -1208,18 +1225,26 @@ def paint(cv, text_mask):
     edge = np.maximum(edge, cv.coverage(np.abs(X - x1), 0.025) * dash_s * (S > u0 * C) * (S < u1 * C))
     cv.paint(edge * W * up, rgb=WALK)
     # red keep-clear lines ahead of the moving surfaces, and round the spoilers
+    sp_in = next(a for _, a, b, kind in bl.SURFACES if kind == "spoiler") - SPOILER_MARGIN
+    flap_out = max(b for _, a, b, kind in bl.SURFACES if kind == "flap")
     for pattern, xa, xb, kind in bl.SURFACES:
         if kind == "spoiler":
             t0, t1 = bl.SPOILER_CHORD[0], paint_spoiler_te(X, C)
             # front and ends only: aft of the spoilers lies the aileron's lip, too close for a line (the aileron hinge
             # runs from 0.73 to 0.89 chord)
-            sdf = rrect_sdf(X, S, xa - 0.06, xb + 0.06, t0 * C - 0.06, t1 * C + 0.06, 0.04)
-            cv.paint(cv.coverage(np.abs(sdf), RED_LINE) * W * up * (S < t1 * C), rgb=RED)
+            m = SPOILER_MARGIN
+            sdf = rrect_sdf(X, S, xa - m, xb + m, t0 * C - m, t1 * C + m, 0.04)
+            # the inboard leg ends at the outer flap's line, which runs into it: on to the lip it was a stub past the
+            # corner the two lines make
+            stub = ((X < xa - m + 2 * RED_LINE) & (S > bl.FLAP_HINGE * C - 0.07)).astype(float)
+            cv.paint(cv.colour_line(np.abs(sdf), RED_LINE) * W * up * (S < t1 * C) * (1 - stub), rgb=RED)
             continue
         if kind == "aileron":  # the spoilers span it, so their outline is its line: the skin between them and the
             continue  # lip narrows to nothing partway along, and a line there stopped in mid-air
         cove = bl.FLAP_HINGE * C
-        cv.paint(cv.coverage(np.abs(S - (cove - 0.07)), RED_LINE) * W * up * (X > xa) * (X < xb), rgb=RED)
+        # the outer flap's line runs on across the fixed strip into the spoiler outline's inboard leg, so the two close
+        x1 = sp_in + RED_LINE / 2 if xb == flap_out else xb
+        cv.paint(cv.colour_line(np.abs(S - (cove - 0.07)), RED_LINE) * W * up * (X > xa) * (X < x1), rgb=RED)
     # fuel filler with its marker, fuel vent, jacking point: shapes in (x, metres aft of a chord fraction)
     fx, fu = FUEL_FILLER
     V = S - fu * C
@@ -1235,11 +1260,13 @@ def paint(cv, text_mask):
     jx, ju = JACK_POINT
     sdf = poly_sdf(X, S - ju * C, [(jx - 0.1, -0.08), (jx + 0.1, -0.08), (jx, 0.1)])
     cv.paint(cv.coverage(np.abs(sdf), 0.02) * W * lo, rgb=STENCIL)
-    # fuel jettison pipe: a red keep-clear ring on the trailing edge round it
-    cv.paint(cv.coverage(np.abs(np.hypot(X - JETTISON, (1 - U) * C * 4) - 0.12), RED_LINE) * W, rgb=RED)
+    # fuel jettison pipe's root: a dark slot across the blunt trailing edge. No red ring: on the narrow fixed strip's end
+    # it drew two red bars either side of the pipe, a striped cap on the strip from behind and a stray red mark from above
+    jet = np.hypot(X - JETTISON, (1 - U) * C * 4)
+    cv.paint(cv.fill_coverage(jet - JETTISON_SLOT) * W, rgb=DARK, height=-0.003)
     for x, u, wx, ws_, s in PLACARDS:
         placard(cv, W * side_mask(s), X, S - u * C, x, wx, ws_)
-    for x, u in ((9.7, 0.33), (10.3, 0.33)):
+    for x, u in ((9.7, 0.33), (10.4, 0.33)):  # clear of the filler's red marker, which ends at x 10.26
         placard(cv, W * up, X, S - u * C, x, 0.22, 0.10)
     # the end collar the first stage slides through, and its seal band
     collar(cv, W, X, S, x_in, x_root, seal=True)
@@ -1271,7 +1298,7 @@ def paint(cv, text_mask):
         for dx in ((1.1, 2.7, 4.0, 6.2, 7.6, 9.5) if k == 0 else (1.5, 3.3, 4.6, 6.6, 8.4, 10.0)):
             rib(mask, x_seal + dx, 0.65, 1.01, rows=False)
         # the witness line, low-vis
-        cv.paint(cv.coverage(np.abs(X - (x_seal + 0.1)), RED_LINE) * mask * WITNESS_TINT, rgb=RED)
+        cv.paint(cv.colour_line(np.abs(X - (x_seal + 0.1)), RED_LINE) * mask * WITNESS_TINT, rgb=RED)
         for uu in (0.3, 0.5):  # index arrows pointing outboard, read against the seal when fully extended
             arrow = [(x_seal + 0.2, uu * chord - 0.07), (x_seal + 0.2, uu * chord + 0.07), (x_seal + 0.34, uu * chord)]
             cv.paint(cv.fill_coverage(poly_sdf(X, S, arrow)) * mask * up, rgb=STENCIL)

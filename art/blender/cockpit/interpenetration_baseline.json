@@ -1,0 +1,18 @@
+{
+ "ours / ours": {
+  "pairs": 334,
+  "visible": 207
+ },
+ "hardware under 3 cm in a plate": {
+  "pairs": 308,
+  "visible": 225
+ },
+ "ours / old shell": {
+  "pairs": 149,
+  "visible": 87
+ },
+ "old shell / old shell": {
+  "pairs": 54,
+  "visible": 30
+ }
+}

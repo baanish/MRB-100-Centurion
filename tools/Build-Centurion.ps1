@@ -16,19 +16,37 @@
 #   pwsh tools/Build-Centurion.ps1                                     # reuse the last export
 #   pwsh tools/Build-Centurion.ps1 -ExecuteMethod Some.Other.Method   # exercise the failure path
 #   pwsh tools/Build-Centurion.ps1 -Committed                         # DLL from HEAD's src/Centurion
+#   pwsh tools/Build-Centurion.ps1 -Dev                               # dev DLL for tests/agentic
 #
 # -Committed compiles the DLL from HEAD's src/Centurion, not the working tree: workers edit src/
 # in this checkout, and a playtest DLL must carry only reviewed, committed code.
+#
+# The default is a release build: no diagnostics, AgenticState(), Debug.* or Capture.* settings. -Dev compiles them in
+# (CENTURION_DEV); every scenario under tests/agentic needs a dev build. The verdict line names which one it built.
 
 param(
     [string]$ExecuteMethod = 'Centurion.Editor.CenturionBuild.Build',
     [string]$UnityPath,
     [string]$Blend,
-    [string]$BlenderPath = 'D:\SteamLibrary\steamapps\common\Blender\blender.exe',
-    [switch]$Committed
+    [string]$BlenderPath,
+    [switch]$Committed,
+    [switch]$Dev
 )
 
 $ErrorActionPreference = 'Stop'
+$buildKind = if ($Dev) { 'dev' } else { 'release' }
+$repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+# The desktop pause (tools/Set-Pause.ps1) lives in the main worktree, shared by every worktree of the repository.
+$common = git -C $PSScriptRoot rev-parse --path-format=absolute --git-common-dir 2>$null
+$quietFile = Join-Path (Split-Path -Parent ($common ?? $PSScriptRoot)) '.cache/refresh/*-quiet.txt'
+if (Test-Path -Path $quietFile) {
+    Write-Output 'G0.1 FAIL: Local Unity is paused. Use tools/Run-Remote.ps1.'
+    exit 1
+}
+$config = Join-Path $PSScriptRoot 'local-paths.json'
+$paths = if (Test-Path -LiteralPath $config) { Get-Content -LiteralPath $config -Raw | ConvertFrom-Json }
+if ($paths.game -and -not $env:NUCLEAR_OPTION_DIR) { $env:NUCLEAR_OPTION_DIR = $paths.game }
+if (-not $UnityPath) { $UnityPath = $env:CENTURION_UNITY ?? $paths.unity }
 # One build at a time machine-wide: parallel workers share the Unity project, the export folders and build/. A build
 # that dies leaves the mutex abandoned, which the next one takes.
 $buildLock = [System.Threading.Mutex]::new($false, 'Global\CenturionBuild')
@@ -38,7 +56,6 @@ catch {
     while ($e -and $e -isnot [System.Threading.AbandonedMutexException]) { $e = $e.InnerException }
     if (-not $e) { throw }
 }
-$repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $project = Join-Path $repo 'unity'
 $build = Join-Path $repo 'build'
 $logs = Join-Path $build 'logs'
@@ -50,13 +67,14 @@ $licenseFailure = 'No valid Unity Editor license found'
 $maxLicenseRetries = 3
 
 function Fail([string]$why) {
-    Write-Output "G0.1 FAIL: $why ($([int]$clock.Elapsed.TotalSeconds) s)"
+    Write-Output "G0.1 FAIL: $why ($buildKind build, $([int]$clock.Elapsed.TotalSeconds) s)"
     exit 1
 }
 
 if ($Blend) {
     $blendFile = (Resolve-Path -LiteralPath $Blend).Path
-    & $BlenderPath --background --factory-startup --python-exit-code 1 --python (Join-Path $repo 'tools/export_blockout.py') -- --blend $blendFile |
+    if ($BlenderPath) { $env:CENTURION_BLENDER = $BlenderPath }
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Run-Blender.ps1') --background --factory-startup --python-exit-code 1 --python (Join-Path $repo 'tools/export_blockout.py') -- --blend $blendFile |
         Where-Object { $_ -match '^\[export_blockout\]|Error|Traceback' } | Out-Host
     if ($LASTEXITCODE -ne 0) { Fail "blockout export of $blendFile exited $LASTEXITCODE" }
 }
@@ -65,6 +83,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $repo 'art/export/blockout.json'))) 
 }
 & python (Join-Path $repo 'tools/export_manifest.py')
 if ($LASTEXITCODE -ne 0) { Fail 'exports do not match art/export-manifest.json' }
+# The liveries Unity builds carry the game's faction roundels, painted from the local asset export onto the roundel-free
+# maps in art/export/textures; without the export this stops here with the one line that names it. First every recorded
+# roundel is checked on the export: whole, upright, symmetric, seen, on fixed skin no other surface shares.
+$marks = @(& python (Join-Path $repo 'art/textures/faction_marks.py') check 2>&1)
+if ($LASTEXITCODE -ne 0) { Fail "faction roundels: $(@($marks | Where-Object { "$_" -match '^FACTION MARKS FAIL' })[0] ?? ($marks | Select-Object -Last 1))" }
+$marks = @(& python (Join-Path $repo 'art/textures/faction_marks.py') 2>&1)
+if ($LASTEXITCODE -ne 0) { Fail (($marks | Select-Object -Last 1) -replace '^FACTION MARKS FAIL: ', 'faction roundels: ') }
+$marks = @(& python (Join-Path $repo 'art/textures/faction_marks.py') verify-marked 2>&1)
+if ($LASTEXITCODE -ne 0) { Fail "faction roundels: $(@($marks | Where-Object { "$_" -match '^FACTION MARKS FAIL' })[0] ?? ($marks | Select-Object -Last 1))" }
 
 # Runtime DLL. The bundle serializes the DLL's MonoBehaviours by assembly and type name, so Unity
 # must import the same build that ships beside the .nobp.
@@ -86,18 +113,23 @@ if (Test-Path -LiteralPath $csproj) {
     # Staged outside build/ until Unity succeeds, so a failed build never leaves a DLL beside an older bundle there.
     $dotnetOut = Join-Path $repo '.cache/build-staging/dotnet'
     # --no-incremental: an up-to-date skip would leave a DLL older than this run.
-    & dotnet build $csproj -c Release --no-incremental -o $dotnetOut --nologo | Out-Host
+    & dotnet build $csproj -c Release "-p:CenturionDev=$(if ($Dev) { 'true' } else { 'false' })" --no-incremental -o $dotnetOut --nologo | Out-Host
     if ($LASTEXITCODE -ne 0) { Fail "dotnet build exited $LASTEXITCODE" }
     $dll = Join-Path $dotnetOut 'Centurion.dll'
     if (-not (Test-Path -LiteralPath $dll) -or (Get-Item -LiteralPath $dll).LastWriteTimeUtc -lt $runStart) {
         Fail "dotnet build produced no fresh $dll"
     }
+    # Every dev build binds Diagnostics.StageLogging; its name in a release DLL means the dev code went in.
+    $dllBytes = [Text.Encoding]::Latin1.GetString([IO.File]::ReadAllBytes($dll))
+    $hasStageLogging = $dllBytes.Contains([Text.Encoding]::Latin1.GetString([Text.Encoding]::Unicode.GetBytes('StageLogging')))
+    if ($hasStageLogging -ne [bool]$Dev) { Fail "Centurion.dll $(if ($Dev) { 'lacks' } else { 'carries' }) the dev settings for a $buildKind build" }
     $plugins = Join-Path $project 'Assets/Plugins'
     New-Item -ItemType Directory -Force $plugins | Out-Null
     Copy-Item -LiteralPath $dll -Destination $plugins -Force
     # The editor unloads Centurion.dll unless BepInEx and its own references resolve, and the
     # project's imported game assemblies don't include them. Blueprinter never bundles a .dll.
-    $gameDir = if ($env:NUCLEAR_OPTION_DIR) { $env:NUCLEAR_OPTION_DIR } else { 'D:\SteamLibrary\steamapps\common\Nuclear Option' }
+    $gameDir = if ($env:NUCLEAR_OPTION_DIR) { $env:NUCLEAR_OPTION_DIR } else { (& dotnet msbuild $csproj -getProperty:GameDir -nologo) }
+    if ($LASTEXITCODE -ne 0 -or -not $gameDir) { Fail 'could not determine the Nuclear Option install path' }
     $references = Join-Path $plugins 'BepInEx'
     New-Item -ItemType Directory -Force $references | Out-Null
     foreach ($name in 'BepInEx.dll', '0Harmony.dll', 'Mono.Cecil.dll', 'MonoMod.Utils.dll', 'MonoMod.RuntimeDetour.dll') {
@@ -107,7 +139,7 @@ if (Test-Path -LiteralPath $csproj) {
             Copy-Item -LiteralPath $source -Destination $target -Force
         }
     }
-    Write-Output "dotnet: built and copied Centurion.dll to unity/Assets/Plugins"
+    Write-Output "dotnet: built and copied Centurion.dll ($buildKind build) to unity/Assets/Plugins"
 } else {
     Write-Output 'dotnet: skipped, src/Centurion/Centurion.csproj does not exist yet'
 }
@@ -136,6 +168,7 @@ if (Test-Path -LiteralPath $lock) {
 }
 
 for ($attempt = 1; ; $attempt++) {
+    if (Test-Path -Path $quietFile) { Fail 'Local Unity is paused. Use tools/Run-Remote.ps1.' }
     $log = Join-Path $logs ('unity-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + "-try$attempt.log")
     $arguments = @('-batchmode', '-quit', '-projectPath', "`"$project`"", '-executeMethod', $ExecuteMethod, '-logFile', "`"$log`"")
     $unityClock = [Diagnostics.Stopwatch]::StartNew()
@@ -186,5 +219,5 @@ if ($dll) {
     New-Item -ItemType Directory -Force (Join-Path $build 'dotnet') | Out-Null
     Copy-Item -Path (Join-Path $dotnetOut '*') -Destination (Join-Path $build 'dotnet') -Recurse -Force
 }
-$dllNote = if ($dll) { 'with Centurion.dll' } else { 'no DLL (src/Centurion not present yet)' }
+$dllNote = if ($dll) { "with Centurion.dll ($buildKind build)" } else { 'no DLL (src/Centurion not present yet)' }
 Write-Output "G0.1 PASS: build/$(Split-Path -Leaf $nobp) $($sums[0].Substring(0, 12)) $dllNote, $attempt Unity attempt(s) ($([int]$clock.Elapsed.TotalSeconds) s)"

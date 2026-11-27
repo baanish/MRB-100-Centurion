@@ -12,7 +12,7 @@ sealed class SurfaceMotionSound : MonoBehaviour
     Turbofan[] engines = null!;
     (ControlSurface surface, float angle)[] flaps = null!;
     float wingVolume;
-    bool sampledFlaps;
+    bool sampledFlaps, silent;
 
     internal static SurfaceMotionSound For(Aircraft aircraft) =>
         aircraft.TryGetComponent(out SurfaceMotionSound sound) ? sound : aircraft.gameObject.AddComponent<SurfaceMotionSound>();
@@ -32,18 +32,20 @@ sealed class SurfaceMotionSound : MonoBehaviour
             return;
         }
         flaps = aircraft.partLookup.Where(p => p != null).Select(p => p.GetComponent<ControlSurface>())
-            .Where(s => s != null && FlapPreset.ReadMotion(s, out _, out _)).Select(s => (s, 0f)).ToArray();
+            .Where(s => s != null && SurfaceRules.ReadFlapMotion(s, out _, out _)).Select(s => (s, 0f)).ToArray();
         foreach (var source in new[] { wingA, wingB, flap }) aircraft.RegisterDopplerSound(source);
     }
 
     bool Followed => aircraft != null && !aircraft.disabled && aircraft.isActiveAndEnabled && SceneSingleton<CameraStateManager>.i != null
         && SceneSingleton<CameraStateManager>.i.followingUnit == aircraft;
 
+    // Only the followed aircraft is heard; every other Centurion's sources were stopped once, when it stopped being
+    // followed (LateUpdate), and are left alone after that.
     internal void WingMotion(float rate, bool stop)
     {
-        if (!enabled || wingA == null || wingB == null) return;
+        if (!enabled || wingA == null || wingB == null || !Followed) return;
         // Preserve the Alkyon's Clamp law, including its alternating full-motion gain and pitch.
-        wingVolume = stop || !Followed ? 0f : Mathf.Clamp(rate - wingVolume,
+        wingVolume = stop ? 0f : Mathf.Clamp(rate - wingVolume,
             wingVolume - 4f * Time.fixedDeltaTime, wingVolume + 4f * Time.fixedDeltaTime);
         float n = Mathf.InverseLerp(0.1f, 1f, wingVolume);
         Play(wingA, n * 0.85f, Mathf.Lerp(0.2f, 1f, n) * 0.75f);
@@ -52,11 +54,11 @@ sealed class SurfaceMotionSound : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (flap == null || flaps == null) return;
+        if (flap == null || flaps == null || !Followed) return;
         float rate = 0f;
         for (int i = 0; i < flaps.Length; i++)
         {
-            if (flaps[i].surface == null || !FlapPreset.ReadMotion(flaps[i].surface, out float angle, out float speed)) continue;
+            if (flaps[i].surface == null || !SurfaceRules.ReadFlapMotion(flaps[i].surface, out float angle, out float speed)) continue;
             float delta = Mathf.Abs(angle - flaps[i].angle), step = speed * Time.fixedDeltaTime;
             // Initialization and correction snaps are not servo travel. Each direction reaches full gain at its own rate.
             if (sampledFlaps && step > 0f && delta <= step * 1.1f)
@@ -73,7 +75,7 @@ sealed class SurfaceMotionSound : MonoBehaviour
             }
         if (engines.Length > 0) { rpmRatio /= engines.Length; idleRatio /= engines.Length; }
         float volume = Mathf.Lerp(FlapIdleVolume, 1f, Mathf.InverseLerp(idleRatio, 1f, rpmRatio));
-        Play(flap, Followed ? rate * volume : 0f, 1f);
+        Play(flap, rate * volume, 1f);
     }
 
     static void Play(AudioSource source, float volume, float pitch, float offset = 0f)
@@ -90,11 +92,14 @@ sealed class SurfaceMotionSound : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!Followed) OnDisable();
+        bool followed = Followed;
+        if (!followed && !silent) OnDisable();
+        silent = !followed;
     }
 
     void OnDisable()
     {
+        silent = true;
         wingVolume = 0f;
         sampledFlaps = false;
         Play(wingA, 0f, 1f);

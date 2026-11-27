@@ -15,8 +15,8 @@ MonoBehaviour:
   prefab: {fileID: 3956907817030627034, guid: 872816c2846824448925bb7200fe6689, type: 3}
   jsonKey: baanish_centurion_b250lr_84
   info: {fileID: 11400000, guid: 9a01e7fdf83462f439ec2815665c1a4b, type: 2}
-  mountName: PAB-250LR x84
-  ammo: 84
+  mountName: PAB-250LR x60
+  ammo: 60
   turret: 0
   missileBay: 1
   radar: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   GunAmmo: 0
   emptyCost: 0
   emptyMass: 0
-  mass: 22680
+  mass: 16200
   drag: 0
   emptyDrag: 0
   RCS: 0

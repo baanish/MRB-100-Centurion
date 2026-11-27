@@ -26,8 +26,10 @@ sealed class WingTearRule
 
     public WingTearRule(CenturionLog log) => this.log = log;
 
+#if CENTURION_DEV
     /// <summary>"intact", "armed" while a limit is held, or "torn".</summary>
     public string State => Fired ? "torn" : armedBy != Limit.None ? "armed" : "intact";
+#endif
 
     public bool Fired { get; private set; }
 
