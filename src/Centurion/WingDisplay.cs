@@ -35,7 +35,7 @@ sealed class WingDisplay : MonoBehaviour
     Transform plan = null!, stage1 = null!, stage2 = null!;
     UnitPart[] roots = null!;
     TextMeshProUGUI percent = null!, word = null!;
-    (int Extension, int Lost) shown = (-1, -1);
+    (int Extension, int Lost, bool RootLost) shown = (-1, -1, false);
 
     /// <summary>
     /// Puts the display on the Centurion's wing display canvas, found through partLookup: in complex physics each part
@@ -100,8 +100,20 @@ sealed class WingDisplay : MonoBehaviour
             canvas.enabled = on;
         }
 
-        var now = (Mathf.RoundToInt(telescope.Extension * 1000f), telescope.LostMask);
-        if (!on || now == shown)
+        if (!on)
+        {
+            return;
+        }
+
+        // A root can go after both stage 1 panels have, with the extension and the lost mask unchanged, so it is in the key.
+        bool rootLost = false;
+        foreach (UnitPart root in roots)
+        {
+            rootLost |= root == null || root.IsDetached();
+        }
+
+        var now = (Mathf.RoundToInt(telescope.Extension * 1000f), telescope.LostMask, rootLost);
+        if (now == shown)
         {
             return;
         }
@@ -121,8 +133,6 @@ sealed class WingDisplay : MonoBehaviour
         stage2.gameObject.SetActive(!inner && !outer);
         percent.text = Invariant($"{extension * 100f:0}%");
         percent.color = inner || outer ? Amber : Green;
-        // A lost root takes its stage 1 too, which is how the redraw sees it.
-        bool rootLost = roots.Any(r => r == null || r.IsDetached());
         word.text = rootLost ? "WING LOST" : inner ? "JETTISONED" : outer ? "OUTER LOST" : "";
         word.color = Amber;
     }

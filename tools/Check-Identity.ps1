@@ -21,6 +21,12 @@ New-Item -ItemType Directory -Force $logs | Out-Null
 
 $unityVersion = (Select-String -LiteralPath (Join-Path $project 'ProjectSettings/ProjectVersion.txt') -Pattern '^m_EditorVersion: (\S+)$').Matches[0].Groups[1].Value
 if (-not $UnityPath) {
+    # The same custom editor the build takes (tools/Build-Centurion.ps1), so a Unity outside the registry can package too.
+    $config = Join-Path $PSScriptRoot 'local-paths.json'
+    $paths = if (Test-Path -LiteralPath $config) { Get-Content -LiteralPath $config -Raw | ConvertFrom-Json }
+    $UnityPath = $env:CENTURION_UNITY ?? $paths.unity
+}
+if (-not $UnityPath) {
     $UnityPath = @(
         foreach ($root in 'HKLM:/SOFTWARE', 'HKLM:/SOFTWARE/WOW6432Node', 'HKCU:/SOFTWARE') {
             $icon = Get-ItemPropertyValue -LiteralPath "$root/Microsoft/Windows/CurrentVersion/Uninstall/Unity $unityVersion" -Name DisplayIcon -ErrorAction SilentlyContinue

@@ -228,7 +228,7 @@ $sourceUrl = "https://github.com/baanish/MRB-100-Centurion/blob/v$tag"
 $notes = @(
     "# MRB-100 Centurion v$tag", '',
     'For Nuclear Option 0.34.6. Requires BepInEx 5 and Blueprinter 2.0.1 or later.', '',
-    'Every player needs the mod. Two-PC multiplayer validation is still pending; this is a prerelease.', ''
+    'Every player in a lobby needs the mod and the same weapon packs as the host. This is a pre-release.', ''
 )
 if ($changes) { $notes += @('## Changes', '', $changes.Trim(), '') }
 $notes += @(

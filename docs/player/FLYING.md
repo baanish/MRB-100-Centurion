@@ -1,96 +1,95 @@
 # Flying the MRB-100 Centurion
 
-The Centurion is a heavy bomber with two internal weapon bays. Fit the dorsal beam to fly AWACS instead. Its telescoping wing trades speed for lift and endurance. Plan your turns early and bring escorts into defended airspace.
+The Centurion is a heavy high-altitude bomber with two internal bays, or an AWACS once you fit the dorsal radar beam. Its telescoping wing trades speed for lift and endurance. Think ahead on turns, manage your energy on climbs, and bring escorts when pushing into defended airspace.
 
-For installation, see the [README](../../README.md). Check [known issues](KNOWN-ISSUES.md) before flying an interim build.
-
-In stock Domination, Escalation, Terminal Control and their co-op variants, one BDF factory builds Centurions in turn with Darkreaches. BDF starts with none. Set `StockMissionSupply = false` under `[Missions]` in `BepInEx/config/baanish.centurion.cfg` to turn this off from the host's next mission load.
+For installation, see the [README](../../README.md). Check [known issues](KNOWN-ISSUES.md) for current caveats.
 
 ## Controls
 
-Use your own bindings in Nuclear Option's control settings. The mod adds no separate keyboard shortcuts.
+The mod adds no custom hotkeys. Everything runs on Nuclear Option's own bindings.
 
 | Action | Control |
 |---|---|
-| Extend or retract the wing | Custom Axis 1; 0 is retracted, 1 is fully extended |
-| Switch the radars and AWACS beam | Radar toggle |
-| Raise or lower the gear and automatic flaps | Landing gear control |
-| Release bay weapons | Select the weapon, designate a target when required, then use the weapon trigger |
-| Aim the laser manually | Select the Laser C-RAM station, aim with your view or designate a target, then use the weapon trigger |
-| Return the laser to automatic defence | Select another weapon station. With both bays empty, let go of the trigger |
+| Extend or retract the wing | Custom Axis 1 (0 is retracted, 1 is fully extended) |
+| Switch radars and AWACS beam | Radar toggle |
+| Raise or lower gear and automatic flaps | Landing gear control |
+| Release bay weapons | Select weapon, designate target when required, press weapon trigger |
+| Aim the laser manually | Select the Laser C-RAM station, aim with your view or designate a target, press weapon trigger |
+| Return laser to automatic defence | Select another weapon station, or let go of the trigger if both bays are empty |
 | Flares and ECM | Countermeasure controls |
-| Airbrakes | Bring throttle fully to idle |
-| Eject or leave the aircraft | Ejection or aircraft exit control |
+| Airbrakes | Throttle fully to idle |
+| Eject or exit aircraft | Ejection or aircraft exit control |
 
-The span gauge shows the wing's actual extension and a marker for your command. Full travel takes 8 seconds. The wing is 43.56 m retracted and 87.14 m extended. Near a medium hangar on the ground, the wing stays retracted even if you command extension.
+The HUD span gauge and the cockpit wing display both show current extension (143 ft retracted to 286 ft extended) along with your commanded position. Full travel takes 8 seconds. On the ground near a medium hangar, the span stays locked retracted even if you command extension.
 
 ## Takeoff
 
-1. Check fuel and stores before spawning. Normal maximum takeoff mass is 199 t. The full PAB-80LR pair needs reduced fuel, as described below.
-2. Taxi with the wing retracted. From a medium hangar, wait until the doors are fully open, about 15 seconds, before you roll. The retracted wing clears the door by only about 3.6 ft (1.1 m) a side, so taxi straight out along the hangar's centreline until the wing is out of the doorway. Line up clear of the hangar, then extend for lift and the climb. Heavy takeoffs also work retracted, but you must extend before climbing to the higher ceiling.
-3. The flaps automatically set 30 degrees for takeoff. Apply thrust and let the aircraft gain speed before rotating. In a measured extended takeoff near 199 t, it lifted off at about 154 kt after 920 m. Treat that as a reference, not a runway guarantee.
-4. Rotate smoothly. Keep rotation within 8 or 9 degrees; the tail strikes at about 10.5 degrees. Avoid trying to force it off the runway.
-5. Once climbing, raise the gear and keep gaining speed. The takeoff flaps stow over 20 seconds after gear up. Leave the wing extended while you establish the climb.
+1. **Check your weight before spawning.** Normal maximum takeoff mass is 199 t. Only the event-content 412-round LEGACY PAB-80LR load exceeds this at full fuel (see [Bays and loadouts](#bays-and-loadouts) below).
+2. **Wait for the hangar doors.** Keep the wing retracted while taxiing. From a medium hangar, wait until the doors finish opening (about 15 seconds) before rolling. The retracted wingtips clear the doorway by only 3.6 ft (1.1 m) a side, so track straight down the centreline until the wings are completely outside.
+3. **Choose your span.** Heavy takeoffs work retracted or extended, though extending once clear of the hangar gives better lift in the climb. At 199 t with the wing extended, expect liftoff around 154 kt after roughly 3,020 ft (920 m) of runway.
+4. **Rotate gently.** Flaps set themselves to 30 degrees for takeoff. Let speed build, then pull smoothly to 8 or 9 degrees nose-up. The tail strikes at 10.5 degrees, so do not force it off the ground.
+5. **Clean up in the climb.** Raise the gear once established climbing. Takeoff flaps stow slowly over 20 seconds after gear up so you keep your lift while accelerating. Leave the wing extended until you want speed down low.
 
-Leaving the gear down keeps the takeoff flap setting. Raise it during the climb so the flaps can stow and the next gear-down can use the landing setting.
+Always raise the gear after takeoff. If you leave it down, the flaps stay on the 30-degree takeoff setting for your landing, which makes the aircraft float and bounce.
 
 ## Cruise and ceiling
 
-Use the extended wing for loiter, climb and slower cruise. It reduces the lift needed from angle of attack, burns less fuel at suitable speeds and rolls more slowly. Keep turns gentle and watch airspeed as you climb.
-
-For fast transit near Mach 0.85, retract. The extended wing's drag rises steeply above Mach 0.76; retracting above about Mach 0.75 saves fuel. Extended full-throttle level flight settles near Mach 0.81. There is no automatic speed tear, but pulling hard at speed can exceed the load limit.
-
-At mid weight, the extended aircraft can hold 17.5 km, about 57,500 ft. The retracted ceiling is about 14 km, about 46,000 ft. Weight and turns reduce your margin, so leave room below the ceiling rather than climbing until the speed decays. The official ceiling is 55,000 ft.
-
-With the current 330 kN engines, AWACS loiter at 15 km and 200 m/s gives about 3.3 hours down to 20% fuel. This is extrapolated from four burns totalling 25 minutes, not a continuous endurance flight. It excludes the climb, manoeuvring and the return to base. There is no aerial refuelling.
-
-With the stick centred, the stock fly-by-wire holds attitude, as on every aircraft. It cannot prevent a sink if you let the aircraft get too slow.
+- **Extended wing** is for climbs, loiter and long-range cruise. It lowers fuel burn, climbs higher and rolls more slowly. Keep turns smooth and watch airspeed as the air thins out.
+- **Retracted wing** is for fast transit near Mach 0.85. Extended drag climbs sharply past Mach 0.76, capping level flight around Mach 0.81, so pull the wing in once you pass Mach 0.75. There is no automatic overspeed tear, though a hard pull at high speed will still over-g the outer stages.
+- **Ceiling.** Official ceiling is 55,000 ft. At mid weight, the aircraft holds about 57,500 ft extended and about 46,000 ft retracted. Heavy loads and turns eat into that margin, so cruise a little below maximum altitude rather than riding the edge of a stall.
+- **Endurance.** At 49,000 ft and around 390 kt extended, AWACS loiter runs roughly 3.3 hours down to 20% internal fuel, not counting the climb, manoeuvring or recovery. There is no aerial refuelling.
+- **Fly-by-wire.** With the stick centred, stock fly-by-wire holds pitch attitude as on other aircraft. It will not save you from sinking if you let airspeed bleed away.
 
 ## Landing and damaged wings
 
-Extend before the approach, while you have room to slow down and settle. Lower the gear once configured; the flaps automatically use 15 degrees after they have stowed during the flight. Watch speed and sink rate rather than stretching the flare. At idle, the split ailerons and spoilers act as airbrakes. Avoid a high nose attitude near touchdown, and retract the wing before taxiing among buildings.
+Extend the wing before starting your approach so you have lift and room to slow down. Once the flaps have stowed earlier in the flight, lowering the gear sets 15-degree landing flaps automatically. Fly speed and sink rate onto the runway instead of stretching the flare, keep the nose down to avoid a tail strike, and bring throttle to idle if you need the split ailerons and spoilers as airbrakes. Retract the wing before taxiing back near buildings.
 
-If you go around, add thrust and establish the climb before raising the gear. A go-around retains the landing flap preset until the aircraft is slow on the ground again.
+If you go around, add power and establish a positive climb before raising the gear. A go-around keeps the 15-degree landing flap preset until you are slow on the ground again.
 
-Past 25% extension, more than +4 g or less than -1 g for half a second tears off the outer wing stages. Damage to one outer panel causes an automatic symmetric emergency jettison of the healthy outer panel to prevent asymmetric lift. Losing a whole wing at its root does not: the other wing keeps its panels. Extension then stays locked for the sortie. The damaged wing adds drag permanently. Slow down, use shallow turns and return to land with the remaining span.
+Hard touchdowns can snap a main gear leg above about 3,000 ft/min at maximum weight, or about 4,200 ft/min light. Grass and soft ground break the gear about as easily as on a Darkreach.
+
+### Wing tear and symmetric jettison
+
+Past 25% extension, holding more than +4 g or less than -1 g for half a second tears both outer wing stages off. If enemy fire knocks off one outer panel, the aircraft automatically jettisons the healthy opposite outer panel so you are not rolled upside down by asymmetric lift. Losing an entire wing at the root does not trigger jettison on the intact side.
+
+After any outer stage loss, wing extension locks for the rest of the sortie and the damaged wing adds permanent drag. Slow down, make shallow turns and fly home on the inner span.
 
 ## Fire in the bays
 
-Lasers, guns, flak and missiles can all damage the Centurion. Fuel fires spread between tanks and threaten loaded bays.
+Lasers, cannon fire, flak and missiles can all damage the Centurion and start fuel fires, which spread between neighbouring tanks just like on stock bombers.
 
-If the fuel tank over a loaded bay catches fire, release everything in that bay within 20 seconds. If any conventional stores remain, one blast goes off at the bay. It can break up the aircraft and damage nearby escorts. The blast grows with what is left aboard, up to the equivalent of 5,000 kg of TNT. Empty bays and bays holding only nuclear weapons never cook off.
+Each weapon bay sits under a fuselage fuel tank. If the tank over a loaded bay catches fire, you have **20 seconds** to jettison or drop everything in that bay. If any conventional ordnance remains when the timer runs out, the bay cooks off in a single explosion scaled to what is left aboard (up to 5,000 kg of TNT). The blast can break the aircraft in half and damage nearby escorts. Empty bays and bays holding only nuclear weapons never cook off.
 
-## AWACS beam and radar master
+## AWACS beam and radars
 
-Fit the 6 t AWACS Beam on the dorsal station. It occupies the aft bay, which must stay empty. The forward bay keeps its bomber stores and ARAD-116 options; the AWACS preset uses 16 ARAD-116s.
+Mounting the 6 t AWACS beam on the dorsal station turns the Centurion into an AWACS. The beam uses the aft bay's space, so the aft bay stays empty regardless of saved loadouts. The forward bay keeps normal bomber stores and ARAD-116 racks (the AWACS preset loads 16 ARAD-116s).
 
-Clear the hangar with the radar master on and the beam rises, then extends its ends. Deployment takes 12 seconds. The beam detects nothing until fully deployed. Switching the radar master off stows it and removes the extra deployed drag; switching on raises it again when clear of the hangar.
+Once you clear the hangar with radar master on, the beam rises on its mast and extends its end sections over 12 seconds. It produces no detections until fully deployed. Toggling radar master off stows the beam back into the spine and drops its deployed drag.
 
 | Radar | Nominal range | Coverage |
 |---|---|---|
-| Nose | 60 km | Forward cone, 60 degree half-angle |
-| Tail | 40 km | Aft cone, 60 degree half-angle |
+| Nose | 60 km | Forward 60-degree half-cone |
+| Tail | 40 km | Aft 60-degree half-cone |
 | AWACS beam | 150 km | All directions |
 
-All radars follow the same master switch and operate together when fitted and deployed. These are radar range settings, not guaranteed detection distances. Target radar cross-section, clutter and jamming affect the picture. The beam draws 15 kW and adds drag when deployed. Its emissions reveal you to enemy warning receivers and anti-radiation missiles.
+All three radars share the stock radar toggle and run simultaneously when fitted and deployed. Actual detection distances depend on target radar cross-section, terrain clutter and jamming. Deployed, the beam draws 15 kW, adds noticeable drag and broadcasts your position to enemy RWRs and anti-radiation missiles.
 
 ## Laser C-RAM and capacitor
 
-The tail laser is a separate, removable station. It fires at 120 kW within 80 degrees of straight aft, out to 8 km. Its 2,000 kJ capacitor also supplies the radars and ECM. Engine RPM controls charging: 20 kW at idle to 60 kW at full RPM with both engines healthy. Continuous fire drains charge even with the engines running.
+The tail cone carries a removable 120 kW laser effective out to 8 km within 80 degrees of straight aft. It shares a 2,000 kJ capacitor with the radars and built-in ECM. Both healthy engines recharge the capacitor from 20 kW at idle up to 60 kW at full RPM, so continuous firing drains it faster than the engines can refill it.
 
-Leave another weapon selected for automatic defence. The laser picks hostile missiles it can track, including missiles aimed at you, friendlies and missiles with no target. It does not automatically attack aircraft or vehicles. `Cram.CoverEscorts` defaults to true; turning it off leaves defence against missiles aimed at the Centurion and missiles with no target. Use the same setting throughout a multiplayer lobby.
+- **Automatic defence.** Leave any other weapon selected and the laser defends automatically, engaging tracked hostile missiles aimed at you, aimed at friendlies, or flying without a target. It never shoots at aircraft or ground units on its own. Setting `Cram.CoverEscorts = false` limits it to missiles aimed at you and untargeted missiles (keep this setting identical across a multiplayer lobby).
+- **Manual aim.** Select the laser station to aim with your view or lock a designated target of any kind within the aft cone, then hold the trigger. Automatic defence pauses while the station is selected. Pick another weapon to hand it back. If both bays are empty, the laser stays automatic until you hold the trigger to aim it manually, and returns to automatic defence when you release. Watch your line of fire, because the beam hits friendlies too.
+- **ECM and flares.** Built-in ECM applies at double its normal strength against active and semi-active radar missile seekers while leaving search radar returns and RWR estimates unchanged. It is defensive self-protection only, not an offensive radar jammer. Use flares for IR missiles, and rely on escorts for head-on shots and salvos that can drain the capacitor.
+- **Removing the laser.** Leaving the tail station empty saves 300 kg and removes point defence. The tail dome stays.
 
-Select the laser station to aim it yourself. It follows your view or a designated target and fires on the trigger, still within its range and aft cone. While selected, it stops automatic defence. Select another station to hand defence back. With both bays empty the laser is your only station. It still defends on its own, and holding the trigger aims and fires it as if selected. Let go and automatic defence resumes. The beam can hit friendlies, so check your line of fire.
-
-ECM counts at twice its normal intensity against active and semi-active radar missile seekers when the seeker signal is strong enough for jamming to apply. Search radars and warning estimates keep the normal intensity. This is defensive self-protection; the aircraft has no offensive radar-jamming pod. Use flares for infrared threats and escorts for threats the rear laser cannot cover. A large salvo can exhaust the capacitor.
-
-Leaving the laser station empty saves 300 kg and removes its defence. The tail dome remains. See [known issues](KNOWN-ISSUES.md) before using manual laser aim on a dedicated server.
+Check [known issues](KNOWN-ISSUES.md) before using manual laser aim on a dedicated server.
 
 ## Bays and loadouts
 
-Forward and aft stores of the same munition pool into one weapon selection. For bombs, a single release alternates bays. Holding the trigger, or selecting two or more targets, releases bombs from both bays together. Doors stay open for four seconds and lower layers release first. Keep the aircraft steady while stores clear the bays.
+Matching munitions in the forward and aft bays combine into one weapon selection. Single bomb presses alternate between bays. Holding the trigger, or selecting two or more targets, drops from both bays together at that bomb's normal interval. Bay doors stay open for four seconds and lower layers drop first, so hold the aircraft steady while stores clear.
 
-The table gives the standard pairs in 0.2.0 and the three forward ARAD racks. Counts are rounds.
+Standard 0.2.0 racks and forward-only ARAD-116 options (counts in rounds):
 
 | Munition | Forward | Aft | Total |
 |---|---:|---:|---:|
@@ -114,9 +113,9 @@ The table gives the standard pairs in 0.2.0 and the three forward ARAD racks. Co
 | ARAD-116, medium rack | 8 | 0 | 8 |
 | ARAD-116, packed rack (AWACS preset) | 16 | 0 | 16 |
 
-Smaller racks also appear in the selector. Each rack fits its intended bay. The higher 0.1.3 counts are labelled `LEGACY` and appear in missions that allow event content.
+Smaller racks are also available in the loadout menu:
 
-| Munition, smaller rack | Forward | Aft | Total with that rack in both bays |
+| Munition, smaller rack | Forward | Aft | Total with both bays |
 |---|---:|---:|---:|
 | GPO-500 | 8 | 8 | 16 |
 | GPO-500 | 12 | 12 | 24 |
@@ -129,13 +128,13 @@ Smaller racks also appear in the selector. Each rack fits its intended bay. The 
 | GPO-N (250 kt) | 2 | 2 | 4 |
 | ALND-4 (20 kt) | 2 | 2 | 4 |
 
-Normal payload is up to 50 t. The 412-round LEGACY PAB-80LR pair weighs 51.5 t. With full fuel and the laser fitted, it reaches 200.5 t. Set fuel to 93% or less to stay under 199 t. Check mass before departure with any custom load.
+Each rack fits only its intended bay. In missions that allow event content, the larger 0.1.3 counts appear under `LEGACY` labels. Normal maximum payload is 50 t, but the 412-round LEGACY PAB-80LR pair weighs 51.5 t and pushes takeoff mass to 200.5 t with full fuel and the laser fitted. Cut fuel to 93% or less to stay under 199 t.
 
-With the AWACS beam fitted, read every aft count as zero. The beam takes precedence over aft stores, including saved loadouts. ARAD-116s are forward-only with either role. There are no air-to-air missiles or external pods.
+With the AWACS beam mounted, aft bay counts are always zero, and ARAD-116s mount in the forward bay only. There are no air-to-air missiles or external pods.
 
 ## Weapon pack racks
 
-With the Aryx Weaponry Pack or Meridian Works installed, the bays also offer Centurion-sized racks of their weapons. The racks appear only when the pack is installed; nothing changes without it. A mission saved with a pack rack loads that bay empty on a game without the pack.
+If you have the Aryx Weaponry Pack or Meridian Works installed, the Centurion adds 45 bay racks for their weapons automatically. Without those packs installed, nothing changes. Missions saved with a pack rack load that bay empty if the pack is absent.
 
 | Pack | Weapon | Forward | Aft |
 |---|---|---:|---:|
@@ -157,20 +156,19 @@ With the Aryx Weaponry Pack or Meridian Works installed, the bays also offer Cen
 | Meridian Works | HSM-160M Hailstorm (20 kt), event content | 9 | 9 |
 | Meridian Works | PAB-125HD | 60 | 60 |
 
-The Hailstorm rack, "EVENT: HSM-160M Hailstorm (20kt) x9", appears only in missions that allow event content. The nuclear racks follow the mission's nuclear settings and the airbase's warheads like the stock ones. Nemesis and Kalibr pairs, and the forward-only ARAD-120, load the aircraft nose-heavy; the ARAD-120 rack holds 12 rather than 16 so its takeoff keeps back stick in hand at rotation. In multiplayer everyone needs the same packs; a Steam lobby turns away a player whose packs differ from the host's.
+`"EVENT: HSM-160M Hailstorm (20kt) x9"` appears only in missions that allow event content. Nuclear pack racks obey the mission's nuclear rules and airbase warhead stock just like stock nukes. Nemesis pairs, Kalibr pairs and the forward-only ARAD-120 shift weight forward, so expect a nose-heavy rotation on takeoff. In multiplayer, every player needs the same weapon packs as the host.
 
 ## Crew and ejection
 
-The pilot sits on the left and the mission commander on the right. Use the normal ejection control in flight. The overhead escape hatches jettison and both crew leave in separate seats with parachutes; the cockpit stays with the aircraft. This does not add a separate player-controlled commander station. On the ground, leaving the aircraft uses the side crew door.
+The pilot sits on the left and the mission commander on the right. Ejecting in flight blows the overhead escape hatches and launches both seats on parachutes while the cockpit stays with the airframe. On the ground, exiting the aircraft uses the side crew door.
 
-## What the AI does
+## AI and stock missions
 
-The AI draws one of eight presets: GPO-500 x66, PAB-250 x120, PAB-250LR x120, GBM-500LR x54, Tusko-B x42, AShM-300 x36, GPO-500 x16 and AWACS. These presets use the standard racks. While the enemy has a long-range SAM site alive anywhere in the mission, a bomb or glide bomb draw becomes a Tusko-B or AShM-300 loadout instead, so bombers carry missiles until those sites are gone. The AWACS draw is unaffected.
+In stock Domination, Escalation, Terminal Control and their co-op variants, one BDF factory builds Centurions in turn with Darkreaches (BDF starts with none). Hosts can turn this off from the next mission load by setting `StockMissionSupply = false` under `[Missions]` in `BepInEx/config/baanish.centurion.cfg`.
 
-Bombers extend for takeoff and climb on a racetrack before heading toward the target. Cruise height depends on weight, about 51,000 to 57,000 ft, with gentle 20 degree banks. Against a target near their base they attack lower. With bombs they come in at 15,000 ft for a target 10 nautical miles from base, rising evenly to 50,000 ft at 30 nautical miles and beyond. Missile bombers come in at 20,000 ft for a target within about 22 nautical miles (40 km). Each keeps its assigned target until it is destroyed. Missiles launch from height and speed, except while an enemy long-range SAM covers the home base: then a missile bomber fires during the climb, often within a minute of takeoff. A missile bomber extends away from a target too close to line up on, then turns back. With rounds left, it waits for its missiles in flight before deciding to land. Empty aircraft return to rearm.
+AI Centurions only take off from runways at least 6,257 ft (1,907 m) long, while players can spawn at any base with a medium hangar. The AI handles its own wing extension, waiting for hangar doors and taxiing out at 12 kt or less.
 
-The AI leaves the laser in automatic defence. It holds its attack against missiles the laser can cover. For an uncovered radar missile, it dodges while holding height rather than diving to the ground. Escort it against head-on attacks.
-
-AWACS aircraft climb toward 15 km and orbit near 200 m/s, with radars on. Their racetrack follows the front at a distance set by detecting stealthy fighters, about 25 km from the nearest enemy base under normal conditions. This can put them inside long-range SAM coverage. They use countermeasures and the automatic laser, and return at 20% fuel. They fire their ARAD-116s in pairs at emitting hostile SAM and AA radars, only from beyond the site's own reach plus 10 km and never closing in to make a shot, so a StratoLance R9 site is never a target.
-
-AI Centurions need a qualifying runway at least 1,907 m long. Players can spawn at any base whose medium hangar fits the aircraft. The AI manages span itself, including extension for landing and retraction for taxi.
+- **Loadouts.** AI Centurions draw from eight standard presets: GPO-500 x66, PAB-250 x120, PAB-250LR x120, GBM-500LR x54, Tusko-B x42, AShM-300 x36, GPO-500 x16 and AWACS. Whenever an enemy long-range SAM site is alive anywhere on the map, bomb and glide-bomb draws swap to Tusko-B or AShM-300 missiles until those sites are gone. AWACS draws are unchanged.
+- **Bomber doctrine.** Bombers climb extended on a racetrack before heading in at 51,000 to 57,000 ft by weight, using gentle 20-degree banks. Against nearby targets they ingress lower, from 15,000 ft at 10 nautical miles out up to 50,000 ft at 30 nautical miles for bombs, and 20,000 ft within about 22 nautical miles (40 km) for missiles. If an enemy long-range SAM covers their home base, missile bombers fire during the climb instead of waiting for cruise altitude. They stay on their assigned target until it is destroyed, extend away and turn back if a missile target is too close to align on, and wait for missiles in flight before heading home to rearm.
+- **Defence.** AI leaves the tail laser on automatic and flies through attacks the laser can intercept. Against an uncovered radar missile, it dodges laterally while holding altitude rather than diving to the deck. Escort friendly bombers against head-on threats.
+- **AWACS doctrine.** AWACS climbs to about 49,000 ft and orbits near 390 kt with radars on, standing off roughly 25 km from the nearest enemy base to detect stealth fighters. That standoff can sit inside long-range SAM reach, so clear threatening sites or cover it. It defends with countermeasures and the automatic laser, returns to base at 20% fuel, and fires pairs of ARAD-116s at emitting SAM and AA radars from outside their weapon reach plus 10 km without closing in (so a StratoLance R9 site stays out of its target list).
